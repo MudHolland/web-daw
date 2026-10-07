@@ -1,0 +1,7356 @@
+{
+  "version": 1,
+  "bpm": 97,
+  "swing": 0,
+  "accent": [
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false
+  ],
+  "accentAmount": 0,
+  "key": "C",
+  "master": 0.85,
+  "instruments": [
+    {
+      "id": "kick-mwsu6t",
+      "name": "Kick",
+      "kind": "drum",
+      "voice": {
+        "type": "808",
+        "drum": "kick",
+        "sound": {
+          "decay": 0.5,
+          "tone": 0.48,
+          "snap": 0.29
+        }
+      },
+      "patterns": [
+        {
+          "id": "kick-mwsu6t-section-start",
+          "length": 16,
+          "steps": [
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            }
+          ],
+          "notes": []
+        },
+        {
+          "id": "kick-mwsu6t-4kbqdc",
+          "length": 16,
+          "steps": [
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            }
+          ],
+          "notes": []
+        },
+        {
+          "id": "kick-mwsu6t-m2wqi4",
+          "length": 16,
+          "steps": [
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            }
+          ],
+          "notes": []
+        },
+        {
+          "id": "kick-mwsu6t-okyoc6",
+          "length": 16,
+          "steps": [
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            }
+          ],
+          "notes": []
+        },
+        {
+          "id": "kick-mwsu6t-p24mcc",
+          "length": 16,
+          "steps": [
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            }
+          ],
+          "notes": []
+        },
+        {
+          "id": "kick-mwsu6t-cs8a5d",
+          "length": 16,
+          "steps": [
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            }
+          ],
+          "notes": []
+        },
+        {
+          "id": "kick-mwsu6t-k5uzb7",
+          "length": 16,
+          "steps": [
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            }
+          ],
+          "notes": []
+        }
+      ],
+      "mix": {
+        "level": 0.9,
+        "pan": 0,
+        "eq": {
+          "low": 15,
+          "mid": 10,
+          "high": 17
+        }
+      },
+      "effects": [],
+      "inserts": [
+        "eq",
+        "adsr",
+        "processing"
+      ],
+      "envelope": {
+        "attack": 0,
+        "decay": 0.65,
+        "sustain": 0.86,
+        "release": 0.86
+      }
+    },
+    {
+      "id": "snare-721867",
+      "name": "Snare",
+      "kind": "drum",
+      "voice": {
+        "type": "808",
+        "drum": "snare",
+        "sound": {
+          "decay": 0.5,
+          "tone": 0.26,
+          "snap": 0.5
+        }
+      },
+      "patterns": [
+        {
+          "id": "snare-721867-section-start",
+          "length": 16,
+          "steps": [
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            }
+          ],
+          "notes": []
+        },
+        {
+          "id": "snare-721867-4kbqdc",
+          "length": 16,
+          "steps": [
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            }
+          ],
+          "notes": []
+        },
+        {
+          "id": "snare-721867-m2wqi4",
+          "length": 16,
+          "steps": [
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            }
+          ],
+          "notes": []
+        },
+        {
+          "id": "snare-721867-okyoc6",
+          "length": 16,
+          "steps": [
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            }
+          ],
+          "notes": []
+        },
+        {
+          "id": "snare-721867-p24mcc",
+          "length": 16,
+          "steps": [
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            }
+          ],
+          "notes": []
+        },
+        {
+          "id": "snare-721867-cs8a5d",
+          "length": 16,
+          "steps": [
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            }
+          ],
+          "notes": []
+        },
+        {
+          "id": "snare-721867-k5uzb7",
+          "length": 16,
+          "steps": [
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            }
+          ],
+          "notes": []
+        }
+      ],
+      "mix": {
+        "level": 0.62,
+        "pan": 0,
+        "eq": {
+          "low": 0,
+          "mid": 17,
+          "high": 12
+        }
+      },
+      "effects": [],
+      "inserts": [
+        "eq",
+        "adsr",
+        "processing"
+      ],
+      "envelope": {
+        "attack": 0,
+        "decay": 0.92,
+        "sustain": 0.45,
+        "release": 0.28
+      }
+    },
+    {
+      "id": "hatClosed-9clfo3",
+      "name": "Closed Hat",
+      "kind": "drum",
+      "voice": {
+        "type": "808",
+        "drum": "hatClosed",
+        "sound": {
+          "decay": 0.5,
+          "tone": 0.5,
+          "snap": 0.5
+        }
+      },
+      "patterns": [
+        {
+          "id": "hatClosed-9clfo3-section-start",
+          "length": 16,
+          "steps": [
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            }
+          ],
+          "notes": []
+        },
+        {
+          "id": "hatClosed-9clfo3-4kbqdc",
+          "length": 16,
+          "steps": [
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            }
+          ],
+          "notes": []
+        },
+        {
+          "id": "hatClosed-9clfo3-m2wqi4",
+          "length": 16,
+          "steps": [
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            }
+          ],
+          "notes": []
+        },
+        {
+          "id": "hatClosed-9clfo3-okyoc6",
+          "length": 16,
+          "steps": [
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            }
+          ],
+          "notes": []
+        },
+        {
+          "id": "hatClosed-9clfo3-p24mcc",
+          "length": 16,
+          "steps": [
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            }
+          ],
+          "notes": []
+        },
+        {
+          "id": "hatClosed-9clfo3-cs8a5d",
+          "length": 16,
+          "steps": [
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            }
+          ],
+          "notes": []
+        },
+        {
+          "id": "hatClosed-9clfo3-k5uzb7",
+          "length": 16,
+          "steps": [
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            }
+          ],
+          "notes": []
+        }
+      ],
+      "mix": {
+        "level": 0.7,
+        "pan": 0,
+        "eq": {
+          "low": 0,
+          "mid": 0,
+          "high": 0
+        }
+      },
+      "effects": [],
+      "inserts": [],
+      "envelope": {
+        "attack": 0.02,
+        "decay": 0.35,
+        "sustain": 0.45,
+        "release": 0.28
+      }
+    },
+    {
+      "id": "hatOpen-gms8ba",
+      "name": "Open Hat",
+      "kind": "drum",
+      "voice": {
+        "type": "808",
+        "drum": "hatOpen",
+        "sound": {
+          "decay": 0.5,
+          "tone": 0.5,
+          "snap": 0.5
+        }
+      },
+      "patterns": [
+        {
+          "id": "hatOpen-gms8ba-section-start",
+          "length": 16,
+          "steps": [
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            }
+          ],
+          "notes": []
+        },
+        {
+          "id": "hatOpen-gms8ba-4kbqdc",
+          "length": 16,
+          "steps": [
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            }
+          ],
+          "notes": []
+        },
+        {
+          "id": "hatOpen-gms8ba-m2wqi4",
+          "length": 16,
+          "steps": [
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            }
+          ],
+          "notes": []
+        },
+        {
+          "id": "hatOpen-gms8ba-okyoc6",
+          "length": 16,
+          "steps": [
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            }
+          ],
+          "notes": []
+        },
+        {
+          "id": "hatOpen-gms8ba-p24mcc",
+          "length": 16,
+          "steps": [
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            }
+          ],
+          "notes": []
+        },
+        {
+          "id": "hatOpen-gms8ba-cs8a5d",
+          "length": 16,
+          "steps": [
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            }
+          ],
+          "notes": []
+        },
+        {
+          "id": "hatOpen-gms8ba-k5uzb7",
+          "length": 16,
+          "steps": [
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            }
+          ],
+          "notes": []
+        }
+      ],
+      "mix": {
+        "level": 0.66,
+        "pan": 0,
+        "eq": {
+          "low": 0,
+          "mid": 0,
+          "high": 0
+        }
+      },
+      "effects": [],
+      "inserts": [],
+      "envelope": {
+        "attack": 0.02,
+        "decay": 0.35,
+        "sustain": 0.45,
+        "release": 0.28
+      }
+    },
+    {
+      "id": "rim-safv52",
+      "name": "Rim",
+      "kind": "drum",
+      "voice": {
+        "type": "808",
+        "drum": "rim",
+        "sound": {
+          "decay": 0.5,
+          "tone": 0.5,
+          "snap": 0.5
+        }
+      },
+      "patterns": [
+        {
+          "id": "rim-safv52-section-start",
+          "length": 16,
+          "steps": [
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            }
+          ],
+          "notes": []
+        },
+        {
+          "id": "rim-safv52-4kbqdc",
+          "length": 16,
+          "steps": [
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            }
+          ],
+          "notes": []
+        },
+        {
+          "id": "rim-safv52-m2wqi4",
+          "length": 16,
+          "steps": [
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            }
+          ],
+          "notes": []
+        },
+        {
+          "id": "rim-safv52-okyoc6",
+          "length": 16,
+          "steps": [
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            }
+          ],
+          "notes": []
+        },
+        {
+          "id": "rim-safv52-p24mcc",
+          "length": 16,
+          "steps": [
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            }
+          ],
+          "notes": []
+        },
+        {
+          "id": "rim-safv52-cs8a5d",
+          "length": 16,
+          "steps": [
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            }
+          ],
+          "notes": []
+        },
+        {
+          "id": "rim-safv52-k5uzb7",
+          "length": 16,
+          "steps": [
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": true,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            }
+          ],
+          "notes": []
+        }
+      ],
+      "mix": {
+        "level": 0.45,
+        "pan": 0,
+        "eq": {
+          "low": 0,
+          "mid": 0,
+          "high": 0
+        }
+      },
+      "effects": [],
+      "inserts": [],
+      "envelope": {
+        "attack": 0.02,
+        "decay": 0.35,
+        "sustain": 0.45,
+        "release": 0.28
+      }
+    },
+    {
+      "id": "bass-ae5rdn",
+      "name": "Bass",
+      "kind": "melodic",
+      "voice": {
+        "type": "bass",
+        "sound": {
+          "cutoff": 0.45,
+          "decay": 0.45,
+          "glide": 0.15
+        }
+      },
+      "patterns": [
+        {
+          "id": "bass-ae5rdn-section-start",
+          "length": 16,
+          "steps": [
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            }
+          ],
+          "notes": [
+            {
+              "pitch": 48,
+              "start": 2,
+              "duration": 1,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 48,
+              "start": 6,
+              "duration": 1,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 48,
+              "start": 10,
+              "duration": 1,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 51,
+              "start": 2,
+              "duration": 1,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 50,
+              "start": 6,
+              "duration": 1,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 46,
+              "start": 10,
+              "duration": 1,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 48,
+              "start": 14,
+              "duration": 1,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 45,
+              "start": 14,
+              "duration": 1,
+              "velocity": 0.9
+            }
+          ]
+        },
+        {
+          "id": "bass-ae5rdn-4kbqdc",
+          "length": 16,
+          "steps": [
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            }
+          ],
+          "notes": [
+            {
+              "pitch": 48,
+              "start": 2,
+              "duration": 1,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 48,
+              "start": 6,
+              "duration": 1,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 48,
+              "start": 10,
+              "duration": 1,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 51,
+              "start": 2,
+              "duration": 1,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 50,
+              "start": 6,
+              "duration": 1,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 46,
+              "start": 10,
+              "duration": 1,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 48,
+              "start": 14,
+              "duration": 1,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 45,
+              "start": 14,
+              "duration": 1,
+              "velocity": 0.9
+            }
+          ]
+        },
+        {
+          "id": "bass-ae5rdn-m2wqi4",
+          "length": 16,
+          "steps": [
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            }
+          ],
+          "notes": [
+            {
+              "pitch": 48,
+              "start": 2,
+              "duration": 1,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 48,
+              "start": 6,
+              "duration": 1,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 46,
+              "start": 10,
+              "duration": 1,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 45,
+              "start": 14,
+              "duration": 1,
+              "velocity": 0.9
+            }
+          ]
+        },
+        {
+          "id": "bass-ae5rdn-okyoc6",
+          "length": 16,
+          "steps": [
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            }
+          ],
+          "notes": [
+            {
+              "pitch": 48,
+              "start": 2,
+              "duration": 1,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 48,
+              "start": 6,
+              "duration": 1,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 48,
+              "start": 10,
+              "duration": 1,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 51,
+              "start": 2,
+              "duration": 1,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 50,
+              "start": 6,
+              "duration": 1,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 46,
+              "start": 10,
+              "duration": 1,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 48,
+              "start": 14,
+              "duration": 1,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 45,
+              "start": 14,
+              "duration": 1,
+              "velocity": 0.9
+            }
+          ]
+        },
+        {
+          "id": "bass-ae5rdn-p24mcc",
+          "length": 16,
+          "steps": [
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            }
+          ],
+          "notes": [
+            {
+              "pitch": 48,
+              "start": 2,
+              "duration": 1,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 48,
+              "start": 6,
+              "duration": 1,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 48,
+              "start": 10,
+              "duration": 1,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 51,
+              "start": 2,
+              "duration": 1,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 50,
+              "start": 6,
+              "duration": 1,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 46,
+              "start": 10,
+              "duration": 1,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 48,
+              "start": 14,
+              "duration": 1,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 45,
+              "start": 14,
+              "duration": 1,
+              "velocity": 0.9
+            }
+          ]
+        },
+        {
+          "id": "bass-ae5rdn-cs8a5d",
+          "length": 16,
+          "steps": [
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            }
+          ],
+          "notes": [
+            {
+              "pitch": 48,
+              "start": 2,
+              "duration": 1,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 48,
+              "start": 6,
+              "duration": 1,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 48,
+              "start": 10,
+              "duration": 1,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 51,
+              "start": 2,
+              "duration": 1,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 50,
+              "start": 6,
+              "duration": 1,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 46,
+              "start": 10,
+              "duration": 1,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 48,
+              "start": 14,
+              "duration": 1,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 45,
+              "start": 14,
+              "duration": 1,
+              "velocity": 0.9
+            }
+          ]
+        },
+        {
+          "id": "bass-ae5rdn-k5uzb7",
+          "length": 16,
+          "steps": [
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            }
+          ],
+          "notes": [
+            {
+              "pitch": 48,
+              "start": 10,
+              "duration": 1,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 51,
+              "start": 2,
+              "duration": 1,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 50,
+              "start": 6,
+              "duration": 1,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 46,
+              "start": 14,
+              "duration": 1,
+              "velocity": 0.9
+            }
+          ]
+        }
+      ],
+      "mix": {
+        "level": 0.53,
+        "pan": 0,
+        "eq": {
+          "low": 0,
+          "mid": 0,
+          "high": 0
+        }
+      },
+      "effects": [],
+      "inserts": [
+        "eq"
+      ],
+      "envelope": {
+        "attack": 0.02,
+        "decay": 0.35,
+        "sustain": 0.45,
+        "release": 0.28
+      }
+    },
+    {
+      "id": "bass-fgb8h5",
+      "name": "Bass",
+      "kind": "melodic",
+      "voice": {
+        "type": "bass",
+        "sound": {
+          "cutoff": 0.45,
+          "decay": 0.45,
+          "glide": 0.15
+        }
+      },
+      "patterns": [
+        {
+          "id": "bass-fgb8h5-section-start",
+          "length": 16,
+          "steps": [
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            }
+          ],
+          "notes": [
+            {
+              "pitch": 36,
+              "start": 0,
+              "duration": 1,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 36,
+              "start": 2,
+              "duration": 1,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 36,
+              "start": 4,
+              "duration": 1,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 36,
+              "start": 6,
+              "duration": 1,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 34,
+              "start": 8,
+              "duration": 1,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 34,
+              "start": 10,
+              "duration": 1,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 36,
+              "start": 14,
+              "duration": 1,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 36,
+              "start": 12,
+              "duration": 1,
+              "velocity": 0.9
+            }
+          ]
+        },
+        {
+          "id": "bass-fgb8h5-4kbqdc",
+          "length": 16,
+          "steps": [
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            }
+          ],
+          "notes": [
+            {
+              "pitch": 36,
+              "start": 0,
+              "duration": 1,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 36,
+              "start": 2,
+              "duration": 1,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 36,
+              "start": 4,
+              "duration": 1,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 36,
+              "start": 6,
+              "duration": 1,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 34,
+              "start": 8,
+              "duration": 1,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 34,
+              "start": 10,
+              "duration": 1,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 36,
+              "start": 14,
+              "duration": 1,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 36,
+              "start": 12,
+              "duration": 1,
+              "velocity": 0.9
+            }
+          ]
+        },
+        {
+          "id": "bass-fgb8h5-m2wqi4",
+          "length": 16,
+          "steps": [
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            }
+          ],
+          "notes": [
+            {
+              "pitch": 36,
+              "start": 0,
+              "duration": 1,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 36,
+              "start": 2,
+              "duration": 1,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 36,
+              "start": 4,
+              "duration": 1,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 36,
+              "start": 6,
+              "duration": 1,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 34,
+              "start": 8,
+              "duration": 1,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 34,
+              "start": 10,
+              "duration": 1,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 36,
+              "start": 14,
+              "duration": 1,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 36,
+              "start": 12,
+              "duration": 1,
+              "velocity": 0.9
+            }
+          ]
+        },
+        {
+          "id": "bass-fgb8h5-okyoc6",
+          "length": 16,
+          "steps": [
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            }
+          ],
+          "notes": [
+            {
+              "pitch": 36,
+              "start": 0,
+              "duration": 1,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 36,
+              "start": 2,
+              "duration": 1,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 36,
+              "start": 4,
+              "duration": 1,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 36,
+              "start": 6,
+              "duration": 1,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 34,
+              "start": 8,
+              "duration": 1,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 34,
+              "start": 10,
+              "duration": 1,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 36,
+              "start": 14,
+              "duration": 1,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 36,
+              "start": 12,
+              "duration": 1,
+              "velocity": 0.9
+            }
+          ]
+        },
+        {
+          "id": "bass-fgb8h5-p24mcc",
+          "length": 16,
+          "steps": [
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            }
+          ],
+          "notes": [
+            {
+              "pitch": 36,
+              "start": 0,
+              "duration": 1,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 36,
+              "start": 2,
+              "duration": 1,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 36,
+              "start": 4,
+              "duration": 1,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 36,
+              "start": 6,
+              "duration": 1,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 34,
+              "start": 8,
+              "duration": 1,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 34,
+              "start": 10,
+              "duration": 1,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 36,
+              "start": 14,
+              "duration": 1,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 36,
+              "start": 12,
+              "duration": 1,
+              "velocity": 0.9
+            }
+          ]
+        },
+        {
+          "id": "bass-fgb8h5-cs8a5d",
+          "length": 16,
+          "steps": [
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            }
+          ],
+          "notes": [
+            {
+              "pitch": 36,
+              "start": 0,
+              "duration": 1,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 36,
+              "start": 2,
+              "duration": 1,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 36,
+              "start": 4,
+              "duration": 1,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 36,
+              "start": 6,
+              "duration": 1,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 34,
+              "start": 8,
+              "duration": 1,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 34,
+              "start": 10,
+              "duration": 1,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 36,
+              "start": 14,
+              "duration": 1,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 36,
+              "start": 12,
+              "duration": 1,
+              "velocity": 0.9
+            }
+          ]
+        },
+        {
+          "id": "bass-fgb8h5-k5uzb7",
+          "length": 16,
+          "steps": [
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            }
+          ],
+          "notes": [
+            {
+              "pitch": 36,
+              "start": 0,
+              "duration": 1,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 36,
+              "start": 2,
+              "duration": 1,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 36,
+              "start": 4,
+              "duration": 1,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 36,
+              "start": 6,
+              "duration": 1,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 34,
+              "start": 8,
+              "duration": 1,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 34,
+              "start": 10,
+              "duration": 1,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 36,
+              "start": 14,
+              "duration": 1,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 36,
+              "start": 12,
+              "duration": 1,
+              "velocity": 0.9
+            }
+          ]
+        }
+      ],
+      "mix": {
+        "level": 0.38,
+        "pan": 0,
+        "eq": {
+          "low": -7,
+          "mid": 6,
+          "high": 0
+        }
+      },
+      "effects": [],
+      "inserts": [
+        "eq",
+        "adsr"
+      ],
+      "envelope": {
+        "attack": 0,
+        "decay": 0.59,
+        "sustain": 0.45,
+        "release": 0.58
+      }
+    },
+    {
+      "id": "keys-pm9peh",
+      "name": "Keys",
+      "kind": "melodic",
+      "voice": {
+        "type": "chord",
+        "sound": {
+          "cutoff": 0.55,
+          "decay": 0.4
+        }
+      },
+      "patterns": [
+        {
+          "id": "keys-pm9peh-section-start",
+          "length": 16,
+          "steps": [
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            }
+          ],
+          "notes": []
+        },
+        {
+          "id": "keys-pm9peh-4kbqdc",
+          "length": 16,
+          "steps": [
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            }
+          ],
+          "notes": [
+            {
+              "pitch": 48,
+              "start": 0,
+              "duration": 16,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 55,
+              "start": 0,
+              "duration": 16,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 52,
+              "start": 0,
+              "duration": 4,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 50,
+              "start": 4,
+              "duration": 4,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 57,
+              "start": 8,
+              "duration": 4,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 53,
+              "start": 12,
+              "duration": 4,
+              "velocity": 0.9
+            }
+          ]
+        },
+        {
+          "id": "keys-pm9peh-m2wqi4",
+          "length": 16,
+          "steps": [
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            }
+          ],
+          "notes": []
+        },
+        {
+          "id": "keys-pm9peh-okyoc6",
+          "length": 16,
+          "steps": [
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            }
+          ],
+          "notes": [
+            {
+              "pitch": 48,
+              "start": 0,
+              "duration": 16,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 55,
+              "start": 0,
+              "duration": 16,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 52,
+              "start": 0,
+              "duration": 4,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 50,
+              "start": 4,
+              "duration": 4,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 57,
+              "start": 8,
+              "duration": 4,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 53,
+              "start": 12,
+              "duration": 4,
+              "velocity": 0.9
+            }
+          ]
+        },
+        {
+          "id": "keys-pm9peh-p24mcc",
+          "length": 16,
+          "steps": [
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            }
+          ],
+          "notes": []
+        },
+        {
+          "id": "keys-pm9peh-cs8a5d",
+          "length": 16,
+          "steps": [
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            }
+          ],
+          "notes": [
+            {
+              "pitch": 48,
+              "start": 0,
+              "duration": 16,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 52,
+              "start": 0,
+              "duration": 16,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 50,
+              "start": 4,
+              "duration": 4,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 53,
+              "start": 8,
+              "duration": 4,
+              "velocity": 0.9
+            },
+            {
+              "pitch": 55,
+              "start": 12,
+              "duration": 4,
+              "velocity": 0.9
+            }
+          ]
+        },
+        {
+          "id": "keys-pm9peh-k5uzb7",
+          "length": 16,
+          "steps": [
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            },
+            {
+              "on": false,
+              "velocity": 0.9,
+              "degree": 0,
+              "quality": null
+            }
+          ],
+          "notes": []
+        }
+      ],
+      "mix": {
+        "level": 1,
+        "pan": 0,
+        "eq": {
+          "low": 0,
+          "mid": 0,
+          "high": 0
+        }
+      },
+      "effects": [],
+      "inserts": [],
+      "envelope": {
+        "attack": 0.02,
+        "decay": 0.35,
+        "sustain": 0.45,
+        "release": 0.28
+      }
+    }
+  ],
+  "groups": [
+    {
+      "id": "group-795pyt",
+      "name": "drums",
+      "instrumentIds": [
+        "kick-mwsu6t",
+        "snare-721867",
+        "hatClosed-9clfo3",
+        "hatOpen-gms8ba",
+        "rim-safv52"
+      ]
+    },
+    {
+      "id": "group-i9yh7s",
+      "name": "bass",
+      "instrumentIds": [
+        "bass-ae5rdn",
+        "bass-fgb8h5"
+      ]
+    },
+    {
+      "id": "group-ifso39",
+      "name": "Keys",
+      "instrumentIds": [
+        "keys-pm9peh"
+      ]
+    }
+  ],
+  "sections": [
+    {
+      "id": "section-start",
+      "name": "outro",
+      "bpm": 97,
+      "key": "C",
+      "meter": "4/4",
+      "accent": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "slots": {
+        "kick-mwsu6t": {
+          "enabled": true,
+          "patternId": "kick-mwsu6t-section-start",
+          "solo": false
+        },
+        "snare-721867": {
+          "enabled": true,
+          "patternId": "snare-721867-section-start",
+          "solo": false
+        },
+        "hatClosed-9clfo3": {
+          "enabled": true,
+          "patternId": "hatClosed-9clfo3-section-start",
+          "solo": false
+        },
+        "hatOpen-gms8ba": {
+          "enabled": true,
+          "patternId": "hatOpen-gms8ba-section-start",
+          "solo": false
+        },
+        "rim-safv52": {
+          "enabled": true,
+          "patternId": "rim-safv52-section-start",
+          "solo": false
+        },
+        "bass-ae5rdn": {
+          "enabled": false,
+          "patternId": "bass-ae5rdn-section-start",
+          "solo": false
+        },
+        "bass-fgb8h5": {
+          "enabled": false,
+          "patternId": "bass-fgb8h5-section-start",
+          "solo": false
+        },
+        "keys-pm9peh": {
+          "enabled": false,
+          "patternId": "keys-pm9peh-section-start",
+          "solo": false
+        }
+      }
+    },
+    {
+      "id": "section-4kbqdc",
+      "name": "verse",
+      "bpm": 97,
+      "key": "C",
+      "meter": "4/4",
+      "accent": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "slots": {
+        "kick-mwsu6t": {
+          "enabled": true,
+          "patternId": "kick-mwsu6t-4kbqdc",
+          "solo": false
+        },
+        "snare-721867": {
+          "enabled": true,
+          "patternId": "snare-721867-4kbqdc",
+          "solo": false
+        },
+        "hatClosed-9clfo3": {
+          "enabled": true,
+          "patternId": "hatClosed-9clfo3-4kbqdc",
+          "solo": false
+        },
+        "hatOpen-gms8ba": {
+          "enabled": true,
+          "patternId": "hatOpen-gms8ba-4kbqdc",
+          "solo": false
+        },
+        "rim-safv52": {
+          "enabled": true,
+          "patternId": "rim-safv52-4kbqdc",
+          "solo": false
+        },
+        "bass-ae5rdn": {
+          "enabled": true,
+          "patternId": "bass-ae5rdn-4kbqdc",
+          "solo": false
+        },
+        "bass-fgb8h5": {
+          "enabled": true,
+          "patternId": "bass-fgb8h5-4kbqdc",
+          "solo": false
+        },
+        "keys-pm9peh": {
+          "enabled": true,
+          "patternId": "keys-pm9peh-4kbqdc",
+          "solo": false
+        }
+      }
+    },
+    {
+      "id": "section-m2wqi4",
+      "name": "interlude",
+      "bpm": 97,
+      "key": "C",
+      "meter": "4/4",
+      "accent": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "slots": {
+        "kick-mwsu6t": {
+          "enabled": true,
+          "patternId": "kick-mwsu6t-m2wqi4",
+          "solo": false
+        },
+        "snare-721867": {
+          "enabled": true,
+          "patternId": "snare-721867-m2wqi4",
+          "solo": false
+        },
+        "hatClosed-9clfo3": {
+          "enabled": true,
+          "patternId": "hatClosed-9clfo3-m2wqi4",
+          "solo": false
+        },
+        "hatOpen-gms8ba": {
+          "enabled": true,
+          "patternId": "hatOpen-gms8ba-m2wqi4",
+          "solo": false
+        },
+        "rim-safv52": {
+          "enabled": true,
+          "patternId": "rim-safv52-m2wqi4",
+          "solo": false
+        },
+        "bass-ae5rdn": {
+          "enabled": true,
+          "patternId": "bass-ae5rdn-m2wqi4",
+          "solo": false
+        },
+        "bass-fgb8h5": {
+          "enabled": true,
+          "patternId": "bass-fgb8h5-m2wqi4",
+          "solo": false
+        },
+        "keys-pm9peh": {
+          "enabled": false,
+          "patternId": "keys-pm9peh-m2wqi4",
+          "solo": false
+        }
+      }
+    },
+    {
+      "id": "section-okyoc6",
+      "name": "verse 2",
+      "bpm": 97,
+      "key": "C",
+      "meter": "4/4",
+      "accent": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "slots": {
+        "kick-mwsu6t": {
+          "enabled": true,
+          "patternId": "kick-mwsu6t-okyoc6",
+          "solo": false
+        },
+        "snare-721867": {
+          "enabled": true,
+          "patternId": "snare-721867-okyoc6",
+          "solo": false
+        },
+        "hatClosed-9clfo3": {
+          "enabled": true,
+          "patternId": "hatClosed-9clfo3-okyoc6",
+          "solo": false
+        },
+        "hatOpen-gms8ba": {
+          "enabled": true,
+          "patternId": "hatOpen-gms8ba-okyoc6",
+          "solo": false
+        },
+        "rim-safv52": {
+          "enabled": true,
+          "patternId": "rim-safv52-okyoc6",
+          "solo": false
+        },
+        "bass-ae5rdn": {
+          "enabled": true,
+          "patternId": "bass-ae5rdn-okyoc6",
+          "solo": false
+        },
+        "bass-fgb8h5": {
+          "enabled": true,
+          "patternId": "bass-fgb8h5-okyoc6",
+          "solo": false
+        },
+        "keys-pm9peh": {
+          "enabled": true,
+          "patternId": "keys-pm9peh-okyoc6",
+          "solo": false
+        }
+      }
+    },
+    {
+      "id": "section-p24mcc",
+      "name": "intro",
+      "bpm": 97,
+      "key": "C",
+      "meter": "4/4",
+      "accent": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "slots": {
+        "kick-mwsu6t": {
+          "enabled": true,
+          "patternId": "kick-mwsu6t-p24mcc",
+          "solo": false
+        },
+        "snare-721867": {
+          "enabled": true,
+          "patternId": "snare-721867-p24mcc",
+          "solo": false
+        },
+        "hatClosed-9clfo3": {
+          "enabled": true,
+          "patternId": "hatClosed-9clfo3-p24mcc",
+          "solo": false
+        },
+        "hatOpen-gms8ba": {
+          "enabled": true,
+          "patternId": "hatOpen-gms8ba-p24mcc",
+          "solo": false
+        },
+        "rim-safv52": {
+          "enabled": true,
+          "patternId": "rim-safv52-p24mcc",
+          "solo": false
+        },
+        "bass-ae5rdn": {
+          "enabled": false,
+          "patternId": "bass-ae5rdn-p24mcc",
+          "solo": false
+        },
+        "bass-fgb8h5": {
+          "enabled": false,
+          "patternId": "bass-fgb8h5-p24mcc",
+          "solo": false
+        },
+        "keys-pm9peh": {
+          "enabled": false,
+          "patternId": "keys-pm9peh-p24mcc",
+          "solo": false
+        }
+      }
+    },
+    {
+      "id": "section-cs8a5d",
+      "name": "verse 3",
+      "bpm": 97,
+      "key": "C",
+      "meter": "4/4",
+      "accent": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "slots": {
+        "kick-mwsu6t": {
+          "enabled": true,
+          "solo": false,
+          "patternId": "kick-mwsu6t-cs8a5d"
+        },
+        "snare-721867": {
+          "enabled": true,
+          "solo": false,
+          "patternId": "snare-721867-cs8a5d"
+        },
+        "hatClosed-9clfo3": {
+          "enabled": true,
+          "solo": false,
+          "patternId": "hatClosed-9clfo3-cs8a5d"
+        },
+        "hatOpen-gms8ba": {
+          "enabled": true,
+          "solo": false,
+          "patternId": "hatOpen-gms8ba-cs8a5d"
+        },
+        "rim-safv52": {
+          "enabled": true,
+          "solo": false,
+          "patternId": "rim-safv52-cs8a5d"
+        },
+        "bass-ae5rdn": {
+          "enabled": true,
+          "solo": false,
+          "patternId": "bass-ae5rdn-cs8a5d"
+        },
+        "bass-fgb8h5": {
+          "enabled": true,
+          "solo": false,
+          "patternId": "bass-fgb8h5-cs8a5d"
+        },
+        "keys-pm9peh": {
+          "enabled": true,
+          "solo": false,
+          "patternId": "keys-pm9peh-cs8a5d"
+        }
+      }
+    },
+    {
+      "id": "section-k5uzb7",
+      "name": "Part",
+      "bpm": 97,
+      "key": "C",
+      "meter": "4/4",
+      "accent": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "slots": {
+        "kick-mwsu6t": {
+          "enabled": true,
+          "solo": false,
+          "patternId": "kick-mwsu6t-k5uzb7"
+        },
+        "snare-721867": {
+          "enabled": true,
+          "solo": false,
+          "patternId": "snare-721867-k5uzb7"
+        },
+        "hatClosed-9clfo3": {
+          "enabled": true,
+          "solo": false,
+          "patternId": "hatClosed-9clfo3-k5uzb7"
+        },
+        "hatOpen-gms8ba": {
+          "enabled": true,
+          "solo": false,
+          "patternId": "hatOpen-gms8ba-k5uzb7"
+        },
+        "rim-safv52": {
+          "enabled": true,
+          "solo": false,
+          "patternId": "rim-safv52-k5uzb7"
+        },
+        "bass-ae5rdn": {
+          "enabled": true,
+          "solo": false,
+          "patternId": "bass-ae5rdn-k5uzb7"
+        },
+        "bass-fgb8h5": {
+          "enabled": true,
+          "solo": false,
+          "patternId": "bass-fgb8h5-k5uzb7"
+        },
+        "keys-pm9peh": {
+          "enabled": true,
+          "solo": false,
+          "patternId": "keys-pm9peh-k5uzb7"
+        }
+      }
+    }
+  ],
+  "arrangement": [
+    {
+      "id": "node-p24mcc",
+      "sectionId": "section-p24mcc",
+      "repeat": 1,
+      "nextId": "node-4kbqdc"
+    },
+    {
+      "id": "node-4kbqdc",
+      "sectionId": "section-4kbqdc",
+      "repeat": 4,
+      "nextId": "node-m2wqi4"
+    },
+    {
+      "id": "node-m2wqi4",
+      "sectionId": "section-m2wqi4",
+      "repeat": 1,
+      "nextId": "node-okyoc6"
+    },
+    {
+      "id": "node-okyoc6",
+      "sectionId": "section-okyoc6",
+      "repeat": 4,
+      "nextId": "node-start"
+    },
+    {
+      "id": "node-start",
+      "sectionId": "section-start",
+      "repeat": 1,
+      "nextId": "node-cs8a5d"
+    },
+    {
+      "id": "node-cs8a5d",
+      "sectionId": "section-cs8a5d",
+      "repeat": 4,
+      "nextId": "node-p24mcc"
+    },
+    {
+      "id": "node-k5uzb7",
+      "sectionId": "section-k5uzb7",
+      "repeat": 1,
+      "nextId": "node-4kbqdc"
+    }
+  ],
+  "startNodeId": "node-p24mcc"
+}

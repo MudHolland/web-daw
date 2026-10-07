@@ -1,0 +1,108 @@
+import { loopSteps, type Project, type Section } from '../model/project.ts'
+
+export type PlaybackCursor = {
+  nodeId: string
+  cycle: number
+  step: number
+}
+
+export const SCHEDULE_AHEAD_SECONDS = 0.1
+export const TICK_MS = 25
+export const MAX_STEPS_PER_TICK = 64
+
+export function bpmFor(project: Project, nodeId: string): number {
+  const node = project.arrangement.find((item) => item.id === nodeId)
+  const section = node ? project.sections.find((item) => item.id === node.sectionId) : null
+  return section?.bpm ?? project.bpm
+}
+
+export function stepDuration(bpm: number, swing: number, stepIndex: number): number {
+  const base = 60 / Math.max(1, bpm) / 4
+  const pair = base * 2
+  const amount = Math.min(1, Math.max(0, swing))
+  const first = pair * (0.5 + amount * 0.25)
+  const second = pair - first
+  return stepIndex % 2 === 0 ? first : second
+}
+
+export function sectionStepLength(project: Project, section: Section): number {
+  for (const instrument of project.instruments) {
+    const patternId = section.slots[instrument.id]?.patternId
+    if (!patternId) continue
+    const pattern = instrument.patterns.find((item) => item.id === patternId)
+    if (pattern && pattern.steps.length > 0) return pattern.steps.length
+  }
+  return loopSteps(section.meter, section.bars)
+}
+
+export function advanceCursor(
+  project: Project,
+  cursor: PlaybackCursor,
+  queuedNodeId: string | null = null,
+): { cursor: PlaybackCursor; stopped: boolean; consumedQueue: boolean } {
+  const node = project.arrangement.find((item) => item.id === cursor.nodeId)
+  if (!node) return { cursor, stopped: true, consumedQueue: false }
+  const section = project.sections.find((item) => item.id === node.sectionId)
+  if (!section) return { cursor, stopped: true, consumedQueue: false }
+
+  const length = sectionStepLength(project, section)
+  if (cursor.step + 1 < length) {
+    return { cursor: { ...cursor, step: cursor.step + 1 }, stopped: false, consumedQueue: false }
+  }
+
+  const queued = queuedNodeId && project.arrangement.some((item) => item.id === queuedNodeId) ? queuedNodeId : null
+  if (queued && queued !== cursor.nodeId) {
+    return { cursor: { nodeId: queued, cycle: 0, step: 0 }, stopped: false, consumedQueue: true }
+  }
+  const alreadyThere = queued === cursor.nodeId
+
+  const nextCycle = cursor.cycle + 1
+  if (nextCycle < node.repeat) {
+    return { cursor: { nodeId: cursor.nodeId, cycle: nextCycle, step: 0 }, stopped: false, consumedQueue: alreadyThere }
+  }
+  if (node.nextId == null) {
+    return { cursor: { nodeId: cursor.nodeId, cycle: nextCycle, step: 0 }, stopped: true, consumedQueue: alreadyThere }
+  }
+  const following = project.arrangement.find((item) => item.id === node.nextId)
+  if (!following) return { cursor, stopped: true, consumedQueue: alreadyThere }
+  return { cursor: { nodeId: following.id, cycle: 0, step: 0 }, stopped: false, consumedQueue: alreadyThere }
+}
+
+export type ScheduledStep = {
+  time: number
+  cursor: PlaybackCursor
+}
+
+/** Walk the arrangement only as far as the audio horizon, so a looping song cannot enqueue forever. */
+export function takeSteps(
+  project: Project,
+  cursor: PlaybackCursor,
+  nextNoteTime: number,
+  horizon: number,
+  queuedNodeId: string | null = null,
+): {
+  steps: ScheduledStep[]
+  cursor: PlaybackCursor
+  nextNoteTime: number
+  stopped: boolean
+  queuedNodeId: string | null
+} {
+  const steps: ScheduledStep[] = []
+  let stopped = false
+  let queue = queuedNodeId
+  let guard = 0
+  while (nextNoteTime < horizon && guard < MAX_STEPS_PER_TICK) {
+    steps.push({ time: nextNoteTime, cursor: { ...cursor } })
+    const duration = stepDuration(bpmFor(project, cursor.nodeId), project.swing, cursor.step)
+    const advanced = advanceCursor(project, cursor, queue)
+    cursor = advanced.cursor
+    if (advanced.consumedQueue) queue = null
+    nextNoteTime += duration
+    guard += 1
+    if (advanced.stopped) {
+      stopped = true
+      break
+    }
+  }
+  return { steps, cursor, nextNoteTime, stopped, queuedNodeId: queue }
+}

@@ -1,0 +1,793 @@
+{
+  "version": 1,
+  "bpm": 96,
+  "swing": 0,
+  "key": "C",
+  "instruments": [
+    {
+      "id": "kick",
+      "name": "Kick",
+      "kind": "drum",
+      "voice": {
+        "type": "808",
+        "drum": "kick"
+      },
+      "patterns": [
+        {
+          "id": "kick-a",
+          "length": 16,
+          "steps": [
+            {
+              "on": true,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": true,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": true,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": true,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            }
+          ],
+          "notes": []
+        }
+      ],
+      "mix": {
+        "level": 0.9,
+        "pan": 0,
+        "eq": {
+          "low": 0,
+          "mid": 0,
+          "high": 0
+        }
+      },
+      "effects": []
+    },
+    {
+      "id": "snare",
+      "name": "Snare",
+      "kind": "drum",
+      "voice": {
+        "type": "808",
+        "drum": "snare"
+      },
+      "patterns": [
+        {
+          "id": "snare-a",
+          "length": 16,
+          "steps": [
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": true,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": true,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": true,
+              "velocity": 0.9
+            },
+            {
+              "on": true,
+              "velocity": 0.9
+            }
+          ],
+          "notes": []
+        }
+      ],
+      "mix": {
+        "level": 0.62,
+        "pan": 0,
+        "eq": {
+          "low": 0,
+          "mid": 0,
+          "high": 0
+        }
+      },
+      "effects": []
+    },
+    {
+      "id": "clap",
+      "name": "Clap",
+      "kind": "drum",
+      "voice": {
+        "type": "808",
+        "drum": "clap"
+      },
+      "patterns": [
+        {
+          "id": "clap-a",
+          "length": 16,
+          "steps": [
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            }
+          ],
+          "notes": []
+        }
+      ],
+      "mix": {
+        "level": 0.55,
+        "pan": 0,
+        "eq": {
+          "low": 0,
+          "mid": 0,
+          "high": 0
+        }
+      },
+      "effects": []
+    },
+    {
+      "id": "hatClosed",
+      "name": "Closed Hat",
+      "kind": "drum",
+      "voice": {
+        "type": "808",
+        "drum": "hatClosed"
+      },
+      "patterns": [
+        {
+          "id": "hatClosed-a",
+          "length": 16,
+          "steps": [
+            {
+              "on": true,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": true,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": true,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": true,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": true,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": true,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": true,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            }
+          ],
+          "notes": []
+        }
+      ],
+      "mix": {
+        "level": 0.32,
+        "pan": 0,
+        "eq": {
+          "low": 0,
+          "mid": 0,
+          "high": 0
+        }
+      },
+      "effects": []
+    },
+    {
+      "id": "hatOpen",
+      "name": "Open Hat",
+      "kind": "drum",
+      "voice": {
+        "type": "808",
+        "drum": "hatOpen"
+      },
+      "patterns": [
+        {
+          "id": "hatOpen-a",
+          "length": 16,
+          "steps": [
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": true,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            }
+          ],
+          "notes": []
+        }
+      ],
+      "mix": {
+        "level": 0.34,
+        "pan": 0,
+        "eq": {
+          "low": 0,
+          "mid": 0,
+          "high": 0
+        }
+      },
+      "effects": []
+    },
+    {
+      "id": "tom",
+      "name": "Tom",
+      "kind": "drum",
+      "voice": {
+        "type": "808",
+        "drum": "tom"
+      },
+      "patterns": [
+        {
+          "id": "tom-a",
+          "length": 16,
+          "steps": [
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": true,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": true,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": true,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            }
+          ],
+          "notes": []
+        }
+      ],
+      "mix": {
+        "level": 0.7,
+        "pan": 0,
+        "eq": {
+          "low": 0,
+          "mid": 0,
+          "high": 0
+        }
+      },
+      "effects": []
+    },
+    {
+      "id": "rim",
+      "name": "Rim",
+      "kind": "drum",
+      "voice": {
+        "type": "808",
+        "drum": "rim"
+      },
+      "patterns": [
+        {
+          "id": "rim-a",
+          "length": 16,
+          "steps": [
+            {
+              "on": true,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": true,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            }
+          ],
+          "notes": []
+        }
+      ],
+      "mix": {
+        "level": 0.45,
+        "pan": 0,
+        "eq": {
+          "low": 0,
+          "mid": 0,
+          "high": 0
+        }
+      },
+      "effects": []
+    },
+    {
+      "id": "cowbell",
+      "name": "Cowbell",
+      "kind": "drum",
+      "voice": {
+        "type": "808",
+        "drum": "cowbell"
+      },
+      "patterns": [
+        {
+          "id": "cowbell-a",
+          "length": 16,
+          "steps": [
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": true,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": true,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": true,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            },
+            {
+              "on": true,
+              "velocity": 0.9
+            },
+            {
+              "on": false,
+              "velocity": 0.9
+            }
+          ],
+          "notes": []
+        }
+      ],
+      "mix": {
+        "level": 0.4,
+        "pan": 0,
+        "eq": {
+          "low": 0,
+          "mid": 0,
+          "high": 0
+        }
+      },
+      "effects": []
+    }
+  ],
+  "sections": [
+    {
+      "id": "section-intro",
+      "name": "Intro",
+      "slots": {
+        "kick": {
+          "enabled": true,
+          "patternId": "kick-a"
+        },
+        "snare": {
+          "enabled": true,
+          "patternId": "snare-a"
+        },
+        "clap": {
+          "enabled": true,
+          "patternId": "clap-a"
+        },
+        "hatClosed": {
+          "enabled": true,
+          "patternId": "hatClosed-a"
+        },
+        "hatOpen": {
+          "enabled": true,
+          "patternId": "hatOpen-a"
+        },
+        "tom": {
+          "enabled": true,
+          "patternId": "tom-a"
+        },
+        "rim": {
+          "enabled": true,
+          "patternId": "rim-a"
+        },
+        "cowbell": {
+          "enabled": true,
+          "patternId": "cowbell-a"
+        }
+      }
+    }
+  ],
+  "arrangement": [
+    {
+      "id": "node-intro",
+      "sectionId": "section-intro",
+      "repeat": 1,
+      "nextId": "node-intro"
+    }
+  ],
+  "startNodeId": "node-intro"
+}
