@@ -9,13 +9,18 @@ import {
   STUTTER_RATES,
   SYNC_RATES,
   WAVES,
+  bassCutoffHz,
+  chordCutoffHz,
+  formatHz,
+  fxHighCutHz,
+  fxLowCutHz,
   reverbSeconds,
   stutterIndex,
   stutterValue,
   syncIndex,
   syncRateKey,
+  syncTimeKey,
   syncValue,
-  tapeSeconds,
   type Envelope,
   type FxSettings,
   type InsertId,
@@ -24,7 +29,7 @@ import {
   type Wave,
 } from '../model/project.ts'
 import { instrumentColor } from './drums.ts'
-import { Fader } from './Fader.tsx'
+import { Fader, GainFader, formatGainDb } from './Fader.tsx'
 
 type ChannelStripProps = {
   instrument: Instrument
@@ -162,21 +167,15 @@ export function ChannelStrip({
                   onChange={(val) => masterGroove.onAccentAmount(val / 100)}
                 />
               </Knob>
-              <Knob label="Level" valueLabel={String(Math.round(masterGroove.master * 100))}>
-                <Fader
-                  vertical
-                  min={0}
-                  max={100}
-                  step={1}
-                  value={Math.round(masterGroove.master * 100)}
-                  reset={85}
-                  testId="master"
-                  onChange={(val) => masterGroove.onMaster(val / 100)}
-                />
+              <Knob label="Level" valueLabel={formatGainDb(masterGroove.master)}>
+                <GainFader gain={masterGroove.master} testId="master" onChange={masterGroove.onMaster} />
+              </Knob>
+              <Knob label="Pan" valueLabel={formatPan(instrument.mix.pan)}>
+                <Fader vertical min={-1} max={1} step={0.01} value={instrument.mix.pan} reset={0} testId={`pan-${instrument.id}`} onChange={onPan} />
               </Knob>
             </div>
           </section>
-        ) : null}
+        ) : (
         <section className="fader-bank">
           <header className="bank-name">
             <h4>Mix</h4>
@@ -201,14 +200,15 @@ export function ChannelStrip({
             ) : null}
           </header>
           <div className="bank-faders">
-            <Knob label="Level" valueLabel={String(Math.round(instrument.mix.level * 100))}>
-              <Fader vertical min={0} max={1} step={0.01} value={instrument.mix.level} reset={0.9} testId={`level-${instrument.id}`} onChange={onLevel} />
+            <Knob label="Level" valueLabel={formatGainDb(instrument.mix.level)}>
+              <GainFader gain={instrument.mix.level} testId={`level-${instrument.id}`} onChange={onLevel} />
             </Knob>
             <Knob label="Pan" valueLabel={formatPan(instrument.mix.pan)}>
               <Fader vertical min={-1} max={1} step={0.01} value={instrument.mix.pan} reset={0} testId={`pan-${instrument.id}`} onChange={onPan} />
             </Knob>
           </div>
         </section>
+        )}
         {instrument.inserts.map((insert) => {
           const live = !instrument.off?.includes(insert)
           const label = INSERTS.find((item) => item.id === insert)?.label ?? insert
@@ -358,7 +358,7 @@ function Processing({
       ) : null}
       {bass ? (
         <>
-          <Knob label="Cutoff" valueLabel={String(Math.round(bass.cutoff * 100))}>
+          <Knob label="Cutoff" valueLabel={formatHz(bassCutoffHz(bass.cutoff))}>
             <Fader vertical min={0} max={1} step={0.01} value={bass.cutoff} reset={(instrument.voice.type === 'lead' ? DEFAULT_LEAD : DEFAULT_BASS).cutoff} testId={`cutoff-${instrument.id}`} onChange={(value) => onBass('cutoff', value)} />
           </Knob>
           <Knob label="Decay" valueLabel={String(Math.round(bass.decay * 100))}>
@@ -371,7 +371,7 @@ function Processing({
       ) : null}
       {chord ? (
         <>
-          <Knob label="Cutoff" valueLabel={String(Math.round(chord.cutoff * 100))}>
+          <Knob label="Cutoff" valueLabel={formatHz(chordCutoffHz(chord.cutoff))}>
             <Fader vertical min={0} max={1} step={0.01} value={chord.cutoff} reset={DEFAULT_CHORD.cutoff} testId={`cutoff-${instrument.id}`} onChange={(value) => onChord('cutoff', value)} />
           </Knob>
           <Knob label="Decay" valueLabel={String(Math.round(chord.decay * 100))}>
@@ -427,6 +427,7 @@ function EffectKnobs({
               step={steps ? 1 : 0.01}
               value={steps ? steps.index(settings[key]) : settings[key]}
               reset={steps ? steps.index(home) : home}
+              split={key === 'mix'}
               testId={`${effect}-${key}-${instrument.id}`}
               onChange={(value) => onFx(effect, key, steps ? steps.value(value) : value)}
             />
@@ -438,7 +439,7 @@ function EffectKnobs({
 }
 
 function stepScale(effect: keyof FxSettings, key: string) {
-  if (syncRateKey(effect, key)) return { count: SYNC_RATES.length, index: syncIndex, value: syncValue }
+  if (syncRateKey(effect, key) || syncTimeKey(effect, key)) return { count: SYNC_RATES.length, index: syncIndex, value: syncValue }
   if (effect === 'stutter' && key === 'rate') return { count: STUTTER_RATES.length, index: stutterIndex, value: stutterValue }
   return null
 }
@@ -449,17 +450,17 @@ function knobLabel(key: string): string {
 }
 
 function formatFx(effect: string, key: string, value: number): string {
-  if (effect === 'stutter' && key === 'rate') return STUTTER_RATES[stutterIndex(value)]?.label ?? 'Off'
-  if (effect === 'tape' && key === 'time') return `${tapeSeconds(value).toFixed(1)}s`
+  if (effect === 'stutter' && key === 'rate') return STUTTER_RATES[stutterIndex(value)]?.label ?? '1/8'
   if (effect === 'reverb' && key === 'size') return `${reverbSeconds(value).toFixed(1)}s`
-  if (key === 'rate' && (effect === 'mover' || effect === 'tremolo' || effect === 'chorus' || effect === 'flanger')) {
+  if (syncRateKey(effect as keyof FxSettings, key) || syncTimeKey(effect as keyof FxSettings, key)) {
     return SYNC_RATES[syncIndex(value)]?.label ?? '1/4'
   }
   if (key === 'semi') {
     const semis = Math.round((value - 0.5) * 24)
     return semis > 0 ? `+${semis}` : String(semis)
   }
-  if (effect === 'cutoff' && ((key === 'low' && value <= 0.01) || (key === 'high' && value >= 0.99))) return 'Open'
+  if (effect === 'cutoff' && key === 'low') return value <= 0.01 ? 'Open' : formatHz(fxLowCutHz(value))
+  if (effect === 'cutoff' && key === 'high') return value >= 0.99 ? 'Open' : formatHz(fxHighCutHz(value))
   return String(Math.round(value * 100))
 }
 

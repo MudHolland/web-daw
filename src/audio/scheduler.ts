@@ -1,4 +1,5 @@
-import { loopSteps, type Project, type Section } from '../model/project.ts'
+import { lerpAutomation } from '../model/automation.ts'
+import { liveInserts, loopSteps, rackFromInstrument, stutterBeats, type Project, type Rack, type Section } from '../model/project.ts'
 
 export type PlaybackCursor = {
   nodeId: string
@@ -46,6 +47,16 @@ export function advanceCursor(
   if (!section) return { cursor, stopped: true, consumedQueue: false }
 
   const length = sectionStepLength(project, section)
+  const hold = repeatHoldSteps(project, section)
+  if (hold != null) {
+    const start = Math.floor(cursor.step / hold) * hold
+    const end = Math.min(length, start + hold)
+    const nextStep = cursor.step + 1
+    if (nextStep < end) {
+      return { cursor: { ...cursor, step: nextStep }, stopped: false, consumedQueue: false }
+    }
+    return { cursor: { ...cursor, step: start }, stopped: false, consumedQueue: false }
+  }
   if (cursor.step + 1 < length) {
     return { cursor: { ...cursor, step: cursor.step + 1 }, stopped: false, consumedQueue: false }
   }
@@ -68,8 +79,27 @@ export function advanceCursor(
   return { cursor: { nodeId: following.id, cycle: 0, step: 0 }, stopped: false, consumedQueue: alreadyThere }
 }
 
+/** While Repeat is on, loop this many steps instead of leaving the part. */
+export function repeatHoldSteps(project: Project, section: Section): number | null {
+  let beats = Number.POSITIVE_INFINITY
+  const consider = (rack: Rack | undefined) => {
+    if (!rack || !liveInserts(rack).includes('stutter')) return
+    const slice = stutterBeats(rack.fx.stutter.rate)
+    if (slice > 0) beats = Math.min(beats, slice)
+  }
+  consider(section.bus)
+  for (const rack of Object.values(section.groups ?? {})) consider(rack)
+  for (const instrument of project.instruments) {
+    consider(section.slots[instrument.id]?.rack ?? rackFromInstrument(instrument))
+  }
+  if (!Number.isFinite(beats) || beats <= 0) return null
+  const length = sectionStepLength(project, section)
+  return Math.min(length, Math.max(1, Math.round(beats * 4)))
+}
+
 export type ScheduledStep = {
   time: number
+  duration: number
   cursor: PlaybackCursor
 }
 
@@ -92,8 +122,8 @@ export function takeSteps(
   let queue = queuedNodeId
   let guard = 0
   while (nextNoteTime < horizon && guard < MAX_STEPS_PER_TICK) {
-    steps.push({ time: nextNoteTime, cursor: { ...cursor } })
-    const duration = stepDuration(bpmFor(project, cursor.nodeId), project.swing, cursor.step)
+    const duration = stepDuration(bpmFor(project, cursor.nodeId), swingFor(project, cursor), cursor.step)
+    steps.push({ time: nextNoteTime, duration, cursor: { ...cursor } })
     const advanced = advanceCursor(project, cursor, queue)
     cursor = advanced.cursor
     if (advanced.consumedQueue) queue = null
@@ -105,4 +135,10 @@ export function takeSteps(
     }
   }
   return { steps, cursor, nextNoteTime, stopped, queuedNodeId: queue }
+}
+
+function swingFor(project: Project, cursor: PlaybackCursor): number {
+  const node = project.arrangement.find((item) => item.id === cursor.nodeId)
+  const section = node ? project.sections.find((item) => item.id === node.sectionId) : null
+  return lerpAutomation(section?.bus?.automation?.['master.shuffle'], cursor.step, project.swing, 'master.shuffle')
 }

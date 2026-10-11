@@ -1,38 +1,76 @@
-import { CHORD_TONES, KEYS, nameChord } from '../model/harmony.ts'
+import { CHORD_TONES, KEYS, degreeLabels, inKey, matchingDegree, nameChord } from '../model/harmony.ts'
 
 type ChordBoardProps = {
+  songKey: string
+  scale: 'major' | 'minor'
   root: string
   tones: number[]
-  editing: boolean
+  overwrite: boolean
   onRoot: (root: string) => void
   onToggle: (semi: number) => void
-  onNext: () => void
+  onDegree: (degree: number) => void
+  onOverwrite: (overwrite: boolean) => void
 }
 
 const CORE = CHORD_TONES.filter((tone) => tone.semi <= 11)
 const COLOR = CHORD_TONES.filter((tone) => tone.semi > 11)
 
-export function ChordBoard({ root, tones, editing, onRoot, onToggle, onNext }: ChordBoardProps) {
+export function ChordBoard({
+  songKey,
+  scale,
+  root,
+  tones,
+  overwrite,
+  onRoot,
+  onToggle,
+  onDegree,
+  onOverwrite,
+}: ChordBoardProps) {
   const selected = [0, ...tones]
   const symbol = nameChord(root, selected)
+  const activeDegree = matchingDegree(songKey, root, tones, scale)
+  const degrees = degreeLabels(scale)
+  const hint = overwrite
+    ? 'Click a step to stamp this chord. Overwrite replaces notes under the brush.'
+    : 'Click an empty step to stamp. Click a lit step to clear it.'
 
   return (
-    <div className="chord-board" role="group" aria-label="Chord">
+    <div className="chord-board" role="group" aria-label="Chord brush">
       <div className="chord-pick-group">
         <div className="chord-pick-row">
-          <span>Root</span>
-          {KEYS.map((note) => (
+          <span>Degree</span>
+          {degrees.map((label, degree) => (
             <button
-              key={note}
+              key={label}
               type="button"
-              className={root === note ? 'chord-key is-on' : 'chord-key'}
-              aria-pressed={root === note}
-              aria-label={`Root ${note}`}
-              onClick={() => onRoot(note)}
+              className={activeDegree === degree ? 'chord-key is-on' : 'chord-key'}
+              aria-pressed={activeDegree === degree}
+              aria-label={`Degree ${label}`}
+              data-testid={`chord-degree-${degree}`}
+              onClick={() => onDegree(degree)}
             >
-              {note}
+              {label}
             </button>
           ))}
+        </div>
+        <div className="chord-pick-row">
+          <span>Root</span>
+          {KEYS.map((note) => {
+            const scaleNote = inKey(songKey, note, scale)
+            const on = root === note
+            return (
+              <button
+                key={note}
+                type="button"
+                className={['chord-key', on ? 'is-on' : '', scaleNote ? 'is-scale' : ''].filter(Boolean).join(' ')}
+                aria-pressed={on}
+                aria-label={`Root ${note}`}
+                onClick={() => onRoot(note)}
+              >
+                {note}
+              </button>
+            )
+          })}
         </div>
         <div className="chord-pick-row">
           <span>Tones</span>
@@ -64,7 +102,6 @@ export function ChordBoard({ root, tones, editing, onRoot, onToggle, onNext }: C
                 type="button"
                 className={on ? 'chord-key is-on' : 'chord-key'}
                 aria-pressed={on}
-                aria-label={`Tone ${tone.label}`}
                 onClick={() => onToggle(tone.semi)}
               >
                 {tone.label}
@@ -77,10 +114,20 @@ export function ChordBoard({ root, tones, editing, onRoot, onToggle, onNext }: C
         <p className="chord-symbol" aria-live="polite">
           {symbol}
         </p>
-        <button type="button" className="chord-next" disabled={!editing} onClick={onNext}>
-          Next
-        </button>
-        <p className="chord-hint">This chord stays editable until you press Next. The one after that is new.</p>
+        <div className="chord-modes">
+          <div className="chord-mode-row" role="group" aria-label="Overwrite">
+            <button
+              type="button"
+              className={overwrite ? 'is-on' : ''}
+              data-testid="chord-overwrite"
+              aria-pressed={overwrite}
+              onClick={() => onOverwrite(!overwrite)}
+            >
+              Overwrite
+            </button>
+          </div>
+        </div>
+        <p className="chord-hint">{hint}</p>
       </div>
     </div>
   )

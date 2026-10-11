@@ -234,6 +234,77 @@ export function scaleTone(key: string, midi: number, scale: 'major' | 'minor'): 
   return steps.some((step) => (root + step) % 12 === pc)
 }
 
+export function diatonicCore(songKey: string, root: string): number[] | null {
+  const interval = (keyRoot(root) - keyRoot(songKey) + 12) % 12
+  const degree = MAJOR.findIndex((step) => step === interval)
+  if (degree < 0) return null
+  if (degree === 6) return [3, 6]
+  if (degree === 1 || degree === 2 || degree === 5) return [3, 7]
+  return [4, 7]
+}
+
+export const DEGREE_LABELS_MAJOR = ['I', 'ii', 'iii', 'IV', 'V', 'vi', 'vii°'] as const
+export const DEGREE_LABELS_MINOR = ['i', 'ii°', 'III', 'iv', 'v', 'VI', 'VII'] as const
+
+export function degreeLabels(scale: 'major' | 'minor'): readonly string[] {
+  return scale === 'minor' ? DEGREE_LABELS_MINOR : DEGREE_LABELS_MAJOR
+}
+
+export function diatonicDegree(
+  songKey: string,
+  degree: number,
+  scale: 'major' | 'minor' = 'major',
+): { root: string; tones: number[] } {
+  const steps = scale === 'minor' ? SCALE : MAJOR
+  const step = wrap(degree, steps.length)
+  const tonic = keyRoot(songKey)
+  const rootPc = (tonic + steps[step]!) % 12
+  const thirdPc = (tonic + steps[(step + 2) % steps.length]!) % 12
+  const fifthPc = (tonic + steps[(step + 4) % steps.length]!) % 12
+  return {
+    root: KEYS[rootPc] ?? 'C',
+    tones: [(thirdPc - rootPc + 12) % 12, (fifthPc - rootPc + 12) % 12],
+  }
+}
+
+export function matchingDegree(
+  songKey: string,
+  root: string,
+  tones: number[],
+  scale: 'major' | 'minor' = 'major',
+): number | null {
+  const core = [...new Set(tones.filter((semi) => semi > 0 && semi <= 11))].sort((a, b) => a - b)
+  if (core.length !== 2) return null
+  for (let degree = 0; degree < 7; degree += 1) {
+    const next = diatonicDegree(songKey, degree, scale)
+    const nextCore = [...next.tones].sort((a, b) => a - b)
+    if (next.root === root && nextCore[0] === core[0] && nextCore[1] === core[1]) return degree
+  }
+  return null
+}
+
+export function inKey(songKey: string, note: string, scale: 'major' | 'minor' = 'major'): boolean {
+  return scaleTone(songKey, 60 + keyRoot(note), scale)
+}
+
+export function compactChordLabel(root: string, semitones: number[]): string {
+  const pcs = [...new Set(semitones.map((semi) => ((semi % 12) + 12) % 12))]
+  const pc = new Set(pcs)
+  const color = semitones.some((semi) => semi > 11)
+  const odd = pc.has(1) || pc.has(2) || pc.has(5) || pc.has(8) || pc.has(11) || pc.has(6)
+  const has3 = pc.has(4)
+  const hasb3 = pc.has(3)
+  const has5 = pc.has(7)
+  const has6 = pc.has(9)
+  const hasb7 = pc.has(10)
+  if (color || odd || (has3 && hasb3)) return `${root}*`
+  if (has3 && hasb7 && !has6 && !hasb3) return `${root}7`
+  if (has3 && has5 && has6 && !hasb7 && !hasb3) return `${root}6`
+  if (has3 && has5 && !has6 && !hasb7 && !hasb3) return `${root}M`
+  if (hasb3 && has5 && !has6 && !hasb7 && !has3) return `${root}m`
+  return `${root}*`
+}
+
 export function transposeScale(key: string, origin: number, steps: number, low = 24, high = 84): number {
   const tones: number[] = []
   for (let midi = low; midi <= high; midi += 1) {

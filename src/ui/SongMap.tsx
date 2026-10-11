@@ -287,10 +287,10 @@ export function SongMap({
                           </select>
                         </label>
                         <label className="transport-select">
-                          <span>Loop</span>
+                          <span>Bars</span>
                           <select
-                            aria-label="Loop length"
-                            data-testid="loop"
+                            aria-label="Bars"
+                            data-testid="bars"
                             value={section.bars}
                             onChange={(event) => onBars(section.id, Number(event.target.value) as LoopBars)}
                           >

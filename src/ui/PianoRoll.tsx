@@ -13,6 +13,8 @@ type PianoRollProps = {
   high: number
   playhead: number
   column: number
+  viewStart?: number
+  viewLength?: number
   onColumn: (step: number) => void
   onChange: (notes: NoteEvent[]) => void
   onSpan?: (span: { start: number; duration: number }) => void
@@ -36,6 +38,8 @@ export function PianoRoll({
   high,
   playhead,
   column,
+  viewStart = 0,
+  viewLength,
   onColumn,
   onChange,
   onSpan,
@@ -54,7 +58,6 @@ export function PianoRoll({
     setDraft(next)
   }
   const [selected, setSelected] = useState<number | null>(null)
-  const [collapsed, setCollapsed] = useState(false)
   const [span, setSpan] = useState<{ start: number; duration: number } | null>(null)
   const [dragSpan, setDragSpan] = useState<{ start: number; duration: number } | null>(null)
   const highlight = dragSpan ?? (heldSpan !== undefined ? heldSpan : span)
@@ -64,6 +67,9 @@ export function PianoRoll({
     else setSpan(next)
   }
   const shown = draft ?? notes
+  const origin = Math.max(0, Math.min(viewStart, Math.max(0, length)))
+  const spanLength = Math.max(1, viewLength ?? length)
+  const limit = Math.min(length, origin + spanLength)
   let pitchLow = low
   let pitchHigh = high
   for (const note of shown) {
@@ -113,7 +119,7 @@ export function PianoRoll({
     const rect = beats.getBoundingClientRect()
     if (rect.width <= 0) return 0
     const x = Math.min(rect.width - 1, Math.max(0, event.clientX - rect.left))
-    return Math.min(length - 1, Math.floor((x / rect.width) * length))
+    return Math.min(limit - 1, origin + Math.floor((x / rect.width) * spanLength))
   }
 
   function onBeatDown(event: ReactPointerEvent<HTMLDivElement>) {
@@ -151,7 +157,7 @@ export function PianoRoll({
     if (rect.width <= 0 || rect.height <= 0) return null
     const x = Math.min(rect.width - 1, Math.max(0, event.clientX - rect.left))
     const y = Math.min(rect.height - 1, Math.max(0, event.clientY - rect.top))
-    const step = Math.min(length - 1, Math.floor((x / rect.width) * length))
+    const step = Math.min(limit - 1, origin + Math.floor((x / rect.width) * spanLength))
     const row = Math.min(pitches.length - 1, Math.floor((y / rect.height) * pitches.length))
     return { step, pitch: pitches[row] ?? pitchHigh, rect }
   }
@@ -160,19 +166,19 @@ export function PianoRoll({
     const grid = gridRef.current
     if (!grid) return
     const rect = grid.getBoundingClientRect()
-    const columnWidth = rect.width / length
+    const columnWidth = rect.width / spanLength
     const rowHeight = rect.height / pitches.length
     if (drag.kind === 'draw') {
       const cell = cellAt(event)
       if (!cell) return
-      const duration = Math.max(1, Math.min(length - drag.start, cell.step - drag.start + 1))
+      const duration = Math.max(1, Math.min(limit - drag.start, cell.step - drag.start + 1))
       drag.duration = duration
       showDraft([...notes, { pitch: drag.pitch, start: drag.start, duration, velocity: 0.9 }])
       return
     }
     if (drag.kind === 'resize') {
       const delta = Math.round((event.clientX - drag.originX) / columnWidth)
-      const duration = Math.max(1, Math.min(length - drag.start, drag.duration + delta))
+      const duration = Math.max(1, Math.min(limit - drag.start, drag.duration + delta))
       showDraft(notes.map((note, index) => (index === drag.index ? { ...note, duration } : note)))
       return
     }
@@ -180,7 +186,7 @@ export function PianoRoll({
     const rowDelta = Math.round((event.clientY - drag.originY) / rowHeight)
     if (Math.abs(event.clientX - drag.originX) > 3 || Math.abs(event.clientY - drag.originY) > 3) drag.moved = true
     if (!drag.moved) return
-    const start = Math.max(0, Math.min(length - drag.duration, drag.start + stepDelta))
+    const start = Math.max(origin, Math.min(Math.max(origin, limit - drag.duration), drag.start + stepDelta))
     const row = Math.max(0, Math.min(pitches.length - 1, pitches.indexOf(drag.pitch) + rowDelta))
     const pitch = pitches[row] ?? drag.pitch
     showDraft(notes.map((note, index) => (index === drag.index ? { ...note, pitch, start } : note)))
@@ -251,26 +257,13 @@ export function PianoRoll({
     showDraft(null)
   }
 
-  const bars = Math.floor(length / groupSize)
+  const bars = Math.floor(spanLength / groupSize)
 
   return (
-    <div className={['roll', collapsed ? 'is-collapsed' : ''].filter(Boolean).join(' ')} data-testid="piano-roll" style={{ '--steps': length, '--rows': pitches.length } as CSSProperties}>
+    <div className="roll" data-testid="piano-roll" style={{ '--steps': spanLength, '--rows': pitches.length } as CSSProperties}>
       <div className="roll-scroll">
         <div className="roll-sheet">
-          <div className="roll-corner">
-            <button
-              type="button"
-              className={['roll-fold', collapsed ? 'is-collapsed' : ''].filter(Boolean).join(' ')}
-              data-testid="piano-roll-toggle"
-              aria-label={collapsed ? 'Show piano roll keys' : 'Collapse piano roll keys'}
-              aria-expanded={!collapsed}
-              onClick={() => setCollapsed((c) => !c)}
-            >
-              <svg className="chevron-icon" viewBox="0 0 12 12" aria-hidden="true">
-                <path d="M2.2 4.2 L6 8 L9.8 4.2" fill="none" stroke="currentColor" strokeWidth="1.6" />
-              </svg>
-            </button>
-          </div>
+          <div className="roll-corner" />
           <div
             ref={beatsRef}
             className={onSpan ? 'roll-beats is-chord' : 'roll-beats'}
@@ -280,13 +273,16 @@ export function PianoRoll({
             onPointerUp={onBeatUp}
             onPointerCancel={onBeatUp}
           >
-            {highlight ? (
+            {highlight && highlight.start < limit && highlight.start + highlight.duration > origin ? (
               <div
                 className="roll-beat-span"
-                style={{ left: `${(highlight.start * 100) / length}%`, width: `${(highlight.duration * 100) / length}%` }}
+                style={{
+                  left: `${((Math.max(highlight.start, origin) - origin) * 100) / spanLength}%`,
+                  width: `${((Math.min(highlight.start + highlight.duration, limit) - Math.max(highlight.start, origin)) * 100) / spanLength}%`,
+                }}
               />
             ) : null}
-            {Array.from({ length }, (_, index) => {
+            {Array.from({ length: spanLength }, (_, index) => {
               const beat = Math.floor(index / groupSize) + 1
               const sub = (index % groupSize) + 1
               return (
@@ -322,21 +318,30 @@ export function PianoRoll({
               const inKey = scaleTone(songKey, pitch, scale)
               return <div key={pitch} className={['roll-row', black ? 'is-black' : '', inKey ? 'is-scale' : ''].filter(Boolean).join(' ')} />
             })}
-            {Array.from({ length: bars - (length % groupSize === 0 ? 1 : 0) }, (_, index) => (
-              <div key={index} className="roll-barline" style={{ left: `${((index + 1) * groupSize * 100) / length}%` }} />
+            {Array.from({ length: bars - (spanLength % groupSize === 0 ? 1 : 0) }, (_, index) => (
+              <div key={index} className="roll-barline" style={{ left: `${((index + 1) * groupSize * 100) / spanLength}%` }} />
             ))}
-            {highlight ? (
-              <div className="roll-span" style={{ left: `${(highlight.start * 100) / length}%`, width: `${(highlight.duration * 100) / length}%` }} />
+            {highlight && highlight.start < limit && highlight.start + highlight.duration > origin ? (
+              <div
+                className="roll-span"
+                style={{
+                  left: `${((Math.max(highlight.start, origin) - origin) * 100) / spanLength}%`,
+                  width: `${((Math.min(highlight.start + highlight.duration, limit) - Math.max(highlight.start, origin)) * 100) / spanLength}%`,
+                }}
+              />
             ) : null}
-            {column >= 0 && column < length ? (
-              <div className="roll-column" style={{ left: `${(column * 100) / length}%`, width: `${100 / length}%` }} />
+            {column >= origin && column < limit ? (
+              <div className="roll-column" style={{ left: `${((column - origin) * 100) / spanLength}%`, width: `${100 / spanLength}%` }} />
             ) : null}
-            {playhead >= 0 && playhead < length ? (
-              <div className="roll-playhead" style={{ left: `${(playhead * 100) / length}%` }} />
+            {playhead >= origin && playhead < limit ? (
+              <div className="roll-playhead" style={{ left: `${((playhead - origin) * 100) / spanLength}%` }} />
             ) : null}
             {shown.map((note, index) => {
               const row = pitches.indexOf(note.pitch)
               if (row < 0) return null
+              const visStart = Math.max(note.start, origin)
+              const visEnd = Math.min(note.start + note.duration, limit)
+              if (visEnd <= visStart) return null
               return (
                 <div
                   key={`${index}-${note.pitch}-${note.start}`}
@@ -345,9 +350,10 @@ export function PianoRoll({
                   className={selected === index ? 'roll-note is-selected' : 'roll-note'}
                   title={`${midiName(note.pitch)}, ${note.duration} step${note.duration === 1 ? '' : 's'}`}
                   style={{
-                    top: row * 20,
-                    left: `${(note.start * 100) / length}%`,
-                    width: `${(note.duration * 100) / length}%`,
+                    top: `calc(${(row / pitches.length) * 100}% + 2px)`,
+                    height: `calc(${100 / pitches.length}% - 4px)`,
+                    left: `${((visStart - origin) * 100) / spanLength}%`,
+                    width: `${((visEnd - visStart) * 100) / spanLength}%`,
                   }}
                 >
                   <span className="roll-note-name">{midiName(note.pitch)}</span>

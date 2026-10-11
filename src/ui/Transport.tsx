@@ -169,15 +169,24 @@ function MeterRow({ level }: { level: number }) {
   )
 }
 
-export function Brand() {
+export function Brand({ live, onLive }: { live: boolean; onLive: () => void }) {
   return (
     <div className="brand">
       <div className="wordmark">
         <span className="wordmark-kicker">Groove box</span>
         <strong>Beat Forge</strong>
-        <span className="wordmark-version">VERSION 1.1</span>
+        <span className="wordmark-version">VERSION 1.3</span>
       </div>
-      <span className="model-badge">LIVE</span>
+      <button
+        type="button"
+        className={live ? 'model-badge is-on' : 'model-badge'}
+        data-testid="live"
+        aria-pressed={live}
+        aria-label={live ? 'Viewing playing bar' : 'Show playing bar'}
+        onClick={onLive}
+      >
+        LIVE
+      </button>
     </div>
   )
 }

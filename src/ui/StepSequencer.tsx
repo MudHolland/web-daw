@@ -32,6 +32,8 @@ type StepLaneProps = {
   pattern: Pattern | null
   playhead: number
   groupSize?: number
+  viewStart?: number
+  viewLength?: number
   solo?: boolean
   muted?: boolean
   face?: (stepIndex: number, on: boolean, degree: number, quality: ChordQuality | null) => string
@@ -52,6 +54,8 @@ export function StepLane({
   pattern,
   playhead,
   groupSize = 4,
+  viewStart = 0,
+  viewLength,
   solo = false,
   muted = false,
   face,
@@ -69,9 +73,11 @@ export function StepLane({
 
   const groups: { stepIndex: number; on: boolean }[][] = []
   if (pattern) {
-    for (let index = 0; index < pattern.steps.length; index += groupSize) {
+    const start = Math.max(0, Math.min(viewStart, pattern.steps.length))
+    const end = Math.max(start, Math.min(pattern.steps.length, viewLength != null ? start + viewLength : pattern.steps.length))
+    for (let index = start; index < end; index += groupSize) {
       groups.push(
-        pattern.steps.slice(index, index + groupSize).map((step, offset) => ({
+        pattern.steps.slice(index, Math.min(index + groupSize, end)).map((step, offset) => ({
           stepIndex: index + offset,
           on: step.on,
         })),
@@ -165,7 +171,14 @@ export function StepLane({
               {group.map((step) => {
                 const current = step.stepIndex === playhead
                 const stored = pattern?.steps[step.stepIndex]
-                const label = stored?.pitch != null ? midiName(stored.pitch) : face ? face(step.stepIndex, step.on, stored?.degree ?? 0, stored?.quality ?? null) : String(step.stepIndex + 1)
+                const local = String(step.stepIndex - viewStart + 1)
+                const label = step.on
+                  ? face
+                    ? face(step.stepIndex, step.on, stored?.degree ?? 0, stored?.quality ?? null)
+                    : stored?.pitch != null
+                      ? midiName(stored.pitch)
+                      : local
+                  : local
                 const picked = step.stepIndex === chosen
                 return (
                   <div key={step.stepIndex} className="step-slot">
@@ -227,14 +240,18 @@ type AccentRowProps = {
   accent: boolean[]
   playhead: number
   groupSize?: number
+  viewStart?: number
+  viewLength?: number
   onAccent: (stepIndex: number, on: boolean) => void
 }
 
-export function AccentRow({ accent, playhead, groupSize = 4, onAccent }: AccentRowProps) {
+export function AccentRow({ accent, playhead, groupSize = 4, viewStart = 0, viewLength, onAccent }: AccentRowProps) {
   const paint = useRef<{ on: boolean; last: number } | null>(null)
   const onAccentRef = useRef(onAccent)
   onAccentRef.current = onAccent
-  const groups = groupsOf(accent.length, groupSize)
+  const start = Math.max(0, Math.min(viewStart, accent.length))
+  const end = Math.max(start, Math.min(accent.length, viewLength != null ? start + viewLength : accent.length))
+  const groups = groupsOf(end - start, groupSize).map((group) => group.map((offset) => start + offset))
 
   function begin(index: number, currentlyOn: boolean) {
     const next = !currentlyOn

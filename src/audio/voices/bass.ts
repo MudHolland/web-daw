@@ -1,3 +1,4 @@
+import { bassCutoffHz } from '../../model/project.ts'
 import { holdGain, shapeGain } from '../envelope.ts'
 import type { Voice } from '../types.ts'
 
@@ -27,7 +28,7 @@ export function createBassVoice(ctx: AudioContext): Voice {
       const filter = ctx.createBiquadFilter()
       filter.type = 'lowpass'
       filter.Q.value = 7
-      filter.frequency.setValueAtTime(140 + sound.cutoff * 2200, time)
+      filter.frequency.setValueAtTime(bassCutoffHz(sound.cutoff), time)
       const gain = ctx.createGain()
       const level = Math.max(0.001, 0.28 * Math.min(1.2, velocity))
       const held = typeof gate === 'number' && gate > 0

@@ -1,4 +1,4 @@
-import { reverbSeconds, stutterBeats, syncHz, tapeSeconds, type FxSettings, type InsertId } from '../model/project.ts'
+import { fxHighCutHz, fxLowCutHz, reverbSeconds, syncHz, syncSeconds, tapeSeconds, type FxSettings, type InsertId } from '../model/project.ts'
 
 export type FxChain = {
   input: GainNode
@@ -457,6 +457,20 @@ function applyStutter(stutter: Stutter, length: number, time: number, grid: FxGr
   holdAt(stutter.wet.gain, 1, at)
 }
 
+export function rampParam(param: AudioParam, from: number, to: number, time: number, duration: number): void {
+  if (!Number.isFinite(from) || !Number.isFinite(to)) return
+  const at = Math.max(time, 0)
+  const end = at + Math.max(0.001, duration)
+  try {
+    param.cancelScheduledValues(at)
+    param.setValueAtTime(from, at)
+    if (Math.abs(to - from) < 1e-6) return
+    param.linearRampToValueAtTime(to, end)
+  } catch {
+    param.setValueAtTime(to, at)
+  }
+}
+
 export function scheduleParam(param: AudioParam, value: number, time: number, snap: boolean, seconds = 0.02): void {
   if (!Number.isFinite(value)) return
   const at = Math.max(time, 0)
@@ -490,19 +504,18 @@ export function applyFx(
   grid: FxGrid = null,
 ): void {
   applyReverb(fx.reverb, inserts.includes('reverb'), settings.reverb.size, settings.reverb.mix, time, snap)
-  applyTape(fx.tape, inserts.includes('tape') && grid !== null, tapeSeconds(settings.tape.time), time)
-  const beats = inserts.includes('stutter') ? stutterBeats(settings.stutter.rate) : 0
-  applyStutter(fx.stutter, beats > 0 ? (60 / Math.max(20, bpm)) * beats : 0, time, grid)
+  applyTape(fx.tape, inserts.includes('tape') && grid !== null, tapeSeconds(settings.tape.time, bpm), time)
+  applyStutter(fx.stutter, 0, time, grid)
   const delayOn = inserts.includes('delay')
   const echoOn = inserts.includes('echo')
   const chorusOn = inserts.includes('chorus')
   const flangerOn = inserts.includes('flanger')
   const delayMix = delayOn ? settings.delay.mix : 0
-  scheduleParam(fx.delayTime, 0.08 + settings.delay.time * 0.72, time, snap, 0.03)
+  scheduleParam(fx.delayTime, Math.min(1.2, syncSeconds(settings.delay.time, bpm)), time, snap, 0.03)
   scheduleParam(fx.delayFeedback, delayMix > 0.001 ? settings.delay.feedback * 0.72 : 0, time, snap, 0.03)
   mix(fx.delayDry, fx.delayWet, delayMix, time, snap)
   const echoMix = echoOn ? settings.echo.mix : 0
-  scheduleParam(fx.echoTime, 0.04 + settings.echo.time * 0.22, time, snap, 0.03)
+  scheduleParam(fx.echoTime, Math.min(0.6, syncSeconds(settings.echo.time, bpm)), time, snap, 0.03)
   scheduleParam(fx.echoFeedback, echoMix > 0.001 ? settings.echo.feedback * 0.65 : 0, time, snap, 0.03)
   mix(fx.echoDry, fx.echoWet, echoMix, time, snap)
   const chorusMix = chorusOn ? settings.chorus.mix : 0
@@ -532,8 +545,8 @@ export function applyFx(
   scheduleParam(fx.shiftDepthB, 0, time, snap, 0.05)
   mix(fx.shiftDry, fx.shiftWet, 0, time, snap)
   const cutOn = inserts.includes('cutoff')
-  const low = cutOn ? 20 * 200 ** settings.cutoff.low : 20
-  const high = cutOn ? 200 * 90 ** settings.cutoff.high : 18000
+  const low = cutOn ? fxLowCutHz(settings.cutoff.low) : 20
+  const high = cutOn ? fxHighCutHz(settings.cutoff.high) : 18000
   scheduleParam(fx.lowCut, low, time, snap, 0.03)
   scheduleParam(fx.highCut, Math.max(low + 80, high), time, snap, 0.03)
 }

@@ -1,4 +1,5 @@
 import { bassMidi, chordMidis, type ChordQuality } from './harmony.ts'
+import { clampGain } from './gain.ts'
 
 export const DRUM_IDS = [
   'kick',
@@ -126,6 +127,7 @@ export type Instrument = {
   name: string
   kind: 'drum' | 'melodic'
   voice: VoiceParams
+  color?: string
   patterns: Pattern[]
   mix: Mix
   effects: EffectSlot[]
@@ -226,11 +228,12 @@ export type FxSettings = {
 }
 
 export const STUTTER_RATES = [
-  { label: 'Off', beats: 0 },
-  { label: '1 beat', beats: 1 },
-  { label: '1/8', beats: 0.5 },
-  { label: '1/16', beats: 0.25 },
   { label: '1/32', beats: 0.125 },
+  { label: '1/16', beats: 0.25 },
+  { label: '1/8', beats: 0.5 },
+  { label: '1/8.', beats: 0.75 },
+  { label: '1 beat', beats: 1 },
+  { label: '2 beats', beats: 2 },
 ] as const
 
 export function stutterIndex(rate: number): number {
@@ -248,12 +251,35 @@ export function stutterBeats(rate: number): number {
   return STUTTER_RATES[stutterIndex(rate)]?.beats ?? 0
 }
 
-export function tapeSeconds(time: number): number {
-  return 0.1 + Math.max(0, Math.min(1, time)) * 1.9
+export function tapeSeconds(time: number, bpm = 120): number {
+  return Math.min(1.2, syncSeconds(time, bpm))
 }
 
 export function reverbSeconds(size: number): number {
   return 0.4 + Math.max(0, Math.min(1, size)) * 3.6
+}
+
+export function bassCutoffHz(cutoff: number): number {
+  return 140 + Math.max(0, Math.min(1, cutoff)) * 2200
+}
+
+export function chordCutoffHz(cutoff: number): number {
+  return 400 + Math.max(0, Math.min(1, cutoff)) * 2800
+}
+
+export function fxLowCutHz(low: number): number {
+  return 20 * 200 ** Math.max(0, Math.min(1, low))
+}
+
+export function fxHighCutHz(high: number): number {
+  return 200 * 90 ** Math.max(0, Math.min(1, high))
+}
+
+export function formatHz(hz: number): string {
+  if (!Number.isFinite(hz)) return '—'
+  if (hz >= 10000) return `${Math.round(hz / 1000)} kHz`
+  if (hz >= 1000) return `${(hz / 1000).toFixed(1)} kHz`
+  return `${Math.round(hz)} Hz`
 }
 
 export const SYNC_RATES = [
@@ -285,13 +311,22 @@ export function syncHz(rate: number, bpm: number): number {
   return Math.max(20, bpm) / 60 / beats
 }
 
+export function syncSeconds(rate: number, bpm: number): number {
+  const beats = SYNC_RATES[syncIndex(rate)]?.beats ?? 1
+  return beats * (60 / Math.max(20, bpm))
+}
+
 export function syncRateKey(effect: keyof FxSettings, key: string): boolean {
   return key === 'rate' && (effect === 'mover' || effect === 'tremolo' || effect === 'chorus' || effect === 'flanger')
 }
 
+export function syncTimeKey(effect: keyof FxSettings, key: string): boolean {
+  return key === 'time' && (effect === 'delay' || effect === 'echo' || effect === 'tape')
+}
+
 export const DEFAULT_FX: FxSettings = {
-  delay: { time: 0.42, feedback: 0.45, mix: 0.35 },
-  echo: { time: 0.35, feedback: 0.3, mix: 0.4 },
+  delay: { time: syncValue(4), feedback: 0.45, mix: 0.35 },
+  echo: { time: syncValue(2), feedback: 0.3, mix: 0.4 },
   chorus: { rate: syncValue(2), depth: 0.55, mix: 0.4 },
   flanger: { rate: syncValue(3), depth: 0.6, feedback: 0.5, mix: 0.35 },
   mover: { rate: syncValue(6), depth: 0 },
@@ -299,9 +334,9 @@ export const DEFAULT_FX: FxSettings = {
   distortion: { drive: 0, tone: 0.6, mix: 1 },
   shifter: { semi: 0.5, mix: 1 },
   cutoff: { low: 0, high: 1 },
-  reverb: { size: 0.45, mix: 0.3 },
-  tape: { time: 0.4 },
-  stutter: { rate: 0 },
+  reverb: { size: 0, mix: 0.3 },
+  tape: { time: syncValue(4) },
+  stutter: { rate: stutterValue(2) },
 }
 
 export function copyFx(fx: FxSettings = DEFAULT_FX): FxSettings {
@@ -328,6 +363,7 @@ export type Rack = {
   fx: FxSettings
   inserts: InsertId[]
   off?: InsertId[]
+  automation?: Record<string, (number | null)[]>
 }
 
 export function openRack(level = 1): Rack {
@@ -342,7 +378,71 @@ export function tuneRack(rack: Rack, effect: keyof FxSettings, key: string, valu
 }
 
 export function copyRack(rack: Rack): Rack {
-  return { level: rack.level, pan: rack.pan, eq: { ...rack.eq }, fx: copyFx(rack.fx), inserts: rack.inserts.slice(), off: rack.off?.slice() }
+  return {
+    level: rack.level,
+    pan: rack.pan,
+    eq: { ...rack.eq },
+    fx: copyFx(rack.fx),
+    inserts: rack.inserts.slice(),
+    off: rack.off?.slice(),
+    automation: copyAutomationMap(rack.automation),
+  }
+}
+
+function copyAutomationMap(
+  map: Record<string, (number | null)[]> | undefined,
+): Record<string, (number | null)[]> | undefined {
+  if (!map) return undefined
+  return Object.fromEntries(Object.entries(map).map(([id, steps]) => [id, steps.slice()]))
+}
+
+function parseAutomationMap(value: unknown): Record<string, (number | null)[]> | undefined {
+  if (!isRecord(value)) return undefined
+  const next: Record<string, (number | null)[]> = {}
+  for (const [id, steps] of Object.entries(value)) {
+    if (!Array.isArray(steps)) continue
+    next[id] = steps.map((item) => (typeof item === 'number' && Number.isFinite(item) ? item : null))
+  }
+  return Object.keys(next).length > 0 ? next : undefined
+}
+
+function resizeAutomationMap(
+  map: Record<string, (number | null)[]> | undefined,
+  length: number,
+): Record<string, (number | null)[]> | undefined {
+  if (!map) return undefined
+  const next: Record<string, (number | null)[]> = {}
+  for (const [id, steps] of Object.entries(map)) {
+    next[id] = Array.from({ length }, (_, index) => steps[index] ?? null)
+  }
+  return next
+}
+
+function copyAutomationBar(
+  map: Record<string, (number | null)[]> | undefined,
+  fromStart: number,
+  targets: number[],
+  count: number,
+  length: number,
+): Record<string, (number | null)[]> | undefined {
+  if (!map) return undefined
+  const next: Record<string, (number | null)[]> = {}
+  for (const [id, steps] of Object.entries(map)) {
+    const list = Array.from({ length }, (_, index) => steps[index] ?? null)
+    const source = list.slice(fromStart, fromStart + count)
+    for (const toStart of targets) {
+      for (let index = 0; index < source.length; index += 1) {
+        if (toStart + index < list.length) list[toStart + index] = source[index] ?? null
+      }
+    }
+    next[id] = list
+  }
+  return next
+}
+
+function withResizedAutomation(rack: Rack | undefined, length: number): Rack | undefined {
+  if (!rack) return rack
+  return { ...rack, automation: resizeAutomationMap(rack.automation, length) }
 }
 
 export function rackFromInstrument(instrument: Instrument): Rack {
@@ -971,6 +1071,12 @@ export function syncMixToAllParts(
 
   return {
     ...project,
+    instruments:
+      scope.kind === 'track'
+        ? project.instruments.map((item) =>
+            item.id === scope.instrumentId ? { ...item, mix: { ...item.mix, level, pan } } : item,
+          )
+        : project.instruments,
     sections: project.sections.map((section) => {
       const current = getRack(section)
       const nextRack: Rack = { ...current, level, pan }
@@ -1021,7 +1127,7 @@ export function setLevel(project: Project, instrumentId: string, level: number):
   if (!Number.isFinite(level)) return project
   return mapInstrument(project, instrumentId, (instrument) => ({
     ...instrument,
-    mix: { ...instrument.mix, level: clamp(level, 0, 1) },
+    mix: { ...instrument.mix, level: clampGain(level) },
   }))
 }
 
@@ -1236,7 +1342,7 @@ function parseMix(value: unknown): Mix | null {
     return null
   }
   return {
-    level: clamp(level as number, 0, 1),
+    level: clampGain(level as number),
     pan: clamp(pan as number, -1, 1),
     eq: {
       low: clamp(low as number, -24, 24),
@@ -1363,11 +1469,13 @@ function parseInstrument(value: unknown): Instrument | null {
   if (!mix) return null
   const effects = Array.isArray(value.effects) ? value.effects.map(parseEffect) : null
   if (!effects || effects.some((effect) => effect === null)) return null
+  const color = parseColor(value.color)
   return {
     id: value.id,
     name: value.name,
     kind: value.kind,
     voice,
+    ...(color ? { color } : {}),
     patterns: patterns as Pattern[],
     mix,
     effects: effects as EffectSlot[],
@@ -1376,6 +1484,12 @@ function parseInstrument(value: unknown): Instrument | null {
     off: parseOff(value.off),
     envelope: parseEnvelope(value.envelope),
   }
+}
+
+function parseColor(value: unknown): string | undefined {
+  if (typeof value !== 'string') return undefined
+  const hex = value.trim().toLowerCase()
+  return /^#[0-9a-f]{6}$/.test(hex) ? hex : undefined
 }
 
 function parseInserts(value: unknown): InsertId[] {
@@ -1452,7 +1566,7 @@ function parseRack(value: Record<string, unknown>): Rack {
   const base = openRack(1)
   const eq = isRecord(value.eq) ? value.eq : {}
   return {
-    level: unit(value.level, base.level),
+    level: typeof value.level === 'number' && Number.isFinite(value.level) ? clampGain(value.level) : base.level,
     pan: typeof value.pan === 'number' && Number.isFinite(value.pan) ? clamp(value.pan, -1, 1) : 0,
     eq: {
       low: typeof eq.low === 'number' ? clamp(eq.low, -24, 24) : 0,
@@ -1462,6 +1576,7 @@ function parseRack(value: Record<string, unknown>): Rack {
     fx: parseFx(value.fx),
     inserts: parseInserts(value.inserts).filter((insert) => insert !== 'adsr' && insert !== 'processing'),
     off: parseOff(value.off),
+    automation: parseAutomationMap(value.automation),
   }
 }
 
@@ -1588,7 +1703,7 @@ export function parseProject(value: unknown): Project | null {
     accentAmount: parseAccentAmount(value.accentAmount),
     key: value.key,
     meter,
-    master: typeof value.master === 'number' && Number.isFinite(value.master) ? clamp(value.master, 0, 1) : 0.85,
+    master: typeof value.master === 'number' && Number.isFinite(value.master) ? clampGain(value.master) : 0.85,
     instruments: parsedInstruments,
     groups: parseGroups(value.groups, parsedInstruments),
     sections: sections as Section[],
@@ -1950,7 +2065,7 @@ export function groupForFamily(project: Project, family: SoundFamily): { project
   return addGroup(project, name)
 }
 
-function catalogVoice(catalog: CatalogId): VoiceParams {
+export function catalogVoice(catalog: CatalogId): VoiceParams {
   if (catalog === 'bass') return { type: 'bass', sound: { ...DEFAULT_BASS } }
   if (catalog === 'sub') return { type: 'bass', sound: { cutoff: 0.2, decay: 0.72, glide: 0.24, wave: 'sine' } }
   if (catalog === 'lead') return { type: 'lead', sound: { ...DEFAULT_LEAD } }
@@ -1973,6 +2088,43 @@ function catalogVoice(catalog: CatalogId): VoiceParams {
 
 function catalogLabel(catalog: CatalogId): string {
   return catalogEntries().find((item) => item.id === catalog)?.label ?? catalog
+}
+
+const LEAD_IDS: CatalogId[] = ['lead', 'pluck', 'brass', 'bell']
+const CHORD_IDS: CatalogId[] = ['keys', 'organ', 'stab', 'strings', 'pad']
+
+export function relatedCatalogs(instrument: Instrument): CatalogEntry[] {
+  const entries = catalogEntries()
+  if (instrument.voice.type === '808') {
+    const drum = instrument.voice.drum
+    return entries.filter((item) => item.id.endsWith(`:${drum}`))
+  }
+  if (instrument.voice.type === 'bass') return entries.filter((item) => item.family === 'bass')
+  if (instrument.voice.type === 'lead') return entries.filter((item) => LEAD_IDS.includes(item.id))
+  if (instrument.voice.type === 'chord') return entries.filter((item) => CHORD_IDS.includes(item.id))
+  return []
+}
+
+export function matchingCatalog(instrument: Instrument): CatalogId | null {
+  if (instrument.voice.type === '808') return `${instrument.voice.kit}:${instrument.voice.drum}`
+  const related = relatedCatalogs(instrument)
+  const named = related.find((item) => item.label.toLowerCase() === instrument.name.toLowerCase())
+  return named?.id ?? related[0]?.id ?? null
+}
+
+export function retuneInstrument(project: Project, instrumentId: string, catalog: CatalogId): Project {
+  const instrument = project.instruments.find((item) => item.id === instrumentId)
+  if (!instrument) return project
+  if (!relatedCatalogs(instrument).some((item) => item.id === catalog)) return project
+  const voice = catalogVoice(catalog)
+  const kind: Instrument['kind'] = voice.type === '808' ? 'drum' : 'melodic'
+  if (instrument.kind !== kind) return project
+  return mapInstrument(project, instrumentId, (item) => ({
+    ...item,
+    name: catalogLabel(catalog),
+    kind,
+    voice,
+  }))
 }
 
 export function addGroup(project: Project, name: string): { project: Project; groupId: string } {
@@ -2057,6 +2209,18 @@ export function renameInstrument(project: Project, instrumentId: string, name: s
   return mapInstrument(project, instrumentId, (instrument) => ({ ...instrument, name: label.slice(0, 32) }))
 }
 
+export function setInstrumentColor(project: Project, instrumentId: string, color: string | null): Project {
+  const hex = color ? parseColor(color) : undefined
+  return mapInstrument(project, instrumentId, (instrument) => {
+    if (instrument.color === hex) return instrument
+    if (!hex) {
+      const { color: _removed, ...rest } = instrument
+      return rest
+    }
+    return { ...instrument, color: hex }
+  })
+}
+
 export function renameGroup(project: Project, groupId: string, name: string): Project {
   const label = name.trim()
   if (!label) return project
@@ -2124,7 +2288,7 @@ export function setSolo(project: Project, instrumentId: string, solo: boolean, s
 
 export function setMaster(project: Project, master: number): Project {
   if (!Number.isFinite(master)) return project
-  const next = clamp(master, 0, 1)
+  const next = clampGain(master)
   if (next === project.master) return project
   return { ...project, master: next }
 }
@@ -2217,7 +2381,125 @@ export function setSectionMeter(project: Project, sectionId: string, meter: Mete
 export function setSectionBars(project: Project, sectionId: string, bars: LoopBars): Project {
   const section = project.sections.find((item) => item.id === sectionId)
   if (!section || section.bars === bars) return project
-  return resizeSection(project, section, section.meter, bars)
+  const previous = section.bars
+  let next = resizeSection(project, section, section.meter, bars)
+  if (bars <= previous) return next
+  const instrumentIds = next.instruments.map((item) => item.id)
+  for (let toBar = previous; toBar < bars; toBar += 1) {
+    next = copyBarTo(next, sectionId, toBar % previous, [toBar], instrumentIds, true)
+  }
+  return next
+}
+
+export function copyBarTo(
+  project: Project,
+  sectionId: string,
+  fromBar: number,
+  toBars: number[],
+  instrumentIds: string[],
+  copyAccent = false,
+): Project {
+  const section = sectionById(project, sectionId)
+  if (!section) return project
+  const stepsPerBar = stepsForMeter(section.meter)
+  const barCount = section.bars
+  if (fromBar < 0 || fromBar >= barCount) return project
+  const targets = [...new Set(toBars)].filter((bar) => bar !== fromBar && bar >= 0 && bar < barCount)
+  if (targets.length === 0) return project
+  const fromStart = fromBar * stepsPerBar
+
+  let next = project
+  if (copyAccent) {
+    const accent = section.accent.slice()
+    const source = accent.slice(fromStart, fromStart + stepsPerBar)
+    for (const toBar of targets) {
+      const toStart = toBar * stepsPerBar
+      for (let index = 0; index < source.length; index += 1) accent[toStart + index] = source[index] === true
+    }
+    next = {
+      ...next,
+      sections: next.sections.map((item) => (item.id === section.id ? { ...item, accent } : item)),
+    }
+  }
+
+  for (const instrumentId of instrumentIds) {
+    const pattern = patternFor(next, instrumentId, sectionId)
+    if (!pattern) continue
+    next = mapInstrument(next, instrumentId, (instrument) => ({
+      ...instrument,
+      patterns: instrument.patterns.map((item) => {
+        if (item.id !== pattern.id) return item
+        const steps = item.steps.map((step) => ({ ...step }))
+        const sourceSteps = item.steps.slice(fromStart, fromStart + stepsPerBar)
+        for (const toBar of targets) {
+          const toStart = toBar * stepsPerBar
+          for (let index = 0; index < sourceSteps.length; index += 1) {
+            const source = sourceSteps[index]
+            if (source && toStart + index < steps.length) steps[toStart + index] = { ...source }
+          }
+        }
+        const kept = item.notes.filter((note) => {
+          const start = Math.round(note.start)
+          return targets.every((toBar) => {
+            const toStart = toBar * stepsPerBar
+            return start < toStart || start >= toStart + stepsPerBar
+          })
+        })
+        const copied = item.notes
+          .filter((note) => {
+            const start = Math.round(note.start)
+            return start >= fromStart && start < fromStart + stepsPerBar
+          })
+          .flatMap((note) =>
+            targets.map((toBar) => {
+              const toStart = toBar * stepsPerBar
+              const start = Math.round(note.start) + (toStart - fromStart)
+              const duration = Math.max(1, Math.min(note.duration, toStart + stepsPerBar - start))
+              return { ...note, start, duration }
+            }),
+          )
+        return { ...item, steps, notes: [...kept, ...copied] }
+      }),
+    }))
+  }
+
+  const toStarts = targets.map((bar) => bar * stepsPerBar)
+  const length = loopSteps(section.meter, section.bars)
+  next = {
+    ...next,
+    sections: next.sections.map((item) => {
+      if (item.id !== section.id) return item
+      const slots = { ...item.slots }
+      for (const instrumentId of instrumentIds) {
+        const slot = slots[instrumentId]
+        if (!slot?.rack?.automation) continue
+        slots[instrumentId] = {
+          ...slot,
+          rack: {
+            ...slot.rack,
+            automation: copyAutomationBar(slot.rack.automation, fromStart, toStarts, stepsPerBar, length),
+          },
+        }
+      }
+      const groups = item.groups
+        ? Object.fromEntries(
+            Object.entries(item.groups).map(([id, rack]) => [
+              id,
+              { ...rack, automation: copyAutomationBar(rack.automation, fromStart, toStarts, stepsPerBar, length) },
+            ]),
+          )
+        : item.groups
+      return {
+        ...item,
+        slots,
+        groups,
+        bus: item.bus
+          ? { ...item.bus, automation: copyAutomationBar(item.bus.automation, fromStart, toStarts, stepsPerBar, length) }
+          : item.bus,
+      }
+    }),
+  }
+  return next
 }
 
 function resizeSection(project: Project, section: Section, meter: Meter, bars: LoopBars): Project {
@@ -2226,7 +2508,26 @@ function resizeSection(project: Project, section: Section, meter: Meter, bars: L
   return {
     ...project,
     sections: project.sections.map((item) =>
-      item.id === section.id ? { ...item, meter, bars, accent: resizeFlags(item.accent, length) } : item,
+      item.id === section.id
+        ? {
+            ...item,
+            meter,
+            bars,
+            accent: resizeFlags(item.accent, length),
+            bus: withResizedAutomation(item.bus, length),
+            groups: item.groups
+              ? Object.fromEntries(
+                  Object.entries(item.groups).map(([id, rack]) => [id, withResizedAutomation(rack, length) ?? rack]),
+                )
+              : item.groups,
+            slots: Object.fromEntries(
+              Object.entries(item.slots).map(([id, slot]) => [
+                id,
+                slot.rack ? { ...slot, rack: withResizedAutomation(slot.rack, length) } : slot,
+              ]),
+            ),
+          }
+        : item,
     ),
     instruments: project.instruments.map((instrument) => ({
       ...instrument,

@@ -401,6 +401,8 @@ function triggerCowbell(
   }
 }
 
+const HAT_SQUARES = [205.3, 304.4, 369.6, 522.7, 540, 800]
+
 function playCluster(
   ctx: AudioContext,
   live: AudioScheduledSourceNode[],
@@ -409,11 +411,12 @@ function playCluster(
   partials: number[],
   gainAmount: number,
   decay: number,
+  highpass = 2800,
 ): void {
   if (decay <= 0 || partials.length === 0) return
   const filter = ctx.createBiquadFilter()
   filter.type = 'highpass'
-  filter.frequency.setValueAtTime(2800, time)
+  filter.frequency.setValueAtTime(highpass, time)
   const gain = ctx.createGain()
   gain.gain.setValueAtTime(Math.max(0.001, gainAmount), time)
   gain.gain.exponentialRampToValueAtTime(0.001, time + decay)
@@ -453,32 +456,26 @@ function trigger909Kick(
   velocity: number,
   sound: SoundParams,
 ): void {
-  const end = Math.max(46, midiToHz(note) * 0.86)
+  const end = Math.max(48, midiToHz(note) * 0.9)
   playTone(ctx, live, destination, time, {
     type: 'sine',
-    frequency: shaped(end * 8, sound.tone),
+    frequency: shaped(end * 2.35, sound.tone),
     endFrequency: end,
-    pitchTime: 0.075,
-    gain: 1.15 * velocity,
-    decay: shaped(0.7, sound.decay),
+    pitchTime: 0.038,
+    gain: 1.08 * velocity,
+    decay: shaped(0.36, sound.decay),
   })
   playTone(ctx, live, destination, time, {
     type: 'sine',
-    frequency: end,
-    gain: 0.42 * velocity,
-    decay: shaped(0.85, sound.decay),
-  })
-  playTone(ctx, live, destination, time, {
-    type: 'triangle',
-    frequency: shaped(780, sound.tone),
-    gain: shaped(0.08 * velocity, sound.snap),
-    decay: 0.006,
+    frequency: shaped(2100, sound.tone),
+    gain: shaped(0.14 * velocity, sound.snap),
+    decay: 0.004,
   })
   playNoise(ctx, noise, live, destination, time, {
     filter: 'highpass',
-    frequency: 1800,
-    gain: shaped(0.05 * velocity, sound.snap),
-    decay: 0.008,
+    frequency: 2800,
+    gain: shaped(0.07 * velocity, sound.snap),
+    decay: 0.01,
   })
 }
 
@@ -492,22 +489,29 @@ function trigger909Snare(
   sound: SoundParams,
 ): void {
   playTone(ctx, live, destination, time, {
-    type: 'triangle',
-    frequency: shaped(188, sound.tone),
-    gain: 0.38 * velocity,
-    decay: shaped(0.09, sound.decay),
+    type: 'sine',
+    frequency: shaped(185, sound.tone),
+    gain: 0.34 * velocity,
+    decay: shaped(0.085, sound.decay),
   })
   playTone(ctx, live, destination, time, {
-    type: 'triangle',
-    frequency: shaped(340, sound.tone),
-    gain: 0.24 * velocity,
-    decay: shaped(0.11, sound.decay),
+    type: 'sine',
+    frequency: shaped(330, sound.tone),
+    gain: 0.2 * velocity,
+    decay: shaped(0.1, sound.decay),
+  })
+  playNoise(ctx, noise, live, destination, time, {
+    filter: 'bandpass',
+    frequency: shaped(1750, sound.tone),
+    q: 1.05,
+    gain: 0.42 * velocity,
+    decay: shaped(0.12, sound.decay),
   })
   playNoise(ctx, noise, live, destination, time, {
     filter: 'highpass',
-    frequency: shaped(2600, sound.tone),
-    gain: shaped(0.7 * velocity, sound.snap),
-    decay: shaped(0.13, sound.decay),
+    frequency: shaped(6200, sound.tone),
+    gain: shaped(0.48 * velocity, sound.snap),
+    decay: shaped(0.055, sound.decay),
   })
 }
 
@@ -547,19 +551,29 @@ function trigger909Hat(
   open: boolean,
   sound: SoundParams,
 ): void {
-  const decay = shaped(open ? 0.42 : 0.045, sound.decay)
-  const base = shaped(open ? 320 : 380, sound.tone)
-  playCluster(ctx, live, destination, time, [base * 8.1, base * 11.4, base * 14.8, base * 17.2, base * 21.6, base * 25.3], shaped((open ? 0.28 : 0.34) * velocity, sound.snap), decay)
+  const decay = shaped(open ? 0.28 : 0.048, sound.decay)
+  const tune = 0.85 + sound.tone * 0.4
+  playCluster(
+    ctx,
+    live,
+    destination,
+    time,
+    HAT_SQUARES.map((hz) => hz * tune),
+    shaped((open ? 0.22 : 0.3) * velocity, sound.snap),
+    decay,
+    open ? 6200 : 7800,
+  )
   playNoise(ctx, noise, live, destination, time, {
     filter: 'highpass',
-    frequency: shaped(open ? 7000 : 9000, sound.tone),
-    gain: shaped((open ? 0.22 : 0.3) * velocity, sound.snap),
-    decay: decay * 0.7,
+    frequency: shaped(open ? 7200 : 9000, sound.tone),
+    gain: shaped((open ? 0.14 : 0.2) * velocity, sound.snap),
+    decay: decay * 0.55,
   })
 }
 
 function trigger909Tom(
   ctx: AudioContext,
+  noise: AudioBuffer,
   live: AudioScheduledSourceNode[],
   destination: AudioNode,
   time: number,
@@ -568,14 +582,21 @@ function trigger909Tom(
   sound: SoundParams,
   decayScale = 1,
 ): void {
-  const end = Math.max(70, midiToHz(note) * 1.15)
+  const end = Math.max(72, midiToHz(note) * 1.08)
   playTone(ctx, live, destination, time, {
-    type: 'triangle',
-    frequency: shaped(end * 3.2, sound.tone),
+    type: 'sine',
+    frequency: shaped(end * 2.1, sound.tone),
     endFrequency: end,
-    pitchTime: 0.045,
-    gain: 0.72 * velocity,
-    decay: shaped(0.22 * decayScale, sound.decay),
+    pitchTime: 0.028,
+    gain: 0.78 * velocity,
+    decay: shaped(0.2 * decayScale, sound.decay),
+  })
+  playNoise(ctx, noise, live, destination, time, {
+    filter: 'bandpass',
+    frequency: shaped(end * 6, sound.tone),
+    q: 1.4,
+    gain: shaped(0.12 * velocity, sound.snap),
+    decay: 0.018,
   })
 }
 
@@ -588,12 +609,24 @@ function trigger909Rim(
   velocity: number,
   sound: SoundParams,
 ): void {
-  playCluster(ctx, live, destination, time, [shaped(620, sound.tone), shaped(1480, sound.tone)], shaped(0.42 * velocity, sound.snap), shaped(0.04, sound.decay))
+  playTone(ctx, live, destination, time, {
+    type: 'sine',
+    frequency: shaped(455, sound.tone),
+    gain: shaped(0.38 * velocity, sound.snap),
+    decay: 0.018,
+  })
+  playTone(ctx, live, destination, time, {
+    type: 'triangle',
+    frequency: shaped(980, sound.tone),
+    gain: 0.16 * velocity,
+    decay: 0.014,
+  })
   playNoise(ctx, noise, live, destination, time, {
-    filter: 'highpass',
+    filter: 'bandpass',
     frequency: 2400,
-    gain: shaped(0.3 * velocity, sound.snap),
-    decay: 0.02,
+    q: 2.2,
+    gain: shaped(0.28 * velocity, sound.snap),
+    decay: 0.016,
   })
 }
 
@@ -606,13 +639,23 @@ function trigger909Cymbal(
   velocity: number,
   sound: SoundParams,
 ): void {
-  const decay = shaped(1.15, sound.decay)
-  playCluster(ctx, live, destination, time, [310 * 7.2, 310 * 11.1, 310 * 15.4, 310 * 19.8, 310 * 24.2], 0.22 * velocity, decay)
+  const decay = shaped(0.95, sound.decay)
+  const tune = 0.9 + sound.tone * 0.3
+  playCluster(
+    ctx,
+    live,
+    destination,
+    time,
+    [...HAT_SQUARES, 1049.5, 1236].map((hz) => hz * tune),
+    0.18 * velocity,
+    decay,
+    5200,
+  )
   playNoise(ctx, noise, live, destination, time, {
     filter: 'highpass',
-    frequency: shaped(6200, sound.tone),
-    gain: shaped(0.34 * velocity, sound.snap),
-    decay,
+    frequency: shaped(6800, sound.tone),
+    gain: shaped(0.2 * velocity, sound.snap),
+    decay: decay * 0.7,
   })
 }
 
@@ -778,21 +821,33 @@ function triggerRockCrash(
   velocity: number,
   sound: SoundParams,
 ): void {
-  const decay = shaped(1.8, sound.decay)
+  const decay = shaped(1.45, sound.decay)
   playNoise(ctx, noise, live, destination, time, {
     filter: 'highpass',
-    frequency: shaped(4800, sound.tone),
-    gain: shaped(0.3 * velocity, sound.snap),
+    frequency: shaped(9000, sound.tone),
+    gain: shaped(0.38 * velocity, sound.snap),
+    decay: 0.07,
+  })
+  playNoise(ctx, noise, live, destination, time, {
+    filter: 'bandpass',
+    frequency: shaped(6200, sound.tone),
+    q: 0.7,
+    gain: 0.28 * velocity,
+    decay: decay * 0.4,
+  })
+  playNoise(ctx, noise, live, destination, time, {
+    filter: 'bandpass',
+    frequency: shaped(3400, sound.tone),
+    q: 0.5,
+    gain: 0.22 * velocity,
+    decay: decay * 0.75,
+  })
+  playNoise(ctx, noise, live, destination, time, {
+    filter: 'highpass',
+    frequency: shaped(2400, sound.tone),
+    gain: 0.16 * velocity,
     decay,
   })
-  for (const ratio of [5.7, 8.4, 11.2, 14.6, 18.1]) {
-    playTone(ctx, live, destination, time, {
-      type: 'sine',
-      frequency: shaped(310 * ratio, sound.tone),
-      gain: 0.045 * velocity,
-      decay: decay * 0.85,
-    })
-  }
 }
 
 export function create808Voice(ctx: AudioContext, drum: DrumId, noise: AudioBuffer, kit: DrumKit = '808'): Voice {
@@ -855,10 +910,10 @@ export function create808Voice(ctx: AudioContext, drum: DrumId, noise: AudioBuff
             trigger909Hat(ctx, noise, live, output, time, level, true, sound)
             return
           case 'tom':
-            trigger909Tom(ctx, live, output, time, note, level, sound)
+            trigger909Tom(ctx, noise, live, output, time, note, level, sound)
             return
           case 'lowTom':
-            trigger909Tom(ctx, live, output, time, note, level, sound, 1.6)
+            trigger909Tom(ctx, noise, live, output, time, note, level, sound, 1.6)
             return
           case 'rim':
             trigger909Rim(ctx, noise, live, output, time, level, sound)

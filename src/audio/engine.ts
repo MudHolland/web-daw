@@ -1,15 +1,16 @@
 import { bassMidi, chordMidis } from '../model/harmony.ts'
-import { applyFx, createFx, scheduleParam, type FxChain, type FxGrid } from './effects.ts'
+import { applyFx, createFx, rampParam, scheduleParam, type FxChain, type FxGrid } from './effects.ts'
+import { applyRackAutomation, hasAutomation, lerpAutomation } from '../model/automation.ts'
 import {
-  DEFAULT_BASS,
+  catalogVoice,
   DEFAULT_CHORD,
-  DEFAULT_LEAD,
   DEFAULT_SOUND,
   insertOn,
   liveInserts,
   openRack,
   rackFromInstrument,
   syncHz,
+  type CatalogId,
   type FxSettings,
   type InsertId,
   type Instrument,
@@ -53,6 +54,7 @@ export type StereoLevel = {
 export type PlaybackState = {
   playing: boolean
   step: number
+  position: number
   nodeId: string | null
   level: StereoLevel
   voices: Record<string, number>
@@ -79,6 +81,7 @@ type Strip = {
 type DisplayEvent = {
   step: number
   time: number
+  duration: number
   nodeId: string
 }
 
@@ -163,10 +166,15 @@ function noteShift(project: Project, section: Section, instrumentId: string): nu
 }
 
 function shapedSound(instrument: Instrument) {
-  const shaped = insertOn(instrument, 'processing')
-  if (instrument.voice.type === 'lead') return shaped ? instrument.voice.sound : DEFAULT_LEAD
-  if (instrument.voice.type === 'bass') return shaped ? instrument.voice.sound : DEFAULT_BASS
-  return shaped && instrument.voice.type === 'chord' ? instrument.voice.sound : DEFAULT_CHORD
+  if (instrument.voice.type === 'lead' || instrument.voice.type === 'bass' || instrument.voice.type === 'chord') {
+    return instrument.voice.sound
+  }
+  return DEFAULT_CHORD
+}
+
+function voiceKind(instrument: Instrument): string {
+  if (instrument.voice.type === '808') return `808:${instrument.voice.kit}:${instrument.voice.drum}`
+  return instrument.voice.type
 }
 
 export class Engine {
@@ -180,6 +188,7 @@ export class Engine {
   private noise: AudioBuffer | null = null
   private strips = new Map<string, Strip>()
   private voices = new Map<string, Voice>()
+  private voiceKinds = new Map<string, string>()
   private timer: number | null = null
   private playing = false
   private nextNoteTime = 0
@@ -203,13 +212,21 @@ export class Engine {
     if (sectionId) this.focusId = sectionId
     if (!this.ctx) return
     this.ensureGraph()
-    this.applyAllMix()
+    if (this.playing) {
+      this.applyLiveMix()
+    } else {
+      this.applyAllMix()
+    }
   }
 
   focus(sectionId: string): void {
     this.focusId = sectionId
-    if (!this.ctx || this.playing) return
-    this.applyAllMix()
+    if (!this.ctx) return
+    if (this.playing) {
+      this.applyLiveMix()
+    } else {
+      this.applyAllMix()
+    }
   }
 
   play(fromNodeId?: string): void {
@@ -300,28 +317,60 @@ export class Engine {
       play(note, 0.9, shapedSound(instrument))
       return
     }
-    const sound = insertOn(instrument, 'processing') ? instrument.voice.sound : DEFAULT_CHORD
+    const sound = shapedSound(instrument)
     for (const note of chordMidis(section?.key ?? this.project.key, 0, 'triad')) play(note, 0.8, sound)
+  }
+
+  previewCatalog(catalog: CatalogId): void {
+    const ctx = this.ensureContext()
+    void ctx.resume()
+    this.ensureGraph()
+    if (!this.master) return
+    const dest = this.songBus?.input ?? this.master
+    const time = ctx.currentTime + 0.02
+    const section = this.project.sections.find((item) => item.id === this.focusId) ?? this.project.sections[0]
+    const key = section?.key ?? this.project.key
+    const params = catalogVoice(catalog)
+    if (params.type === '808') {
+      if (!this.noise) return
+      const voice = create808Voice(ctx, params.drum, this.noise, params.kit)
+      voice.connect(dest)
+      voice.trigger(time, drumNote(params.drum), 0.9, params.sound)
+      return
+    }
+    if (params.type === 'bass' || params.type === 'lead') {
+      const voice = createBassVoice(ctx)
+      voice.connect(dest)
+      const note = bassMidi(key, 0) + (params.type === 'lead' ? 12 : 0)
+      voice.trigger(time, note, 0.9, params.sound)
+      return
+    }
+    const voice = createChordVoice(ctx)
+    voice.connect(dest)
+    for (const note of chordMidis(key, 0, 'triad')) voice.trigger(time, note, 0.8, params.sound)
   }
 
   getPlayback(): PlaybackState {
     const level = this.readLevels()
     const voices = this.readActivity()
     if (!this.playing || !this.ctx) {
-      return { playing: false, step: -1, nodeId: null, level, voices, queuedNodeId: null }
+      return { playing: false, step: -1, position: -1, nodeId: null, level, voices, queuedNodeId: null }
     }
     const now = this.ctx.currentTime
     let step = -1
+    let position = -1
     let nodeId: string | null = this.cursor.nodeId
     for (const event of this.displayQueue) {
       if (event.time <= now) {
         step = event.step
         nodeId = event.nodeId
+        const phase = Math.min(0.999, Math.max(0, (now - event.time) / Math.max(0.0001, event.duration)))
+        position = event.step + phase
       }
     }
     if (this.latchedQueue && nodeId === this.latchedQueue) this.latchedQueue = null
     const queuedNodeId = this.queuedNodeId ?? (this.latchedQueue && this.latchedQueue !== nodeId ? this.latchedQueue : null)
-    return { playing: true, step, nodeId, level, voices, queuedNodeId }
+    return { playing: true, step, position, nodeId, level, voices, queuedNodeId }
   }
 
   private ensureContext(): AudioContext {
@@ -358,8 +407,18 @@ export class Engine {
       )
     }
     for (const instrument of this.project.instruments) {
-      if (this.voices.has(instrument.id) || !this.master || !this.songBus) continue
-      const strip = createStrip(ctx, instrument.mix, this.busInput(instrument.id), instrument.fx, instrument.inserts)
+      if (!this.master || !this.songBus) continue
+      const kind = voiceKind(instrument)
+      if (this.voices.has(instrument.id) && this.voiceKinds.get(instrument.id) !== kind) {
+        this.voices.get(instrument.id)?.silence(ctx.currentTime)
+        this.voices.delete(instrument.id)
+        this.voiceKinds.delete(instrument.id)
+      }
+      if (!this.strips.has(instrument.id)) {
+        this.strips.set(instrument.id, createStrip(ctx, instrument.mix, this.busInput(instrument.id), instrument.fx, instrument.inserts))
+      }
+      if (this.voices.has(instrument.id)) continue
+      const strip = this.strips.get(instrument.id)
       const voice =
         instrument.voice.type === '808' && this.noise
           ? create808Voice(ctx, instrument.voice.drum, this.noise, instrument.voice.kit)
@@ -368,10 +427,10 @@ export class Engine {
             : instrument.voice.type === 'chord'
               ? createChordVoice(ctx)
               : null
-      if (!voice) continue
+      if (!voice || !strip) continue
       voice.connect(strip.input)
-      this.strips.set(instrument.id, strip)
       this.voices.set(instrument.id, voice)
+      this.voiceKinds.set(instrument.id, kind)
     }
     this.routeTracks()
   }
@@ -407,7 +466,10 @@ export class Engine {
     this.routeTracks()
     const section = this.project.sections.find((item) => item.id === (snap ? this.armedSectionId : this.heardSectionId()))
     const bpm = section?.bpm ?? 120
-    if (this.songBus) this.applyRack(this.songBus, section?.bus ?? openRack(1), time, bpm, snap)
+    if (this.songBus) {
+      const bus = section?.bus ?? openRack(1)
+      this.applyRack(this.songBus, { ...bus, level: 1 }, time, bpm, snap)
+    }
     for (const [id, strip] of this.groupBuses) this.applyRack(strip, section?.groups?.[id] ?? openRack(1), time, bpm, snap)
     for (const instrument of this.project.instruments) {
       const strip = this.strips.get(instrument.id)
@@ -415,7 +477,61 @@ export class Engine {
       const rack = section?.slots[instrument.id]?.rack ?? rackFromInstrument(instrument)
       this.applyRack(strip, rack, time, bpm, snap)
     }
-    if (this.master && !snap) this.master.gain.setTargetAtTime(this.project.master, time, 0.02)
+    if (this.master && !snap) scheduleParam(this.master.gain, this.project.master, time, false, 0.02)
+  }
+
+  private applyLiveMix(): void {
+    if (!this.ctx) return
+    const time = this.ctx.currentTime
+    this.routeTracks()
+    const section = this.project.sections.find((item) => item.id === (this.playing && this.armedSectionId ? this.armedSectionId : this.heardSectionId()))
+    const bpm = section?.bpm ?? 120
+
+    if (this.master) {
+      if (!hasAutomation(section?.bus?.automation?.['master.level'])) {
+        scheduleParam(this.master.gain, this.project.master, time, false, 0.02)
+      }
+    }
+    if (this.songBus) {
+      const bus = section?.bus ?? openRack(1)
+      this.applyRackLive(this.songBus, { ...bus, level: 1 }, time, bpm)
+    }
+    for (const [id, strip] of this.groupBuses) {
+      const rack = section?.groups?.[id] ?? openRack(1)
+      this.applyRackLive(strip, rack, time, bpm)
+    }
+    for (const instrument of this.project.instruments) {
+      const strip = this.strips.get(instrument.id)
+      if (!strip) continue
+      const rack = section?.slots[instrument.id]?.rack ?? rackFromInstrument(instrument)
+      this.applyRackLive(strip, rack, time, bpm)
+    }
+  }
+
+  private applyRackLive(strip: Strip, rack: Rack, time: number, bpm: number): void {
+    const auto = rack.automation
+    if (!hasAutomation(auto?.['mix.level'])) {
+      scheduleParam(strip.gain.gain, rack.level, time, false, 0.02)
+    }
+    if (!hasAutomation(auto?.['mix.pan'])) {
+      scheduleParam(strip.pan.pan, rack.pan, time, false, 0.02)
+    }
+    const inserts = liveInserts(rack)
+    const eq = inserts.includes('eq')
+    if (eq) {
+      if (!hasAutomation(auto?.['eq.low'])) scheduleParam(strip.low.gain, rack.eq.low, time, false, 0.02)
+      if (!hasAutomation(auto?.['eq.mid'])) scheduleParam(strip.mid.gain, rack.eq.mid, time, false, 0.02)
+      if (!hasAutomation(auto?.['eq.high'])) scheduleParam(strip.high.gain, rack.eq.high, time, false, 0.02)
+    } else {
+      scheduleParam(strip.low.gain, 0, time, false, 0.02)
+      scheduleParam(strip.mid.gain, 0, time, false, 0.02)
+      scheduleParam(strip.high.gain, 0, time, false, 0.02)
+    }
+    const grid = this.playing && this.armedSectionId ? { origin: this.gridOrigin } : null
+    applyFx(strip.fx, rack.fx, inserts, time, bpm, false, grid)
+    const moverOn = inserts.includes('mover') && rack.fx.mover.depth > 0.001
+    scheduleParam(strip.moverRate, syncHz(rack.fx.mover.rate, bpm), time, false, 0.05)
+    scheduleParam(strip.moverDepth, moverOn ? rack.fx.mover.depth : 0, time, false, 0.04)
   }
 
   private armSection(time: number, cursor: PlaybackCursor): void {
@@ -430,11 +546,66 @@ export class Engine {
     for (const voice of this.voices.values()) voice.rearticulate?.()
   }
 
+  private applyStepMix(time: number, cursor: PlaybackCursor, duration: number): void {
+    if (!this.ctx) return
+    const node = this.project.arrangement.find((item) => item.id === cursor.nodeId)
+    const section = node ? this.project.sections.find((item) => item.id === node.sectionId) : null
+    if (!section || !sectionHasMotion(section)) return
+    const bpm = section.bpm ?? 120
+    const step = cursor.step
+    if (this.songBus && section.bus && rackHasMotion(section.bus)) {
+      const bus = section.bus
+      this.applyRackMotion(this.songBus, { ...applyRackAutomation(bus, step), level: 1 }, { ...applyRackAutomation(bus, step + 1), level: 1 }, time, duration, bpm)
+    }
+    for (const [id, strip] of this.groupBuses) {
+      const rack = section.groups?.[id]
+      if (rack && rackHasMotion(rack)) {
+        this.applyRackMotion(strip, applyRackAutomation(rack, step), applyRackAutomation(rack, step + 1), time, duration, bpm)
+      }
+    }
+    for (const instrument of this.project.instruments) {
+      const strip = this.strips.get(instrument.id)
+      if (!strip) continue
+      const rack = section.slots[instrument.id]?.rack
+      if (rack && rackHasMotion(rack)) {
+        this.applyRackMotion(strip, applyRackAutomation(rack, step), applyRackAutomation(rack, step + 1), time, duration, bpm)
+      }
+    }
+    if (this.master) {
+      const auto = section.bus?.automation?.['master.level']
+      if (hasAutomation(auto)) {
+        rampParam(
+          this.master.gain,
+          lerpAutomation(auto, step, this.project.master, 'master.level'),
+          lerpAutomation(auto, step + 1, this.project.master, 'master.level'),
+          time,
+          duration,
+        )
+      }
+    }
+  }
+
   private applyRack(strip: Strip, rack: Rack, time: number, bpm: number, snap = false): void {
     const mix: Mix = { level: rack.level, pan: rack.pan, eq: rack.eq }
     const inserts = liveInserts(rack)
     const grid = this.playing && this.armedSectionId ? { origin: this.gridOrigin } : null
     applyMix(strip, mix, time, inserts.includes('eq'), rack.fx, inserts, bpm, snap, grid)
+  }
+
+  private applyRackMotion(strip: Strip, from: Rack, to: Rack, time: number, duration: number, bpm: number): void {
+    const inserts = liveInserts(from)
+    const eq = inserts.includes('eq')
+    const grid = this.playing && this.armedSectionId ? { origin: this.gridOrigin } : null
+    rampParam(strip.low.gain, eq ? from.eq.low : 0, eq ? to.eq.low : 0, time, duration)
+    rampParam(strip.mid.gain, eq ? from.eq.mid : 0, eq ? to.eq.mid : 0, time, duration)
+    rampParam(strip.high.gain, eq ? from.eq.high : 0, eq ? to.eq.high : 0, time, duration)
+    rampParam(strip.pan.pan, from.pan, to.pan, time, duration)
+    rampParam(strip.gain.gain, from.level, to.level, time, duration)
+    applyFx(strip.fx, from.fx, inserts, time, bpm, true, grid)
+    const moverFrom = inserts.includes('mover') && from.fx.mover.depth > 0.001
+    const moverTo = inserts.includes('mover') && to.fx.mover.depth > 0.001
+    rampParam(strip.moverRate, syncHz(from.fx.mover.rate, bpm), syncHz(to.fx.mover.rate, bpm), time, duration)
+    rampParam(strip.moverDepth, moverFrom ? from.fx.mover.depth : 0, moverTo ? to.fx.mover.depth : 0, time, duration)
   }
 
   private queueTick(): void {
@@ -456,7 +627,8 @@ export class Engine {
     )
     for (const step of batch.steps) {
       this.armSection(step.time, step.cursor)
-      this.fireStep(step.time, step.cursor)
+      this.applyStepMix(step.time, step.cursor, step.duration)
+      this.fireStep(step.time, step.cursor, step.duration)
     }
     this.cursor = batch.cursor
     this.queuedNodeId = batch.queuedNodeId
@@ -471,12 +643,12 @@ export class Engine {
     this.queueTick()
   }
 
-  private fireStep(time: number, cursor: PlaybackCursor): void {
+  private fireStep(time: number, cursor: PlaybackCursor, duration: number): void {
     const node = this.project.arrangement.find((item) => item.id === cursor.nodeId)
     if (!node) return
     const section = this.project.sections.find((item) => item.id === node.sectionId)
     if (!section) return
-    this.displayQueue.push({ step: cursor.step, time, nodeId: cursor.nodeId })
+    this.displayQueue.push({ step: cursor.step, time, duration, nodeId: cursor.nodeId })
     const soloing = this.project.instruments.some((item) => section.slots[item.id]?.solo)
     for (const instrument of this.project.instruments) {
       const slot = section.slots[instrument.id]
@@ -509,7 +681,12 @@ export class Engine {
         const sound = insertOn(instrument, 'processing') ? (instrument.voice.sound ?? DEFAULT_SOUND) : DEFAULT_SOUND
         play(
           drumNote(instrument.voice.drum),
-          accentVelocity(section.accent, this.project.accentAmount, cursor.step, step.velocity),
+          accentVelocity(
+            section.accent,
+            lerpAutomation(section.bus?.automation?.['master.accent'], cursor.step, this.project.accentAmount, 'master.accent'),
+            cursor.step,
+            step.velocity,
+          ),
           sound,
         )
         continue
@@ -542,8 +719,34 @@ export class Engine {
       this.activity.set(id, next)
       levels[id] = next
     }
+    for (const [id, strip] of this.groupBuses) {
+      const value = peak(strip.meter, strip.meterData)
+      const previous = this.activity.get(id) ?? 0
+      const next = value >= previous ? value : previous * 0.82
+      this.activity.set(id, next)
+      levels[id] = next
+    }
     return levels
   }
+}
+
+function sectionHasMotion(section: Section): boolean {
+  if (rackHasMotion(section.bus)) return true
+  for (const rack of Object.values(section.groups ?? {})) {
+    if (rackHasMotion(rack)) return true
+  }
+  for (const slot of Object.values(section.slots)) {
+    if (rackHasMotion(slot.rack)) return true
+  }
+  return false
+}
+
+function rackHasMotion(rack?: Rack): boolean {
+  if (!rack?.automation) return false
+  for (const steps of Object.values(rack.automation)) {
+    if (hasAutomation(steps)) return true
+  }
+  return false
 }
 
 function peak(analyser: AnalyserNode | null, data: Uint8Array<ArrayBuffer> | null): number {

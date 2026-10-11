@@ -1,3 +1,4 @@
+import { chordCutoffHz } from '../../model/project.ts'
 import { holdGain, shapeGain } from '../envelope.ts'
 import type { Voice } from '../types.ts'
 
@@ -30,7 +31,7 @@ export function createChordVoice(ctx: AudioContext): Voice {
       const filter = ctx.createBiquadFilter()
       filter.type = 'lowpass'
       filter.Q.value = 2
-      filter.frequency.setValueAtTime(400 + sound.cutoff * 2800, time)
+      filter.frequency.setValueAtTime(chordCutoffHz(sound.cutoff), time)
       const gain = ctx.createGain()
       const level = Math.max(0.001, 0.16 * Math.min(1.2, velocity))
       const held = typeof gate === 'number' && gate > 0

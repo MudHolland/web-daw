@@ -1,4 +1,4 @@
-import type { DrumId, Instrument } from '../model/project.ts'
+import { catalogVoice, type CatalogId, type DrumId, type Instrument } from '../model/project.ts'
 
 export const DRUM_COLOR: Record<DrumId, string> = {
   kick: '#ffb000',
@@ -16,9 +16,38 @@ export const DRUM_COLOR: Record<DrumId, string> = {
   cymbal: '#d7e2ea',
 }
 
-export function instrumentColor(instrument: Instrument): string {
-  if (instrument.voice.type === '808') return DRUM_COLOR[instrument.voice.drum]
-  if (instrument.voice.type === 'bass') return '#5b8cff'
-  if (instrument.voice.type === 'lead') return '#ff7a18'
+export function voiceColor(voice: Instrument['voice']): string {
+  if (voice.type === '808') return DRUM_COLOR[voice.drum]
+  if (voice.type === 'bass') return '#5b8cff'
+  if (voice.type === 'lead') return '#ff7a18'
   return '#e56bff'
+}
+
+export const TRACK_COLORS = [
+  '#ffb000',
+  '#ffe14a',
+  '#ff7a18',
+  '#ff4d3a',
+  '#ff5aa5',
+  '#e07a3d',
+  '#ff8a6a',
+  '#f2c9a0',
+  '#f4f0c8',
+  '#3ddc97',
+  '#8fd18a',
+  '#2ee6c7',
+  '#3ec6ff',
+  '#5b8cff',
+  '#c49bff',
+  '#8d6ad4',
+  '#e56bff',
+  '#d7e2ea',
+] as const
+
+export function instrumentColor(instrument: Instrument): string {
+  return instrument.color ?? voiceColor(instrument.voice)
+}
+
+export function catalogColor(catalog: CatalogId): string {
+  return voiceColor(catalogVoice(catalog))
 }

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { ChangeEvent } from 'react'
 import { Engine, type StereoLevel } from './audio/engine.ts'
 import { degreeCount } from './model/harmony.ts'
@@ -51,6 +51,9 @@ import {
   syncInsertToAllParts,
   syncMixToAllParts,
   addInsertToAllParts,
+  copyBarTo,
+  retuneInstrument,
+  setInstrumentColor,
   type CatalogId,
   type Envelope,
   type InsertId,
@@ -69,6 +72,7 @@ import { Brand, LevelMeter, Transport } from './ui/Transport.tsx'
 type PlaybackView = {
   playing: boolean
   step: number
+  position: number
   nodeId: string | null
   level: StereoLevel
   voices: Record<string, number>
@@ -87,10 +91,16 @@ export function App() {
   const [resetArmed, setResetArmed] = useState(false)
   const [fileOpen, setFileOpen] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
-  const [playback, setPlayback] = useState<PlaybackView>({ playing: false, step: -1, nodeId: null, level: { left: 0, right: 0 }, voices: {}, queuedNodeId: null })
+  const [playback, setPlayback] = useState<PlaybackView>({ playing: false, step: -1, position: -1, nodeId: null, level: { left: 0, right: 0 }, voices: {}, queuedNodeId: null })
+  const [liveView, setLiveView] = useState(false)
+  const [followLive, setFollowLive] = useState(true)
   const [namingSong, setNamingSong] = useState(false)
   const [songDraft, setSongDraft] = useState(project.name)
   const cancelSongName = useRef(false)
+  const followLiveRef = useRef(true)
+  const editNodeIdRef = useRef(editNodeId)
+  followLiveRef.current = followLive
+  editNodeIdRef.current = editNodeId
   const fileRef = useRef<HTMLInputElement>(null)
   const engineRef = useRef<Engine | null>(null)
   if (!engineRef.current) engineRef.current = new Engine(project)
@@ -120,9 +130,12 @@ export function App() {
         .map((id) => `${id}:${Math.round((next.voices[id] ?? 0) * 8)}`)
         .join(',')
       const key = `${next.playing}:${next.step}:${next.nodeId}:${next.queuedNodeId}:${Math.round(next.level.left * 24)}:${Math.round(next.level.right * 24)}:${voiceKey}`
-      if (key !== previous) {
+      if (next.playing || key !== previous) {
         previous = key
         setPlayback(next)
+        if (followLiveRef.current && next.playing && next.nodeId && next.nodeId !== editNodeIdRef.current) {
+          setEditNodeId(next.nodeId)
+        }
       }
       frame = requestAnimationFrame(tick)
     }
@@ -146,27 +159,61 @@ export function App() {
     return () => window.removeEventListener('pointerdown', onPointer)
   }, [resetArmed, fileOpen])
 
-  useEffect(() => {
-    const onKey = (event: KeyboardEvent) => {
-      if (event.code !== 'Space') return
-      if (
-        event.target instanceof HTMLInputElement ||
-        event.target instanceof HTMLTextAreaElement ||
-        event.target instanceof HTMLSelectElement
-      ) {
-        return
-      }
-      event.preventDefault()
-      if (engine.getPlayback().playing) engine.stop()
-      else engine.play()
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [engine])
-
   const editNode = project.arrangement.find((node) => node.id === editNodeId) ?? project.arrangement[0]
   const sectionId = editNode?.sectionId ?? ''
   const section = project.sections.find((item) => item.id === sectionId)
+
+  useEffect(() => {
+    const typing = (event: KeyboardEvent) =>
+      event.target instanceof HTMLInputElement ||
+      event.target instanceof HTMLTextAreaElement ||
+      event.target instanceof HTMLSelectElement
+
+    const onKey = (event: KeyboardEvent) => {
+      if (typing(event)) return
+      if (selection.kind === 'song') {
+        const numpad = event.code.match(/^Numpad([1-9])$/)
+        const digit = event.code.match(/^Digit([1-9])$/)
+        if (event.shiftKey && (digit || numpad)) {
+          const instrument = project.instruments[Number((digit ?? numpad)?.[1]) - 1]
+          if (instrument) {
+            event.preventDefault()
+            solo(instrument.id)
+          }
+          return
+        }
+        if (numpad) {
+          const instrument = project.instruments[Number(numpad[1]) - 1]
+          if (instrument) {
+            event.preventDefault()
+            mute(instrument.id)
+          }
+          return
+        }
+      }
+      if (event.code !== 'Space') return
+      event.preventDefault()
+      if (engine.getPlayback().playing) engine.stop()
+      else {
+        setFollowLive(true)
+        engine.play()
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [engine, selection.kind, project.instruments, sectionId])
+
+  useLayoutEffect(() => {
+    if (!followLive || !playback.playing || !playback.nodeId) return
+    if (playback.nodeId === editNodeId) return
+    setEditNodeId(playback.nodeId)
+  }, [followLive, playback.playing, playback.nodeId, editNodeId])
+
+  function goLive() {
+    setFollowLive(true)
+    const nodeId = engine.getPlayback().nodeId
+    if (nodeId) setEditNodeId(nodeId)
+  }
 
   function paint(instrumentId: string, stepIndex: number, on: boolean) {
     setProject((current) => setStep(current, instrumentId, stepIndex, on, sectionId))
@@ -352,12 +399,15 @@ export function App() {
             ) : null}
           </div>
         </div>
-        <Brand />
+        <Brand live={liveView} onLive={goLive} />
         <Transport
           playing={playback.playing}
           onToggle={() => {
             if (engine.getPlayback().playing) engine.stop()
-            else engine.play()
+            else {
+              setFollowLive(true)
+              engine.play()
+            }
           }}
           project={project}
           onBpm={(bpm) => setProject((current) => setProjectBpm(current, bpm))}
@@ -385,8 +435,12 @@ export function App() {
             activeNodeId={playback.playing ? playback.nodeId : null}
             queuedNodeId={playback.queuedNodeId}
             editNodeId={editNode?.id ?? project.startNodeId}
-            onSelect={setEditNodeId}
+            onSelect={(nodeId) => {
+              setFollowLive(false)
+              setEditNodeId(nodeId)
+            }}
             onJump={(nodeId) => {
+              setFollowLive(true)
               setEditNodeId(nodeId)
               engine.jump(nodeId)
             }}
@@ -430,15 +484,28 @@ export function App() {
           activity={playback.voices}
           level={playback.level}
           playhead={playback.playing && playback.nodeId === editNode?.id ? playback.step : -1}
+          motionAt={playback.playing && playback.nodeId === editNode?.id ? playback.position : -1}
           onPaint={paint}
           onNudge={nudge}
           onPitch={(instrumentId, stepIndex, pitch) => setProject((current) => setStepPitch(current, instrumentId, stepIndex, pitch, sectionId))}
-          onTrackRack={(instrumentId, update) => setProject((current) => updateRack(current, sectionId, { kind: 'track', instrumentId }, update))}
-          onGroupRack={(update) => {
-            if (selection.kind !== 'group') return
-            setProject((current) => updateRack(current, sectionId, { kind: 'group', groupId: selection.groupId }, update))
-          }}
-          onSongRack={(update) => setProject((current) => updateRack(current, sectionId, { kind: 'song' }, update))}
+          onTrackRack={(instrumentId, update) =>
+            setProject((current) => {
+              const updated = updateRack(current, sectionId, { kind: 'track', instrumentId }, update)
+              return selection.kind === 'song' ? syncMixToAllParts(updated, sectionId, { kind: 'track', instrumentId }) : updated
+            })
+          }
+          onGroupRack={(groupId, update) =>
+            setProject((current) => {
+              const updated = updateRack(current, sectionId, { kind: 'group', groupId }, update)
+              return selection.kind === 'song' ? syncMixToAllParts(updated, sectionId, { kind: 'group', groupId }) : updated
+            })
+          }
+          onSongRack={(update) =>
+            setProject((current) => {
+              const updated = updateRack(current, sectionId, { kind: 'song' }, update)
+              return selection.kind === 'song' ? syncMixToAllParts(updated, sectionId, { kind: 'song' }) : updated
+            })
+          }
           onAccent={(stepIndex, on) => setProject((current) => setAccentStep(current, stepIndex, on, sectionId))}
           onSwing={(swing) => setProject((current) => setSwing(current, swing))}
           onAccentAmount={(amount) => setProject((current) => setAccentAmount(current, amount))}
@@ -454,11 +521,27 @@ export function App() {
           onPreview={(instrumentId) => engine.preview(instrumentId)}
           onNotes={(instrumentId, notes) => setProject((current) => setRollNotes(current, instrumentId, notes, sectionId))}
           onSelectInstrument={(instrumentId) => setSelection({ kind: 'instrument', instrumentId })}
+          onSelectGroup={(groupId) => setSelection({ kind: 'group', groupId })}
           onMute={mute}
           onSolo={solo}
           onSyncInsert={(scope, insert) => setProject((current) => syncInsertToAllParts(current, sectionId, scope, insert))}
           onSyncMix={(scope) => setProject((current) => syncMixToAllParts(current, sectionId, scope))}
           onAddInsertAll={(scope, insert) => setProject((current) => addInsertToAllParts(current, sectionId, scope, insert))}
+          onCopyBar={(instrumentIds, fromBar, toBars, copyAccent) =>
+            setProject((current) => copyBarTo(current, sectionId, fromBar, toBars, instrumentIds, copyAccent))
+          }
+          onLiveView={setLiveView}
+          followLive={followLive}
+          onFollowLive={setFollowLive}
+          onPreviewCatalog={(catalog) => engine.previewCatalog(catalog)}
+          onRetune={(instrumentId, catalog) =>
+            setProject((current) => {
+              const next = retuneInstrument(current, instrumentId, catalog)
+              engine.setProject(next, sectionId)
+              engine.preview(instrumentId)
+              return next
+            })
+          }
         />
         </div>
         <aside className="instruments">
@@ -476,6 +559,7 @@ export function App() {
             onSolo={solo}
             onAddGroup={createGroup}
             onAddTrack={createTrack}
+            onPreviewCatalog={(catalog) => engine.previewCatalog(catalog)}
             onRenameGroup={(groupId, name) => setProject((current) => renameGroup(current, groupId, name))}
             onRenameInstrument={(instrumentId, name) => setProject((current) => renameInstrument(current, instrumentId, name))}
             onPlace={(instrumentId, groupId, index) => setProject((current) => placeTrack(current, instrumentId, groupId, index))}
@@ -483,6 +567,7 @@ export function App() {
               setProject((current) => removeInstrument(current, instrumentId))
               setSelection((current) => (current.kind === 'instrument' && current.instrumentId === instrumentId ? { kind: 'song' } : current))
             }}
+            onColor={(instrumentId, color) => setProject((current) => setInstrumentColor(current, instrumentId, color))}
             playing={playback.playing}
             activity={playback.voices}
           />
