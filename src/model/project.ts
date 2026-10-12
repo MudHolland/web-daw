@@ -234,6 +234,7 @@ export const STUTTER_RATES = [
   { label: '1/8.', beats: 0.75 },
   { label: '1 beat', beats: 1 },
   { label: '2 beats', beats: 2 },
+  { label: '1 bar', beats: 4 },
 ] as const
 
 export function stutterIndex(rate: number): number {
@@ -336,7 +337,7 @@ export const DEFAULT_FX: FxSettings = {
   cutoff: { low: 0, high: 1 },
   reverb: { size: 0, mix: 0.3 },
   tape: { time: syncValue(4) },
-  stutter: { rate: stutterValue(2) },
+  stutter: { rate: stutterValue(6) },
 }
 
 export function copyFx(fx: FxSettings = DEFAULT_FX): FxSettings {

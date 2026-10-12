@@ -169,36 +169,47 @@ export function App() {
       event.target instanceof HTMLTextAreaElement ||
       event.target instanceof HTMLSelectElement
 
-    const onKey = (event: KeyboardEvent) => {
-      if (typing(event)) return
-      if (selection.kind === 'song') {
-        const numpad = event.code.match(/^Numpad([1-9])$/)
-        const digit = event.code.match(/^Digit([1-9])$/)
-        if (event.shiftKey && (digit || numpad)) {
-          const instrument = project.instruments[Number((digit ?? numpad)?.[1]) - 1]
-          if (instrument) {
-            event.preventDefault()
-            solo(instrument.id)
+      const onKey = (event: KeyboardEvent) => {
+        if (typing(event)) return
+      
+        if (selection.kind === 'song') {
+          // Match zowel Numpad 0-9 als Digit 0-9
+          const numpad = event.code.match(/^Numpad([0-9])$/)
+          const digit = event.code.match(/^Digit([0-9])$/)
+          const match = digit ?? numpad
+      
+          if (match) {
+            // Bepaal de index (1 t/m 9 -> index 0-8, 0 -> index 9)
+            const num = Number(match[1])
+            const index = num === 0 ? 9 : num - 1
+            const instrument = project.instruments[index]
+      
+            if (instrument) {
+              // Ctrl + Nummer (of Cmd op macOS) = Solo
+              if (event.ctrlKey || event.metaKey) {
+                event.preventDefault()
+                solo(instrument.id)
+                return
+              }
+      
+              // Gewoon Nummer (zonder modificatietoetsen) = Mute
+              if (!event.shiftKey && !event.altKey) {
+                event.preventDefault()
+                mute(instrument.id)
+                return
+              }
+            }
           }
-          return
         }
-        if (numpad) {
-          const instrument = project.instruments[Number(numpad[1]) - 1]
-          if (instrument) {
-            event.preventDefault()
-            mute(instrument.id)
-          }
-          return
+      
+        if (event.code !== 'Space') return
+        event.preventDefault()
+        if (engine.getPlayback().playing) engine.stop()
+        else {
+          setFollowLive(true)
+          engine.play()
         }
       }
-      if (event.code !== 'Space') return
-      event.preventDefault()
-      if (engine.getPlayback().playing) engine.stop()
-      else {
-        setFollowLive(true)
-        engine.play()
-      }
-    }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [engine, selection.kind, project.instruments, sectionId])
