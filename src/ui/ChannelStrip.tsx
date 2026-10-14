@@ -36,6 +36,8 @@ type ChannelStripProps = {
   layout: 'full' | 'compact'
   onLevel: (level: number) => void
   onPan: (pan: number) => void
+  probability?: number
+  onProbability?: (value: number) => void
   onEq: (band: 'low' | 'mid' | 'high', value: number) => void
   onSound: (key: keyof SoundParams, value: number) => void
   onBass: (key: 'cutoff' | 'decay' | 'glide', value: number) => void
@@ -63,6 +65,7 @@ type ChannelStripProps = {
 }
 
 const INSERTS: { id: InsertId; label: string }[] = [
+  { id: 'probability', label: 'Chance' },
   { id: 'eq', label: 'EQ' },
   { id: 'adsr', label: 'ADSR' },
   { id: 'processing', label: 'Tone' },
@@ -76,7 +79,7 @@ const INSERTS: { id: InsertId; label: string }[] = [
   { id: 'chorus', label: 'Chorus' },
   { id: 'flanger', label: 'Flanger' },
   { id: 'reverb', label: 'Reverb' },
-  { id: 'tape', label: 'Tape stop' },
+  { id: 'tape', label: 'Tape Stop' },
   { id: 'stutter', label: 'Repeat' },
 ]
 
@@ -87,6 +90,8 @@ export function ChannelStrip({
   layout,
   onLevel,
   onPan,
+  probability = 1,
+  onProbability,
   onEq,
   onSound,
   onBass,
@@ -283,7 +288,21 @@ export function ChannelStrip({
               {insert === 'processing' ? (
                 <Processing instrument={instrument} onSound={onSound} onBass={onBass} onChord={onChord} onWave={onWave} />
               ) : null}
-              {insert !== 'adsr' && insert !== 'processing' && insert !== 'eq' ? (
+              {insert === 'probability' && onProbability ? (
+                <Knob label="Chance" valueLabel={`${Math.round(probability * 100)}%`}>
+                  <Fader
+                    vertical
+                    min={0}
+                    max={1}
+                    step={0.01}
+                    value={probability}
+                    reset={1}
+                    testId={`probability-${instrument.id}`}
+                    onChange={onProbability}
+                  />
+                </Knob>
+              ) : null}
+              {insert !== 'adsr' && insert !== 'processing' && insert !== 'eq' && insert !== 'probability' ? (
                 <EffectKnobs instrument={instrument} effect={insert} onFx={onFx} />
               ) : null}
             </div>

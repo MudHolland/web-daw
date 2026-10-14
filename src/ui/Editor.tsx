@@ -12,7 +12,6 @@ import {
   type ChordQuality,
 } from '../model/harmony.ts'
 import {
-  DEFAULT_FX,
   flipOff,
   groupSizeForMeter,
   matchingCatalog,
@@ -24,6 +23,7 @@ import {
   rollNotes,
   slotEnabled,
   stepsForMeter,
+  withInsert,
   type CatalogId,
   type Envelope,
   type FxSettings,
@@ -87,11 +87,15 @@ type EditorProps = {
   onRemoveInsert: (instrumentId: string, insert: InsertId) => void
   onToggleInsert: (instrumentId: string, insert: InsertId) => void
   onPreview: (instrumentId: string) => void
+  onRecordHold?: (instrumentId: string, down: boolean) => void
+  recording?: boolean
   onNotes: (instrumentId: string, notes: NoteEvent[]) => void
   onSelectInstrument?: (instrumentId: string) => void
   onSelectGroup?: (groupId: string) => void
   onMute?: (instrumentId: string) => void
   onSolo?: (instrumentId: string) => void
+  onMuteGroup?: (groupId: string) => void
+  onSoloGroup?: (groupId: string) => void
   onSyncInsert?: (scope: RackScope, insert: InsertId) => void
   onSyncMix?: (scope: RackScope) => void
   onAddInsertAll?: (scope: RackScope, insert: InsertId) => void
@@ -188,6 +192,10 @@ export function Editor(props: EditorProps) {
             onSelectGroup={props.onSelectGroup ?? (() => {})}
             onMute={props.onMute ?? (() => {})}
             onSolo={props.onSolo ?? (() => {})}
+            onMuteGroup={props.onMuteGroup ?? (() => {})}
+            onSoloGroup={props.onSoloGroup ?? (() => {})}
+            recording={props.recording}
+            onRecordHold={props.onRecordHold}
             onTrackRack={props.onTrackRack}
             onGroupRack={props.onGroupRack}
             onMaster={props.onMaster}
@@ -241,6 +249,8 @@ export function Editor(props: EditorProps) {
           title={instrument.name}
           playing={playing}
           level={heard}
+          recording={props.recording}
+          onRecordHold={(down) => props.onRecordHold?.(instrument.id, down)}
           picker={{
             entries: relatedCatalogs(instrument),
             currentId: matchingCatalog(instrument),
@@ -264,6 +274,8 @@ export function Editor(props: EditorProps) {
                 viewLength={stepsPerBar}
                 solo
                 onPaint={(stepIndex, on) => props.onPaint(instrument.id, stepIndex, on)}
+                recording={props.recording}
+                onRecordHold={(down) => props.onRecordHold?.(instrument.id, down)}
               />
             </div>
             {pager([instrument.id])}
@@ -291,7 +303,14 @@ export function Editor(props: EditorProps) {
           />
         )}
         </div>
-        <ChannelStrip {...stripProps(withRack(instrument, shownRack(section?.slots[instrument.id]?.rack ?? rackFromInstrument(instrument))), props)} {...effects} />
+        <ChannelStrip
+          {...stripProps(
+            withRack(instrument, shownRack(section?.slots[instrument.id]?.rack ?? rackFromInstrument(instrument))),
+            props,
+            shownRack(section?.slots[instrument.id]?.rack ?? rackFromInstrument(instrument)).probability,
+          )}
+          {...effects}
+        />
         {automation(
           section?.slots[instrument.id]?.rack ?? rackFromInstrument(instrument),
           (update) => props.onTrackRack(instrument.id, update),
@@ -355,6 +374,7 @@ export function Editor(props: EditorProps) {
             editGroup,
             props,
             { kind: 'group', groupId: group?.id ?? 'group' },
+            shownRack(section?.groups?.[group?.id ?? ''] ?? openRack(1)).probability,
           )}
           {...effects}
         />
@@ -378,6 +398,7 @@ export function Editor(props: EditorProps) {
             editGroup,
             props,
             { kind: 'group', groupId: group?.id ?? 'group' },
+            shownRack(section?.groups?.[group?.id ?? ''] ?? openRack(1)).probability,
           )}
           {...effects}
         />
@@ -420,6 +441,8 @@ export function Editor(props: EditorProps) {
               muted={!slotEnabled(project, instrument.id, sectionId)}
               face={written && pattern ? noteFace(pattern) : faceFor(songKey, instrument, false)}
               onPaint={(stepIndex, on) => props.onPaint(instrument.id, stepIndex, on)}
+              recording={props.recording}
+              onRecordHold={(down) => props.onRecordHold?.(instrument.id, down)}
               onPitch={isMelodic ? (stepIndex, pitch) => props.onPitch(instrument.id, stepIndex, pitch) : undefined}
               originFor={isMelodic ? (stepIndex) => {
                 const step = pattern?.steps[stepIndex]
@@ -443,6 +466,7 @@ export function Editor(props: EditorProps) {
           editGroup,
           props,
           { kind: 'group', groupId: group?.id ?? 'group' },
+          shownRack(section?.groups?.[group?.id ?? ''] ?? openRack(1)).probability,
         )}
         {...effects}
       />
@@ -457,11 +481,15 @@ function EditorTitle({
   playing,
   level,
   picker,
+  recording,
+  onRecordHold,
 }: {
   partName: string
   title: string
   playing: boolean
   level: number
+  recording?: boolean
+  onRecordHold?: (down: boolean) => void
   picker?: {
     entries: ReturnType<typeof relatedCatalogs>
     currentId: CatalogId | null
@@ -472,19 +500,27 @@ function EditorTitle({
   const [open, setOpen] = useState(false)
   const sounds = picker && picker.entries.length > 0 ? picker : null
   const families = sounds ? [...new Set(sounds.entries.map((item) => item.family))] : undefined
+  const recordPad = recording && onRecordHold
   return (
     <header className="editor-head">
       <p className="part-kicker">{partName}</p>
       <h2>
-        {sounds ? (
+        {sounds || recordPad ? (
           <button
             type="button"
-            className="editor-sound"
+            className={['editor-sound', recordPad ? 'is-record' : ''].filter(Boolean).join(' ')}
             data-testid="sound-picker"
-            aria-haspopup="menu"
-            aria-expanded={open}
-            onPointerDown={(event) => event.stopPropagation()}
-            onClick={() => setOpen((current) => !current)}
+            aria-haspopup={sounds && !recordPad ? 'menu' : undefined}
+            aria-expanded={sounds && !recordPad ? open : undefined}
+            aria-label={recordPad ? `Record ${title}` : undefined}
+            onPointerDown={(event) => {
+              event.stopPropagation()
+              if (recordPad) beginPadHold(onRecordHold, event)
+            }}
+            onClick={() => {
+              if (recordPad) return
+              setOpen((current) => !current)
+            }}
           >
             {title}
           </button>
@@ -811,9 +847,9 @@ function busInstrument(id: string, name: string, rack: Rack): Instrument {
   }
 }
 
-function stripProps(instrument: Instrument, props: EditorProps) {
+function stripProps(instrument: Instrument, props: EditorProps, chance?: number) {
   const edit = (change: (rack: Rack) => Rack) => props.onTrackRack(instrument.id, change)
-  return deckProps(instrument, edit, props, false, { kind: 'track', instrumentId: instrument.id })
+  return deckProps(instrument, edit, props, false, { kind: 'track', instrumentId: instrument.id }, chance)
 }
 
 function busStrip(
@@ -821,8 +857,9 @@ function busStrip(
   update: (change: (rack: Rack) => Rack) => void,
   props: EditorProps,
   scope: RackScope,
+  chance?: number,
 ) {
-  return { ...deckProps(instrument, update, props, true, scope), bus: true }
+  return { ...deckProps(instrument, update, props, true, scope, chance), bus: true }
 }
 
 function deckProps(
@@ -831,11 +868,14 @@ function deckProps(
   props: EditorProps,
   bus: boolean,
   scope: RackScope,
+  chance?: number,
 ) {
   return {
     instrument,
     layout: 'full' as const,
     bus,
+    probability: chance ?? 1,
+    onProbability: (value: number) => edit((rack) => ({ ...rack, probability: value })),
     onLevel: (level: number) => edit((rack) => ({ ...rack, level })),
     onPan: (pan: number) => edit((rack) => ({ ...rack, pan })),
     onEq: (band: 'low' | 'mid' | 'high', value: number) => edit((rack) => ({ ...rack, eq: { ...rack.eq, [band]: value } })),
@@ -857,14 +897,7 @@ function deckProps(
         return
       }
       if (!bus && (insert === 'adsr' || insert === 'processing')) props.onAddInsert(instrument.id, insert)
-      else if (insert === 'eq' || insert === 'adsr' || insert === 'processing') {
-        edit((rack) => (rack.inserts.includes(insert) ? rack : { ...rack, inserts: [...rack.inserts, insert] }))
-      } else {
-        const effect = insert
-        edit((rack) =>
-          rack.inserts.includes(effect) ? rack : { ...rack, inserts: [...rack.inserts, effect], fx: { ...rack.fx, [effect]: { ...DEFAULT_FX[effect] } } },
-        )
-      }
+      else edit((rack) => withInsert(rack, insert))
     },
     onRemoveInsert: (insert: InsertId) => {
       if (!bus && (insert === 'adsr' || insert === 'processing')) props.onRemoveInsert(instrument.id, insert)
@@ -922,4 +955,17 @@ function faceFor(key: string, instrument: Instrument, rich: boolean) {
 function accentStyle(instrument: Instrument): CSSProperties {
   const color = instrumentColor(instrument)
   return { '--step-on': color, '--voice': color } as CSSProperties
+}
+
+function beginPadHold(hold: ((down: boolean) => void) | undefined, event: { button: number; preventDefault(): void }) {
+  if (!hold || event.button !== 0) return
+  event.preventDefault()
+  hold(true)
+  const up = () => {
+    hold(false)
+    window.removeEventListener('pointerup', up)
+    window.removeEventListener('pointercancel', up)
+  }
+  window.addEventListener('pointerup', up)
+  window.addEventListener('pointercancel', up)
 }

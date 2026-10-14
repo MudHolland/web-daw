@@ -120,6 +120,7 @@ export type InstrumentGroup = {
   id: string
   name: string
   instrumentIds: string[]
+  color?: string
 }
 
 export type Instrument = {
@@ -167,6 +168,7 @@ export type InsertId =
   | 'reverb'
   | 'tape'
   | 'stutter'
+  | 'probability'
 
 export const INSERT_IDS: InsertId[] = [
   'adsr',
@@ -184,6 +186,7 @@ export const INSERT_IDS: InsertId[] = [
   'reverb',
   'tape',
   'stutter',
+  'probability',
 ]
 
 export function liveInserts(item: { inserts: InsertId[]; off?: InsertId[] }): InsertId[] {
@@ -357,6 +360,11 @@ export function copyFx(fx: FxSettings = DEFAULT_FX): FxSettings {
   }
 }
 
+export type GroupSlot = {
+  enabled: boolean
+  solo: boolean
+}
+
 export type Rack = {
   level: number
   pan: number
@@ -364,6 +372,7 @@ export type Rack = {
   fx: FxSettings
   inserts: InsertId[]
   off?: InsertId[]
+  probability?: number
   automation?: Record<string, (number | null)[]>
 }
 
@@ -386,8 +395,42 @@ export function copyRack(rack: Rack): Rack {
     fx: copyFx(rack.fx),
     inserts: rack.inserts.slice(),
     off: rack.off?.slice(),
+    probability: rack.probability,
     automation: copyAutomationMap(rack.automation),
   }
+}
+
+export function rackChance(rack: Rack | undefined): number {
+  if (!rack || !insertOn(rack, 'probability')) return 1
+  const value = rack.probability
+  if (typeof value !== 'number' || !Number.isFinite(value)) return 1
+  return clamp(value, 0, 1)
+}
+
+export function withInsert(rack: Rack, insert: InsertId): Rack {
+  if (rack.inserts.includes(insert)) return rack
+  if (insert === 'probability') {
+    return { ...rack, inserts: [...rack.inserts, insert], probability: rack.probability ?? 1 }
+  }
+  if (insert === 'eq' || insert === 'adsr' || insert === 'processing') {
+    return { ...rack, inserts: [...rack.inserts, insert] }
+  }
+  const effect = insert as keyof FxSettings
+  return {
+    ...rack,
+    inserts: [...rack.inserts, insert],
+    fx: { ...rack.fx, [effect]: { ...DEFAULT_FX[effect] } },
+  }
+}
+
+export function groupSlot(section: Section | undefined, groupId: string): GroupSlot {
+  return section?.groupSlots?.[groupId] ?? { enabled: true, solo: false }
+}
+
+export function recordStepIndex(position: number, length: number): number {
+  if (!Number.isFinite(position) || position < 0 || length <= 0) return -1
+  const pulled = position + 0.22
+  return ((Math.floor(pulled) % length) + length) % length
 }
 
 function copyAutomationMap(
@@ -497,6 +540,7 @@ export type Section = {
   slots: Record<string, SectionSlot>
   bus?: Rack
   groups?: Record<string, Rack>
+  groupSlots?: Record<string, GroupSlot>
   customBpm?: boolean
   customKey?: boolean
   customMeter?: boolean
@@ -1019,6 +1063,8 @@ export function syncInsertToAllParts(
       }
       if (insert === 'eq') {
         nextRack = { ...nextRack, eq: { ...eqSettings } }
+      } else if (insert === 'probability') {
+        nextRack = { ...nextRack, probability: sourceRack.probability ?? 1 }
       } else if (fxSettings) {
         nextRack = {
           ...nextRack,
@@ -1109,18 +1155,7 @@ export function addInsertToAllParts(
   scope: RackScope,
   insert: InsertId,
 ): Project {
-  const withSource = updateRack(project, sourceSectionId, scope, (rack) => {
-    if (rack.inserts.includes(insert)) return rack
-    if (insert === 'eq' || insert === 'adsr' || insert === 'processing') {
-      return { ...rack, inserts: [...rack.inserts, insert] }
-    }
-    const effect = insert
-    return {
-      ...rack,
-      inserts: [...rack.inserts, effect],
-      fx: { ...rack.fx, [effect]: { ...DEFAULT_FX[effect] } },
-    }
-  })
+  const withSource = updateRack(project, sourceSectionId, scope, (rack) => withInsert(rack, insert))
   return syncInsertToAllParts(withSource, sourceSectionId, scope, insert)
 }
 
@@ -1287,6 +1322,30 @@ export function setMuted(project: Project, instrumentId: string, muted: boolean,
       }
     }),
   }
+}
+
+export function setGroupMuted(project: Project, groupId: string, muted: boolean, sectionId?: string): Project {
+  if (!project.groups.some((group) => group.id === groupId)) return project
+  const section = sectionId ? sectionById(project, sectionId) : startingSection(project)
+  if (!section) return project
+  const current = groupSlot(section, groupId)
+  if (current.enabled === !muted) return project
+  return replaceSection(project, {
+    ...section,
+    groupSlots: { ...(section.groupSlots ?? {}), [groupId]: { ...current, enabled: !muted } },
+  })
+}
+
+export function setGroupSolo(project: Project, groupId: string, solo: boolean, sectionId?: string): Project {
+  if (!project.groups.some((group) => group.id === groupId)) return project
+  const section = sectionId ? sectionById(project, sectionId) : startingSection(project)
+  if (!section) return project
+  const current = groupSlot(section, groupId)
+  if (current.solo === solo) return project
+  return replaceSection(project, {
+    ...section,
+    groupSlots: { ...(section.groupSlots ?? {}), [groupId]: { ...current, solo } },
+  })
 }
 
 function parseStep(value: unknown): Step | null {
@@ -1502,6 +1561,11 @@ function parseInserts(value: unknown): InsertId[] {
   return next
 }
 
+function migrateProbabilityInsert(inserts: InsertId[], probability: number | undefined): InsertId[] {
+  if (probability == null || probability >= 0.999 || inserts.includes('probability')) return inserts
+  return [...inserts, 'probability']
+}
+
 function parseOff(value: unknown): InsertId[] | undefined {
   if (!Array.isArray(value)) return undefined
   const next = value.filter((item): item is InsertId => INSERT_IDS.includes(item))
@@ -1557,6 +1621,7 @@ function parseSection(value: unknown, bpm: number, key: string, songMeter: Meter
     slots,
     bus: isRecord(value.bus) ? parseRack(value.bus) : undefined,
     groups: parseGroupRacks(value.groups),
+    groupSlots: parseGroupSlots(value.groupSlots),
     customBpm,
     customKey,
     customMeter,
@@ -1575,10 +1640,25 @@ function parseRack(value: Record<string, unknown>): Rack {
       high: typeof eq.high === 'number' ? clamp(eq.high, -24, 24) : 0,
     },
     fx: parseFx(value.fx),
-    inserts: parseInserts(value.inserts).filter((insert) => insert !== 'adsr' && insert !== 'processing'),
+    inserts: migrateProbabilityInsert(
+      parseInserts(value.inserts).filter((insert) => insert !== 'adsr' && insert !== 'processing'),
+      typeof value.probability === 'number' && Number.isFinite(value.probability) ? clamp(value.probability, 0, 1) : undefined,
+    ),
     off: parseOff(value.off),
+    probability:
+      typeof value.probability === 'number' && Number.isFinite(value.probability) ? clamp(value.probability, 0, 1) : undefined,
     automation: parseAutomationMap(value.automation),
   }
+}
+
+function parseGroupSlots(value: unknown): Record<string, GroupSlot> | undefined {
+  if (!isRecord(value)) return undefined
+  const slots: Record<string, GroupSlot> = {}
+  for (const [id, slot] of Object.entries(value)) {
+    if (!isRecord(slot)) continue
+    slots[id] = { enabled: slot.enabled !== false, solo: slot.solo === true }
+  }
+  return Object.keys(slots).length > 0 ? slots : undefined
 }
 
 function parseGroupRacks(value: unknown): Record<string, Rack> | undefined {
@@ -1633,7 +1713,8 @@ function parseGroup(value: unknown, instruments: Instrument[]): InstrumentGroup 
   if (!Array.isArray(value.instrumentIds)) return null
   const known = new Set(instruments.map((instrument) => instrument.id))
   const instrumentIds = value.instrumentIds.filter((id): id is string => typeof id === 'string' && known.has(id))
-  return { id: value.id, name: value.name, instrumentIds }
+  const color = parseColor(value.color)
+  return { id: value.id, name: value.name, instrumentIds, ...(color ? { color } : {}) }
 }
 
 function parseGroups(value: unknown, instruments: Instrument[]): InstrumentGroup[] {
@@ -1961,6 +2042,9 @@ export function addPart(project: Project, sourceNodeId: string): { project: Proj
           slots,
           bus: sourceSection?.bus ? copyRack(sourceSection.bus) : openRack(1),
           groups: Object.fromEntries(Object.entries(sourceSection?.groups ?? {}).map(([id, rack]) => [id, copyRack(rack)])),
+          groupSlots: sourceSection?.groupSlots
+            ? Object.fromEntries(Object.entries(sourceSection.groupSlots).map(([id, slot]) => [id, { ...slot }]))
+            : undefined,
           customBpm: sourceSection?.customBpm,
           customKey: sourceSection?.customKey,
           customMeter: sourceSection?.customMeter,
@@ -2210,6 +2294,23 @@ export function renameInstrument(project: Project, instrumentId: string, name: s
   return mapInstrument(project, instrumentId, (instrument) => ({ ...instrument, name: label.slice(0, 32) }))
 }
 
+export function setGroupColor(project: Project, groupId: string, color: string | null): Project {
+  const hex = color ? parseColor(color) : undefined
+  if (!project.groups.some((group) => group.id === groupId)) return project
+  return {
+    ...project,
+    groups: project.groups.map((group) => {
+      if (group.id !== groupId) return group
+      if (group.color === hex) return group
+      if (!hex) {
+        const { color: _removed, ...rest } = group
+        return rest
+      }
+      return { ...group, color: hex }
+    }),
+  }
+}
+
 export function setInstrumentColor(project: Project, instrumentId: string, color: string | null): Project {
   const hex = color ? parseColor(color) : undefined
   return mapInstrument(project, instrumentId, (instrument) => {
@@ -2235,6 +2336,39 @@ export function moveTrack(project: Project, instrumentId: string, groupId: strin
   const group = project.groups.find((item) => item.id === groupId)
   if (!group) return project
   return placeTrack(project, instrumentId, groupId, group.instrumentIds.filter((id) => id !== instrumentId).length)
+}
+
+export function placeGroup(project: Project, groupId: string, index: number): Project {
+  const from = project.groups.findIndex((group) => group.id === groupId)
+  if (from < 0) return project
+  const groups = project.groups.slice()
+  const [moved] = groups.splice(from, 1)
+  if (!moved) return project
+  const at = Math.max(0, Math.min(Math.round(index), groups.length))
+  groups.splice(at, 0, moved)
+  if (groups.every((group, i) => group.id === project.groups[i]?.id)) return project
+  return { ...project, groups }
+}
+
+export function removeGroup(project: Project, groupId: string): Project {
+  const group = project.groups.find((item) => item.id === groupId)
+  if (!group) return project
+  let next = project
+  for (const instrumentId of group.instrumentIds) {
+    next = removeInstrument(next, instrumentId)
+  }
+  return {
+    ...next,
+    groups: next.groups.filter((item) => item.id !== groupId),
+    sections: next.sections.map((section) => {
+      if (!section.groups?.[groupId] && !section.groupSlots?.[groupId]) return section
+      const groups = { ...section.groups }
+      const groupSlots = { ...section.groupSlots }
+      delete groups[groupId]
+      delete groupSlots[groupId]
+      return { ...section, groups, groupSlots }
+    }),
+  }
 }
 
 export function placeTrack(project: Project, instrumentId: string, groupId: string, index: number): Project {

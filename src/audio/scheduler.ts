@@ -1,11 +1,13 @@
 import { lerpAutomation } from '../model/automation.ts'
-import { liveInserts, loopSteps, rackFromInstrument, stutterBeats, type Project, type Rack, type Section } from '../model/project.ts'
+import { liveInserts, loopSteps, rackFromInstrument, stepsForMeter, stutterBeats, type Project, type Rack, type Section } from '../model/project.ts'
 
 export type PlaybackCursor = {
   nodeId: string
   cycle: number
   step: number
 }
+
+export type CueMode = 'repeat' | 'bar'
 
 export const SCHEDULE_AHEAD_SECONDS = 0.1
 export const TICK_MS = 25
@@ -40,6 +42,7 @@ export function advanceCursor(
   project: Project,
   cursor: PlaybackCursor,
   queuedNodeId: string | null = null,
+  cueMode: CueMode = 'repeat',
 ): { cursor: PlaybackCursor; stopped: boolean; consumedQueue: boolean } {
   const node = project.arrangement.find((item) => item.id === cursor.nodeId)
   if (!node) return { cursor, stopped: true, consumedQueue: false }
@@ -57,13 +60,20 @@ export function advanceCursor(
     }
     return { cursor: { ...cursor, step: start }, stopped: false, consumedQueue: false }
   }
-  if (cursor.step + 1 < length) {
-    return { cursor: { ...cursor, step: cursor.step + 1 }, stopped: false, consumedQueue: false }
-  }
 
+  const nextStep = cursor.step + 1
+  const barLength = Math.max(1, stepsForMeter(section.meter))
+  const atBarEnd = nextStep >= length || nextStep % barLength === 0
+  const atRepeatEnd = nextStep >= length
   const queued = queuedNodeId && project.arrangement.some((item) => item.id === queuedNodeId) ? queuedNodeId : null
   if (queued && queued !== cursor.nodeId) {
-    return { cursor: { nodeId: queued, cycle: 0, step: 0 }, stopped: false, consumedQueue: true }
+    const take = cueMode === 'bar' ? atBarEnd : atRepeatEnd
+    if (take) {
+      return { cursor: { nodeId: queued, cycle: 0, step: 0 }, stopped: false, consumedQueue: true }
+    }
+  }
+  if (!atRepeatEnd) {
+    return { cursor: { ...cursor, step: nextStep }, stopped: false, consumedQueue: false }
   }
   const alreadyThere = queued === cursor.nodeId
 
@@ -110,6 +120,7 @@ export function takeSteps(
   nextNoteTime: number,
   horizon: number,
   queuedNodeId: string | null = null,
+  cueMode: CueMode = 'repeat',
 ): {
   steps: ScheduledStep[]
   cursor: PlaybackCursor
@@ -124,7 +135,7 @@ export function takeSteps(
   while (nextNoteTime < horizon && guard < MAX_STEPS_PER_TICK) {
     const duration = stepDuration(bpmFor(project, cursor.nodeId), swingFor(project, cursor), cursor.step)
     steps.push({ time: nextNoteTime, duration, cursor: { ...cursor } })
-    const advanced = advanceCursor(project, cursor, queue)
+    const advanced = advanceCursor(project, cursor, queue, cueMode)
     cursor = advanced.cursor
     if (advanced.consumedQueue) queue = null
     nextNoteTime += duration

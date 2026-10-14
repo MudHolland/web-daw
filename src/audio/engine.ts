@@ -5,9 +5,11 @@ import {
   catalogVoice,
   DEFAULT_CHORD,
   DEFAULT_SOUND,
+  groupSlot,
   insertOn,
   liveInserts,
   openRack,
+  rackChance,
   rackFromInstrument,
   syncHz,
   type CatalogId,
@@ -25,6 +27,7 @@ import {
   bpmFor,
   stepDuration,
   takeSteps,
+  type CueMode,
   type PlaybackCursor,
 } from './scheduler.ts'
 import type { TriggerSound, Voice } from './types.ts'
@@ -59,6 +62,7 @@ export type PlaybackState = {
   level: StereoLevel
   voices: Record<string, number>
   queuedNodeId: string | null
+  cueMode: CueMode | null
 }
 
 const SILENT: StereoLevel = { left: 0, right: 0 }
@@ -195,6 +199,7 @@ export class Engine {
   private cursor: PlaybackCursor = { nodeId: '', cycle: 0, step: 0 }
   private queuedNodeId: string | null = null
   private latchedQueue: string | null = null
+  private cueMode: CueMode = 'repeat'
   private displayQueue: DisplayEvent[] = []
   private activity = new Map<string, number>()
   private songBus: Strip | null = null
@@ -237,8 +242,7 @@ export class Engine {
         ? fromNodeId
         : this.project.startNodeId
     this.playing = true
-    this.queuedNodeId = null
-    this.latchedQueue = null
+    this.clearCue()
     this.armedSectionId = ''
     this.cursor = { nodeId, cycle: 0, step: 0 }
     this.displayQueue = []
@@ -259,13 +263,27 @@ export class Engine {
       return
     }
     const here = this.soundingNode()
-    if (nodeId === here || nodeId === this.queuedNodeId || nodeId === this.latchedQueue) {
-      this.queuedNodeId = null
-      this.latchedQueue = null
+    if (nodeId === here) {
+      this.clearCue()
+      return
+    }
+    if (nodeId === this.queuedNodeId || nodeId === this.latchedQueue) {
+      if (this.cueMode === 'repeat') {
+        this.cueMode = 'bar'
+        return
+      }
+      this.clearCue()
       return
     }
     this.queuedNodeId = nodeId
     this.latchedQueue = nodeId
+    this.cueMode = 'repeat'
+  }
+
+  private clearCue(): void {
+    this.queuedNodeId = null
+    this.latchedQueue = null
+    this.cueMode = 'repeat'
   }
 
   private soundingNode(): string {
@@ -279,8 +297,7 @@ export class Engine {
 
   stop(): void {
     this.playing = false
-    this.queuedNodeId = null
-    this.latchedQueue = null
+    this.clearCue()
     this.armedSectionId = ''
     if (this.timer !== null) {
       window.clearTimeout(this.timer)
@@ -354,7 +371,7 @@ export class Engine {
     const level = this.readLevels()
     const voices = this.readActivity()
     if (!this.playing || !this.ctx) {
-      return { playing: false, step: -1, position: -1, nodeId: null, level, voices, queuedNodeId: null }
+      return { playing: false, step: -1, position: -1, nodeId: null, level, voices, queuedNodeId: null, cueMode: null }
     }
     const now = this.ctx.currentTime
     let step = -1
@@ -370,7 +387,7 @@ export class Engine {
     }
     if (this.latchedQueue && nodeId === this.latchedQueue) this.latchedQueue = null
     const queuedNodeId = this.queuedNodeId ?? (this.latchedQueue && this.latchedQueue !== nodeId ? this.latchedQueue : null)
-    return { playing: true, step, position, nodeId, level, voices, queuedNodeId }
+    return { playing: true, step, position, nodeId, level, voices, queuedNodeId, cueMode: queuedNodeId ? this.cueMode : null }
   }
 
   private ensureContext(): AudioContext {
@@ -624,6 +641,7 @@ export class Engine {
       this.nextNoteTime,
       now + SCHEDULE_AHEAD_SECONDS,
       this.queuedNodeId,
+      this.cueMode,
     )
     for (const step of batch.steps) {
       this.armSection(step.time, step.cursor)
@@ -649,17 +667,30 @@ export class Engine {
     const section = this.project.sections.find((item) => item.id === node.sectionId)
     if (!section) return
     this.displayQueue.push({ step: cursor.step, time, duration, nodeId: cursor.nodeId })
-    const soloing = this.project.instruments.some((item) => section.slots[item.id]?.solo)
+    const anyTrackSolo = this.project.instruments.some((item) => section.slots[item.id]?.solo)
+    const anyGroupSolo = this.project.groups.some((group) => groupSlot(section, group.id).solo)
     for (const instrument of this.project.instruments) {
       const slot = section.slots[instrument.id]
-      if (!slot?.enabled) continue
-      if (soloing && !slot.solo) continue
+      if (!slot) continue
+      const group = this.project.groups.find((item) => item.instrumentIds.includes(instrument.id))
+      const flags = group ? groupSlot(section, group.id) : { enabled: true, solo: false }
+      if (!slot.solo) {
+        if (anyTrackSolo && !anyGroupSolo) continue
+        if (anyGroupSolo && !flags.solo) continue
+        if (!slot.enabled) continue
+        if (!flags.enabled) continue
+      }
+      const trackRack = applyRackAutomation(slot.rack ?? rackFromInstrument(instrument), cursor.step)
+      const groupRack = group ? applyRackAutomation(section.groups?.[group.id] ?? openRack(1), cursor.step) : undefined
+      const busRack = applyRackAutomation(section.bus ?? openRack(1), cursor.step)
+      const chance = rackChance(trackRack) * rackChance(groupRack) * rackChance(busRack)
+      if (chance < 0.999 && Math.random() >= chance) continue
       const pattern = instrument.patterns.find((item) => item.id === slot.patternId)
       if (!pattern) continue
       const voice = this.voices.get(instrument.id)
       if (!voice) continue
       const envelope = insertOn(instrument, 'adsr') ? instrument.envelope : null
-      const semis = noteShift(this.project, section, instrument.id)
+      const semis = shiftSemis(trackRack) + shiftSemis(groupRack) + shiftSemis(busRack)
       const play = (pitch: number, velocity: number, sound: TriggerSound, gate?: number) => {
         voice.trigger(time, Math.max(0, Math.min(127, Math.round(pitch + semis))), velocity, sound, envelope, gate)
       }

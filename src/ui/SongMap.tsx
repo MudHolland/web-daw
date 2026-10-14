@@ -2,12 +2,14 @@ import { useRef, useState } from 'react'
 import type { PointerEvent as ReactPointerEvent } from 'react'
 import { KEYS } from '../model/harmony.ts'
 import { LOOP_BARS, METERS, songOrder, type LoopBars, type Meter, type Project } from '../model/project.ts'
+import type { CueMode } from '../audio/scheduler.ts'
 import { Fader } from './Fader.tsx'
 
 type SongMapProps = {
   project: Project
   activeNodeId: string | null
   queuedNodeId: string | null
+  cueMode: CueMode | null
   editNodeId: string
   onSelect: (nodeId: string) => void
   onJump: (nodeId: string) => void
@@ -28,6 +30,7 @@ export function SongMap({
   project,
   activeNodeId,
   queuedNodeId,
+  cueMode,
   editNodeId,
   onSelect,
   onJump,
@@ -104,6 +107,7 @@ export function SongMap({
           const selected = node.id === editNodeId
           const current = node.id === activeNodeId
           const queued = node.id === queuedNodeId
+          const queuedBar = queued && cueMode === 'bar'
           const following = shown[index + 1]
           const continues = Boolean(following && node.nextId === following.id)
           const loops = node.nextId != null && node.nextId === firstId && !continues
@@ -112,7 +116,7 @@ export function SongMap({
               {index === gapIndex ? <div className="part-gap" data-part-gap={gapIndex} /> : null}
               <div className="song-slot" data-part-id={node.id}>
               <div
-                className={['song-block', current ? 'is-current' : '', queued ? 'is-queued' : '', selected ? 'is-selected' : '']
+                className={['song-block', current ? 'is-current' : '', queued ? 'is-queued' : '', queuedBar ? 'is-queued-bar' : '', selected ? 'is-selected' : '']
                   .filter(Boolean)
                   .join(' ')}
                 data-testid="song-block"
@@ -125,8 +129,16 @@ export function SongMap({
                   <span className="song-block-name">
                     <button
                       type="button"
-                      className={['song-led', current ? 'is-lit' : '', queued ? 'is-queued' : ''].filter(Boolean).join(' ')}
-                      aria-label={activeNodeId ? `Play ${name} after this loop` : `Play from ${name}`}
+                      className={['song-led', current ? 'is-lit' : '', queued ? 'is-queued' : '', queuedBar ? 'is-queued-bar' : ''].filter(Boolean).join(' ')}
+                      aria-label={
+                        !activeNodeId
+                          ? `Play from ${name}`
+                          : queuedBar
+                            ? `Cancel cue for ${name}`
+                            : queued
+                              ? `Cue ${name} after this bar`
+                              : `Cue ${name} after this repeat`
+                      }
                       onClick={(event) => {
                         event.stopPropagation()
                         onJump(node.id)
@@ -201,6 +213,21 @@ export function SongMap({
                     onClick={(event) => event.stopPropagation()}
                     onPointerDown={(event) => event.stopPropagation()}
                   >
+                    <label className="transport-select">
+                      <span>Bars</span>
+                      <select
+                        aria-label="Bars"
+                        data-testid="bars"
+                        value={section.bars}
+                        onChange={(event) => onBars(section.id, Number(event.target.value) as LoopBars)}
+                      >
+                        {LOOP_BARS.map((item) => (
+                          <option key={item} value={item}>
+                            {item} {item === 1 ? 'bar' : 'bars'}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
                     <div className="part-repeat">
                       <span>Repeat</span>
                       <div className="part-repeat-controls">
@@ -282,21 +309,6 @@ export function SongMap({
                             {METERS.map((item) => (
                               <option key={item} value={item}>
                                 {item}
-                              </option>
-                            ))}
-                          </select>
-                        </label>
-                        <label className="transport-select">
-                          <span>Bars</span>
-                          <select
-                            aria-label="Bars"
-                            data-testid="bars"
-                            value={section.bars}
-                            onChange={(event) => onBars(section.id, Number(event.target.value) as LoopBars)}
-                          >
-                            {LOOP_BARS.map((item) => (
-                              <option key={item} value={item}>
-                                {item} {item === 1 ? 'bar' : 'bars'}
                               </option>
                             ))}
                           </select>

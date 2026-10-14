@@ -53,17 +53,19 @@ export function AutomationPanel({
   barLength,
 }: AutomationPanelProps) {
   const [open, setOpen] = useState(true)
-  const [selected, setSelected] = useState(targets[0]?.id ?? '')
-  const target = targets.find((item) => item.id === selected) ?? targets[0]
+  const choices = targets.filter((item) => !item.divider)
+  const [selected, setSelected] = useState(choices[0]?.id ?? '')
+  const target = choices.find((item) => item.id === selected) ?? choices[0]
   const selectedId = target?.id ?? ''
-  const ids = targets.map((item) => item.id).join('|')
+  const ids = choices.map((item) => item.id).join('|')
   const onWriteRef = useRef(onWrite)
   onWriteRef.current = onWrite
 
   useEffect(() => {
-    if (targets.some((item) => item.id === selected)) return
-    setSelected(targets[0]?.id ?? '')
-  }, [ids, selected, targets])
+    const available = ids ? ids.split('|') : []
+    if (selected && available.includes(selected)) return
+    setSelected(available[0] ?? '')
+  }, [ids, selected])
 
   const start = Math.max(0, Math.min(viewStart, length))
   const end = Math.max(start, Math.min(length, start + viewLength))
@@ -133,11 +135,15 @@ export function AutomationPanel({
               value={selectedId}
               onChange={(event) => setSelected(event.target.value)}
             >
-              {targets.map((item) => (
-                <option key={item.id} value={item.id}>
-                  {item.label}
-                </option>
-              ))}
+              {targets.map((item) =>
+                item.divider ? (
+                  <hr key={item.id} />
+                ) : (
+                  <option key={item.id} value={item.id}>
+                    {item.label}
+                  </option>
+                ),
+              )}
             </select>
           </label>
           <div

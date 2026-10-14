@@ -7,16 +7,28 @@ import { Fader } from './Fader.tsx'
 type TransportProps = {
   playing: boolean
   onToggle: () => void
+  recording?: boolean
+  onRecord?: () => void
   project: Project
   onBpm: (bpm: number) => void
   onKey: (key: string) => void
   onMeter: (meter: Meter) => void
 }
 
-export function Transport({ playing, onToggle, project, onBpm, onKey, onMeter }: TransportProps) {
+function bpmFromTaps(times: number[]): number | null {
+  if (times.length < 2) return null
+  let total = 0
+  for (let index = 1; index < times.length; index += 1) total += times[index]! - times[index - 1]!
+  const bpm = Math.round(60000 / (total / (times.length - 1)))
+  if (!Number.isFinite(bpm)) return null
+  return Math.min(200, Math.max(40, bpm))
+}
+
+export function Transport({ playing, onToggle, recording = false, onRecord, project, onBpm, onKey, onMeter }: TransportProps) {
   const [open, setOpen] = useState(false)
   const popoverRef = useRef<HTMLDivElement>(null)
   const toggleRef = useRef<HTMLButtonElement>(null)
+  const taps = useRef<number[]>([])
 
   useEffect(() => {
     if (!open) return
@@ -42,8 +54,32 @@ export function Transport({ playing, onToggle, project, onBpm, onKey, onMeter }:
     }
   }, [open])
 
+  function tapTempo() {
+    const now = performance.now()
+    const previous = taps.current[taps.current.length - 1]
+    if (previous != null && now - previous > 2000) taps.current = []
+    taps.current.push(now)
+    if (taps.current.length > 8) taps.current.shift()
+    const bpm = bpmFromTaps(taps.current)
+    if (bpm != null) onBpm(bpm)
+  }
+
   return (
     <>
+      {onRecord ? (
+        <button
+          type="button"
+          className={['transport-record', recording ? 'is-on' : '', recording && playing ? 'is-live' : ''].filter(Boolean).join(' ')}
+          data-testid="record"
+          aria-pressed={recording}
+          aria-label={recording ? 'Stop recording' : 'Record'}
+          title={recording ? 'Recording — tap a track name or A–L to write the current step' : 'Arm record'}
+          onClick={onRecord}
+        >
+          <span className="record-mark" aria-hidden="true" />
+        </button>
+      ) : null}
+
       <button
         type="button"
         className={playing ? 'transport-play is-on' : 'transport-play'}
@@ -100,6 +136,16 @@ export function Transport({ playing, onToggle, project, onBpm, onKey, onMeter }:
                   onChange={onBpm}
                 />
                 <b className="transport-pop-value">{project.bpm}</b>
+                <button
+                  type="button"
+                  className="transport-tap"
+                  data-testid="tap-bpm"
+                  aria-label="Tap tempo"
+                  title="Tap along with the beat"
+                  onClick={tapTempo}
+                >
+                  Tap
+                </button>
               </div>
             </label>
 
@@ -175,7 +221,7 @@ export function Brand({ live, onLive }: { live: boolean; onLive: () => void }) {
       <div className="wordmark">
         <span className="wordmark-kicker">Groove box</span>
         <strong>Beat Forge</strong>
-        <span className="wordmark-version">VERSION 1.3</span>
+        <span className="wordmark-version">VERSION 1.4</span>
       </div>
       <button
         type="button"

@@ -44,6 +44,8 @@ type StepLaneProps = {
   originFor?: (stepIndex: number) => number
   scaleKey?: string
   onPaint: (stepIndex: number, on: boolean) => void
+  recording?: boolean
+  onRecordHold?: (down: boolean) => void
 }
 
 export function StepLane({
@@ -66,6 +68,8 @@ export function StepLane({
   originFor,
   scaleKey,
   onPaint,
+  recording = false,
+  onRecordHold,
 }: StepLaneProps) {
   const paint = useRef<{ on: boolean; last: number } | null>(null)
   const onPaintRef = useRef(onPaint)
@@ -163,7 +167,19 @@ export function StepLane({
 
   return (
     <div className={laneClass(solo, muted)} style={style} data-lane={instrumentId}>
-      <span className="lane-name">{name}</span>
+      {recording && onRecordHold ? (
+        <button
+          type="button"
+          className="lane-name is-record"
+          data-testid={`record-pad-${instrumentId}`}
+          aria-label={`Record ${name}`}
+          onPointerDown={(event) => beginPadHold(onRecordHold, event)}
+        >
+          {name}
+        </button>
+      ) : (
+        <span className="lane-name">{name}</span>
+      )}
       <div className="step-row" style={{ '--groups': groups.length, '--group-size': groupSize } as CSSProperties}>
         {groups.map((group, groupIndex) => (
           <div key={groupIndex} className="step-group">
@@ -313,4 +329,17 @@ export function AccentRow({ accent, playhead, groupSize = 4, viewStart = 0, view
       </div>
     </div>
   )
+}
+
+function beginPadHold(hold: ((down: boolean) => void) | undefined, event: { button: number; preventDefault(): void }) {
+  if (!hold || event.button !== 0) return
+  event.preventDefault()
+  hold(true)
+  const up = () => {
+    hold(false)
+    window.removeEventListener('pointerup', up)
+    window.removeEventListener('pointercancel', up)
+  }
+  window.addEventListener('pointerup', up)
+  window.addEventListener('pointercancel', up)
 }

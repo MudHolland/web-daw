@@ -1,7 +1,7 @@
 import { applyRackAutomation, heardMasterMix } from '../model/automation.ts'
-import { openRack, type Project, type Rack } from '../model/project.ts'
+import { groupSlot, openRack, type Project, type Rack } from '../model/project.ts'
 import { formatPan } from './ChannelStrip.tsx'
-import { instrumentColor } from './drums.ts'
+import { groupColor, instrumentColor } from './drums.ts'
 import { Fader, GainFader, formatGainDb } from './Fader.tsx'
 
 type MixerConsoleProps = {
@@ -14,6 +14,10 @@ type MixerConsoleProps = {
   onSelectGroup: (groupId: string) => void
   onMute: (instrumentId: string) => void
   onSolo: (instrumentId: string) => void
+  onMuteGroup?: (groupId: string) => void
+  onSoloGroup?: (groupId: string) => void
+  recording?: boolean
+  onRecordHold?: (instrumentId: string, down: boolean) => void
   onTrackRack: (instrumentId: string, update: (rack: Rack) => Rack) => void
   onGroupRack: (groupId: string, update: (rack: Rack) => Rack) => void
   onMaster: (master: number) => void
@@ -31,6 +35,10 @@ export function MixerConsole({
   onSelectGroup,
   onMute,
   onSolo,
+  onMuteGroup,
+  onSoloGroup,
+  recording = false,
+  onRecordHold,
   onTrackRack,
   onGroupRack,
   onMaster,
@@ -81,21 +89,31 @@ export function MixerConsole({
           <span className="console-strip-ch">CH {chNum}</span>
           <button
             type="button"
-            className="console-strip-name"
-            title={`Open ${instrument.name} in editor`}
-            onClick={() => onSelectInstrument(instrument.id)}
+            className={['console-strip-name', recording ? 'is-record' : ''].filter(Boolean).join(' ')}
+            title={recording ? `Record ${instrument.name}` : `Open ${instrument.name} in editor`}
+            onPointerDown={(event) => {
+              if (!recording) return
+              beginPadHold((down) => onRecordHold?.(instrument.id, down), event)
+            }}
+            onClick={() => {
+              if (!recording) onSelectInstrument(instrument.id)
+            }}
           >
             {instrument.name}
           </button>
           <button
             type="button"
             className="console-strip-badge console-strip-preview"
-            title={`Audition ${instrument.name}`}
-            aria-label={`Audition ${instrument.name}`}
+            title={recording ? `Record ${instrument.name}` : `Audition ${instrument.name}`}
+            aria-label={recording ? `Record ${instrument.name}` : `Audition ${instrument.name}`}
             data-testid={`console-preview-${instrument.id}`}
+            onPointerDown={(event) => {
+              event.stopPropagation()
+              if (recording) beginPadHold((down) => onRecordHold?.(instrument.id, down), event)
+            }}
             onClick={(e) => {
               e.stopPropagation()
-              onPreview?.(instrument.id)
+              if (!recording) onPreview?.(instrument.id)
             }}
           >
             {voiceBadge}
@@ -159,9 +177,11 @@ export function MixerConsole({
         {project.groups.map((group, index) => {
           const stored = section?.groups?.[group.id] ?? openRack(1)
           const rack = motionAt >= 0 ? applyRackAutomation(stored, motionAt) : stored
-          const lead = project.instruments.find((item) => item.id === group.instrumentIds[0])
-          const color = lead ? instrumentColor(lead) : '#ffb000'
+          const color = groupColor(group, project.instruments)
           const voiceLevel = activity[group.id] ?? Math.max(0, ...group.instrumentIds.map((id) => activity[id] ?? 0))
+          const flags = groupSlot(section, group.id)
+          const groupMuted = !flags.enabled
+          const groupSoloed = flags.solo
           const grNum = String(index + 1).padStart(2, '0')
           const members = group.instrumentIds
             .map((id) => project.instruments.find((item) => item.id === id))
@@ -170,7 +190,7 @@ export function MixerConsole({
           return (
             <div key={group.id} className="console-bay">
               <div
-                className="console-strip console-strip-group"
+                className={['console-strip', 'console-strip-group', groupMuted ? 'is-muted' : '', groupSoloed ? 'is-soloed' : ''].filter(Boolean).join(' ')}
                 style={{ '--voice': color } as React.CSSProperties}
                 data-testid={`console-strip-group-${group.id}`}
               >
@@ -187,8 +207,27 @@ export function MixerConsole({
                   </button>
                   <span className="console-strip-badge">GRP</span>
                 </div>
-                <div className="console-strip-actions is-placeholder" aria-hidden="true">
-                  <span className="console-master-label">BUS</span>
+                <div className="console-strip-actions">
+                  <button
+                    type="button"
+                    className={['console-btn', 'console-btn-mute', groupMuted ? 'is-active' : ''].filter(Boolean).join(' ')}
+                    aria-pressed={groupMuted}
+                    title={groupMuted ? `Unmute ${group.name}` : `Mute ${group.name}`}
+                    data-testid={`console-mute-group-${group.id}`}
+                    onClick={() => onMuteGroup?.(group.id)}
+                  >
+                    M
+                  </button>
+                  <button
+                    type="button"
+                    className={['console-btn', 'console-btn-solo', groupSoloed ? 'is-active' : ''].filter(Boolean).join(' ')}
+                    aria-pressed={groupSoloed}
+                    title={groupSoloed ? `Unsolo ${group.name}` : `Solo ${group.name}`}
+                    data-testid={`console-solo-group-${group.id}`}
+                    onClick={() => onSoloGroup?.(group.id)}
+                  >
+                    S
+                  </button>
                 </div>
                 <div className="console-strip-fader-area">
                   <div className="console-channel-meter" aria-hidden="true">
@@ -315,4 +354,17 @@ function ConsoleLedColumn({ level }: { level: number }) {
       })}
     </span>
   )
+}
+
+function beginPadHold(hold: ((down: boolean) => void) | undefined, event: { button: number; preventDefault(): void }) {
+  if (!hold || event.button !== 0) return
+  event.preventDefault()
+  hold(true)
+  const up = () => {
+    hold(false)
+    window.removeEventListener('pointerup', up)
+    window.removeEventListener('pointercancel', up)
+  }
+  window.addEventListener('pointerup', up)
+  window.addEventListener('pointercancel', up)
 }

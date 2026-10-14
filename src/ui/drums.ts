@@ -1,4 +1,4 @@
-import { catalogVoice, type CatalogId, type DrumId, type Instrument } from '../model/project.ts'
+import { catalogVoice, type CatalogId, type DrumId, type Instrument, type InstrumentGroup } from '../model/project.ts'
 
 export const DRUM_COLOR: Record<DrumId, string> = {
   kick: '#ffb000',
@@ -46,6 +46,12 @@ export const TRACK_COLORS = [
 
 export function instrumentColor(instrument: Instrument): string {
   return instrument.color ?? voiceColor(instrument.voice)
+}
+
+export function groupColor(group: InstrumentGroup, instruments: Instrument[]): string {
+  if (group.color) return group.color
+  const lead = instruments.find((item) => item.id === group.instrumentIds[0])
+  return lead ? instrumentColor(lead) : '#6b7280'
 }
 
 export function catalogColor(catalog: CatalogId): string {

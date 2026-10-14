@@ -4,6 +4,7 @@ import {
   DRUM_KITS,
   catalogEntries,
   familiesForGroup,
+  groupSlot,
   kitLabel,
   slotEnabled,
   type CatalogEntry,
@@ -13,7 +14,7 @@ import {
   type Project,
   type SoundFamily,
 } from '../model/project.ts'
-import { catalogColor, instrumentColor, TRACK_COLORS } from './drums.ts'
+import { catalogColor, groupColor, instrumentColor, TRACK_COLORS } from './drums.ts'
 
 export type Selection =
   | { kind: 'song' }
@@ -30,16 +31,23 @@ type GroupListProps = {
   onSelectGroup: (groupId: string) => void
   onSelectInstrument: (instrumentId: string) => void
   onPreview: (instrumentId: string) => void
+  onRecordHold?: (instrumentId: string, down: boolean) => void
+  recording?: boolean
   onMute: (instrumentId: string) => void
   onSolo: (instrumentId: string) => void
+  onMuteGroup: (groupId: string) => void
+  onSoloGroup: (groupId: string) => void
   onAddGroup: (name: string) => void
   onAddTrack: (groupId: string | null, catalog: CatalogId) => void
   onPreviewCatalog: (catalog: CatalogId) => void
   onRenameGroup: (groupId: string, name: string) => void
   onRenameInstrument: (instrumentId: string, name: string) => void
   onPlace: (instrumentId: string, groupId: string, index: number) => void
+  onPlaceGroup: (groupId: string, index: number) => void
   onDelete: (instrumentId: string) => void
+  onDeleteGroup: (groupId: string) => void
   onColor: (instrumentId: string, color: string | null) => void
+  onGroupColor: (groupId: string, color: string | null) => void
   playing: boolean
   activity: Record<string, number>
 }
@@ -54,21 +62,28 @@ export function GroupList({
   onSelectGroup,
   onSelectInstrument,
   onPreview,
+  onRecordHold,
+  recording = false,
   onMute,
   onSolo,
+  onMuteGroup,
+  onSoloGroup,
   onAddGroup,
   onAddTrack,
   onPreviewCatalog,
   onRenameGroup,
   onRenameInstrument,
   onPlace,
+  onPlaceGroup,
   onDelete,
+  onDeleteGroup,
   onColor,
+  onGroupColor,
   playing,
   activity,
 }: GroupListProps) {
   const [menu, setMenu] = useState(false)
-  const [colorPickId, setColorPickId] = useState<string | null>(null)
+  const [colorPick, setColorPick] = useState<{ kind: 'track' | 'group'; id: string } | null>(null)
   const [drag, setDrag] = useState<TrackDrag | null>(null)
   const addingGroup =
     selection.kind === 'group'
@@ -85,36 +100,60 @@ export function GroupList({
         </button>
       </div>
       <div className="group-list">
-        {project.groups.map((group) => (
-          <GroupBlock
-            key={group.id}
-            group={group}
-            project={project}
-            open={openGroups[group.id] !== false}
-            selected={selection.kind === 'group' && selection.groupId === group.id}
-            selectedInstrumentId={selection.kind === 'instrument' ? selection.instrumentId : null}
-            sectionId={sectionId}
-            onToggle={() => onToggleGroup(group.id)}
-            onSelect={() => onSelectGroup(group.id)}
-            onSelectInstrument={onSelectInstrument}
-            onPreview={onPreview}
-            onMute={onMute}
-            onSolo={onSolo}
-            onRename={(name) => onRenameGroup(group.id, name)}
-            onRenameInstrument={onRenameInstrument}
-            dragId={drag?.instrumentId ?? null}
-            dropIndex={drag?.over && drag.over !== 'delete' && drag.over.groupId === group.id ? drag.over.index : null}
-            playing={playing}
-            activity={activity}
-            colorPickId={colorPickId}
-            onGrip={(event, instrument) => beginDrag(event, instrument, group.id)}
-            onColor={(instrumentId, color) => {
-              setColorPickId(null)
-              onColor(instrumentId, color)
-            }}
-            onClosePicker={() => setColorPickId(null)}
-          />
-        ))}
+        {project.groups.map((group) => {
+          const slot = groupSlot(project.sections.find((item) => item.id === sectionId), group.id)
+          const remaining = project.groups.filter((item) => item.id !== (drag?.kind === 'group' ? drag.groupId : ''))
+          const restIndex = remaining.findIndex((item) => item.id === group.id)
+          const groupDrop = drag?.kind === 'group' && drag.over !== 'delete' ? drag.over : null
+          const showGap = groupDrop != null && restIndex === groupDrop && group.id !== drag?.groupId
+          return (
+            <div key={group.id}>
+              {showGap ? <div className="group-gap" data-group-drop={restIndex} /> : null}
+              <GroupBlock
+                group={group}
+                project={project}
+                open={openGroups[group.id] !== false}
+                selected={selection.kind === 'group' && selection.groupId === group.id}
+                selectedInstrumentId={selection.kind === 'instrument' ? selection.instrumentId : null}
+                sectionId={sectionId}
+                muted={!slot.enabled}
+                solo={slot.solo}
+                lifted={drag?.kind === 'group' && drag.groupId === group.id}
+                onToggle={() => onToggleGroup(group.id)}
+                onSelect={() => onSelectGroup(group.id)}
+                onSelectInstrument={onSelectInstrument}
+                onPreview={onPreview}
+                recording={recording}
+                onRecordHold={onRecordHold}
+                onMute={onMute}
+                onSolo={onSolo}
+                onMuteGroup={() => onMuteGroup(group.id)}
+                onSoloGroup={() => onSoloGroup(group.id)}
+                onRename={(name) => onRenameGroup(group.id, name)}
+                onRenameInstrument={onRenameInstrument}
+                dragId={drag?.kind === 'track' ? drag.instrumentId : null}
+                dropIndex={drag?.kind === 'track' && drag.over && drag.over !== 'delete' && drag.over.groupId === group.id ? drag.over.index : null}
+                playing={playing}
+                activity={activity}
+                colorPick={colorPick}
+                onGrip={(event, instrument) => beginDrag(event, instrument, group.id)}
+                onGroupGrip={(event) => beginGroupDrag(event, group)}
+                onColor={(instrumentId, color) => {
+                  setColorPick(null)
+                  onColor(instrumentId, color)
+                }}
+                onGroupColor={(color) => {
+                  setColorPick(null)
+                  onGroupColor(group.id, color)
+                }}
+                onClosePicker={() => setColorPick(null)}
+              />
+            </div>
+          )
+        })}
+        {drag?.kind === 'group' && drag.over !== 'delete' && drag.over === project.groups.filter((item) => item.id !== drag.groupId).length ? (
+          <div className="group-gap" data-group-drop={drag.over} />
+        ) : null}
       </div>
       {drag ? (
         <div className="track-ghost" style={{ left: drag.x, top: drag.y, '--voice': drag.color } as CSSProperties}>
@@ -169,8 +208,9 @@ export function GroupList({
 
     const lift = (pointer: PointerEvent) => {
       lifted = true
-      setColorPickId(null)
+      setColorPick(null)
       setDrag({
+        kind: 'track',
         instrumentId: instrument.id,
         groupId,
         name: instrument.name,
@@ -187,14 +227,14 @@ export function GroupList({
         lift(pointer)
       }
       const over = dropTarget(pointer.clientX, pointer.clientY, instrument.id)
-      setDrag((current) => (current ? { ...current, x: pointer.clientX, y: pointer.clientY, over } : current))
+      setDrag((current) => (current && current.kind === 'track' ? { ...current, x: pointer.clientX, y: pointer.clientY, over } : current))
     }
     const finish = (pointer: PointerEvent) => {
       window.removeEventListener('pointermove', move)
       window.removeEventListener('pointerup', finish)
       window.removeEventListener('pointercancel', finish)
       if (!lifted) {
-        setColorPickId((current) => (current === instrument.id ? null : instrument.id))
+        setColorPick((current) => (current?.kind === 'track' && current.id === instrument.id ? null : { kind: 'track', id: instrument.id }))
         return
       }
       const over = dropTarget(pointer.clientX, pointer.clientY, instrument.id)
@@ -206,24 +246,83 @@ export function GroupList({
     window.addEventListener('pointerup', finish)
     window.addEventListener('pointercancel', finish)
   }
+
+  function beginGroupDrag(event: ReactPointerEvent<HTMLElement>, group: InstrumentGroup) {
+    event.preventDefault()
+    event.stopPropagation()
+    const originX = event.clientX
+    const originY = event.clientY
+    let lifted = false
+    const voice = groupColor(group, project.instruments)
+
+    const lift = (pointer: PointerEvent) => {
+      lifted = true
+      setColorPick(null)
+      setDrag({
+        kind: 'group',
+        groupId: group.id,
+        name: group.name,
+        color: voice,
+        x: pointer.clientX,
+        y: pointer.clientY,
+        over: project.groups.findIndex((item) => item.id === group.id),
+      })
+    }
+
+    const move = (pointer: PointerEvent) => {
+      if (!lifted) {
+        if (Math.hypot(pointer.clientX - originX, pointer.clientY - originY) < 8) return
+        lift(pointer)
+      }
+      const over = groupDropTarget(pointer.clientX, pointer.clientY, group.id)
+      setDrag((current) => (current && current.kind === 'group' ? { ...current, x: pointer.clientX, y: pointer.clientY, over } : current))
+    }
+    const finish = (pointer: PointerEvent) => {
+      window.removeEventListener('pointermove', move)
+      window.removeEventListener('pointerup', finish)
+      window.removeEventListener('pointercancel', finish)
+      if (!lifted) {
+        setColorPick((current) => (current?.kind === 'group' && current.id === group.id ? null : { kind: 'group', id: group.id }))
+        return
+      }
+      const over = groupDropTarget(pointer.clientX, pointer.clientY, group.id)
+      setDrag(null)
+      if (over === 'delete') onDeleteGroup(group.id)
+      else if (over != null) onPlaceGroup(group.id, over)
+    }
+    window.addEventListener('pointermove', move)
+    window.addEventListener('pointerup', finish)
+    window.addEventListener('pointercancel', finish)
+  }
 }
 
-type TrackDrag = {
-  instrumentId: string
-  groupId: string
-  name: string
-  color: string
-  x: number
-  y: number
-  over: { groupId: string; index: number } | 'delete' | null
-}
+type TrackDrag =
+  | {
+      kind: 'track'
+      instrumentId: string
+      groupId: string
+      name: string
+      color: string
+      x: number
+      y: number
+      over: { groupId: string; index: number } | 'delete' | null
+    }
+  | {
+      kind: 'group'
+      groupId: string
+      name: string
+      color: string
+      x: number
+      y: number
+      over: number | 'delete' | null
+    }
 
 function indexInGroup(groupId: string, instrumentId: string): number {
   const rows = document.querySelectorAll(`[data-group-id="${groupId}"] [data-track-id]`)
   return Math.max(0, [...rows].findIndex((row) => (row as HTMLElement).dataset.trackId === instrumentId))
 }
 
-function dropTarget(x: number, y: number, draggingId: string): TrackDrag['over'] {
+function dropTarget(x: number, y: number, draggingId: string): Extract<TrackDrag, { kind: 'track' }>['over'] {
   const stack = document.elementsFromPoint(x, y)
   if (stack.some((node) => node instanceof Element && node.closest('[data-delete-tracks]'))) return 'delete'
   const hole = stack.find((node) => node instanceof Element && node.closest('[data-drop-index]'))
@@ -249,6 +348,19 @@ function dropTarget(x: number, y: number, draggingId: string): TrackDrag['over']
   if (!groupEl?.dataset.groupId) return null
   const rows = [...groupEl.querySelectorAll<HTMLElement>('[data-track-id]')].filter((item) => item.dataset.trackId !== draggingId)
   return { groupId: groupEl.dataset.groupId, index: rows.length }
+}
+
+function groupDropTarget(x: number, y: number, draggingId: string): number | 'delete' | null {
+  const stack = document.elementsFromPoint(x, y)
+  if (stack.some((node) => node instanceof Element && node.closest('[data-delete-tracks]'))) return 'delete'
+  const blocks = [...document.querySelectorAll<HTMLElement>('.group-list [data-group-id]')].filter(
+    (item) => item.dataset.groupId !== draggingId,
+  )
+  for (let i = 0; i < blocks.length; i++) {
+    const rect = blocks[i]!.getBoundingClientRect()
+    if (y < rect.top + rect.height / 2) return i
+  }
+  return blocks.length
 }
 
 export function AddMenu({
@@ -356,21 +468,30 @@ type GroupBlockProps = {
   selected: boolean
   selectedInstrumentId: string | null
   sectionId: string
+  muted: boolean
+  solo: boolean
+  lifted: boolean
   onToggle: () => void
   onSelect: () => void
   onSelectInstrument: (instrumentId: string) => void
   onPreview: (instrumentId: string) => void
+  recording: boolean
+  onRecordHold?: (instrumentId: string, down: boolean) => void
   onMute: (instrumentId: string) => void
   onSolo: (instrumentId: string) => void
+  onMuteGroup: () => void
+  onSoloGroup: () => void
   onRename: (name: string) => void
   onRenameInstrument: (instrumentId: string, name: string) => void
   dragId: string | null
   dropIndex: number | null
   playing: boolean
   activity: Record<string, number>
-  colorPickId: string | null
+  colorPick: { kind: 'track' | 'group'; id: string } | null
   onGrip: (event: ReactPointerEvent<HTMLElement>, instrument: Instrument) => void
+  onGroupGrip: (event: ReactPointerEvent<HTMLElement>) => void
   onColor: (instrumentId: string, color: string | null) => void
+  onGroupColor: (color: string | null) => void
   onClosePicker: () => void
 }
 
@@ -381,28 +502,49 @@ function GroupBlock({
   selected,
   selectedInstrumentId,
   sectionId,
+  muted,
+  solo,
+  lifted,
   onToggle,
   onSelect,
   onSelectInstrument,
   onPreview,
+  recording,
+  onRecordHold,
   onMute,
   onSolo,
+  onMuteGroup,
+  onSoloGroup,
   onRename,
   onRenameInstrument,
   playing,
   activity,
   dragId,
   dropIndex,
-  colorPickId,
+  colorPick,
   onGrip,
+  onGroupGrip,
   onColor,
+  onGroupColor,
   onClosePicker,
 }: GroupBlockProps) {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(group.name)
+  const headRef = useRef<HTMLDivElement>(null)
   const instruments = group.instrumentIds
     .map((id) => project.instruments.find((item) => item.id === id))
     .filter((item): item is Instrument => item !== undefined)
+  const color = groupColor(group, project.instruments)
+  const picking = colorPick?.kind === 'group' && colorPick.id === group.id
+
+  useEffect(() => {
+    if (!picking) return
+    const close = (event: PointerEvent) => {
+      if (!headRef.current?.contains(event.target as Node)) onClosePicker()
+    }
+    window.addEventListener('pointerdown', close)
+    return () => window.removeEventListener('pointerdown', close)
+  }, [picking, onClosePicker])
 
   function commit() {
     setEditing(false)
@@ -413,20 +555,41 @@ function GroupBlock({
   let place = 0
 
   return (
-    <section className={selected ? 'group is-selected' : 'group'} data-group-id={group.id}>
-      <div className="group-head">
+    <section
+      className={[selected ? 'group is-selected' : 'group', muted ? 'is-muted' : '', solo ? 'is-solo' : '', lifted ? 'is-lifted' : '']
+        .filter(Boolean)
+        .join(' ')}
+      data-group-id={group.id}
+    >
+      <div ref={headRef} className="group-head" style={{ '--voice': color } as CSSProperties}>
         <button
           type="button"
-          className={open ? 'chevron is-open' : 'chevron'}
-          data-testid={`group-toggle-${group.id}`}
-          aria-expanded={open}
-          aria-label={open ? `Collapse ${group.name}` : `Expand ${group.name}`}
-          onClick={onToggle}
-        >
-          <svg className="chevron-icon" viewBox="0 0 12 12" aria-hidden="true">
-            <path d="M2.2 4.2 L6 8 L9.8 4.2" fill="none" stroke="currentColor" strokeWidth="1.6" />
-          </svg>
-        </button>
+          className="group-grip"
+          aria-label={`Move or recolor ${group.name}`}
+          aria-haspopup="dialog"
+          aria-expanded={picking}
+          style={activityStyle(playing, activity[group.id] ?? instruments.reduce((peak, item) => Math.max(peak, activity[item.id] ?? 0), 0))}
+          onPointerDown={onGroupGrip}
+        />
+        {picking ? (
+          <div className="color-picker" role="dialog" aria-label={`Color for ${group.name}`}>
+            {TRACK_COLORS.map((swatch) => {
+              const current = swatch === color
+              return (
+                <button
+                  key={swatch}
+                  type="button"
+                  className={current ? 'color-swatch is-on' : 'color-swatch'}
+                  style={{ background: swatch }}
+                  aria-label={swatch}
+                  aria-pressed={current}
+                  onPointerDown={(event) => event.stopPropagation()}
+                  onClick={() => onGroupColor(group.color === swatch ? null : swatch)}
+                />
+              )
+            })}
+          </div>
+        ) : null}
         {editing ? (
           <input
             className="rename"
@@ -455,6 +618,46 @@ function GroupBlock({
             {group.name}
           </button>
         )}
+        <span className={['group-tools', muted || solo ? 'is-on' : ''].filter(Boolean).join(' ')}>
+          <button
+            type="button"
+            className={muted ? 'mute is-on' : 'mute'}
+            data-testid={`group-mute-${group.id}`}
+            aria-pressed={muted}
+            aria-label={muted ? `Unmute ${group.name}` : `Mute ${group.name}`}
+            onClick={(event) => {
+              event.stopPropagation()
+              onMuteGroup()
+            }}
+          >
+            M
+          </button>
+          <button
+            type="button"
+            className={solo ? 'solo is-on' : 'solo'}
+            data-testid={`group-solo-${group.id}`}
+            aria-pressed={solo}
+            aria-label={`Solo ${group.name}`}
+            onClick={(event) => {
+              event.stopPropagation()
+              onSoloGroup()
+            }}
+          >
+            S
+          </button>
+        </span>
+        <button
+          type="button"
+          className={open ? 'chevron is-open' : 'chevron'}
+          data-testid={`group-toggle-${group.id}`}
+          aria-expanded={open}
+          aria-label={open ? `Collapse ${group.name}` : `Expand ${group.name}`}
+          onClick={onToggle}
+        >
+          <svg className="chevron-icon" viewBox="0 0 12 12" aria-hidden="true">
+            <path d="M2.2 4.2 L6 8 L9.8 4.2" fill="none" stroke="currentColor" strokeWidth="1.6" />
+          </svg>
+        </button>
       </div>
       {open ? (
         <ul>
@@ -473,11 +676,13 @@ function GroupBlock({
                 gap={openGap ? slot : null}
                 onSelect={() => onSelectInstrument(instrument.id)}
                 onPreview={() => onPreview(instrument.id)}
+                recording={recording}
+                onRecordHold={(down) => onRecordHold?.(instrument.id, down)}
                 onMute={() => onMute(instrument.id)}
                 onSolo={() => onSolo(instrument.id)}
                 playing={playing}
                 level={activity[instrument.id] ?? 0}
-                picking={colorPickId === instrument.id}
+                picking={colorPick?.kind === 'track' && colorPick.id === instrument.id}
                 onGrip={(event) => onGrip(event, instrument)}
                 onRename={(name) => onRenameInstrument(instrument.id, name)}
                 onColor={(color) => onColor(instrument.id, color)}
@@ -501,6 +706,8 @@ function TrackRow({
   gap,
   onSelect,
   onPreview,
+  recording,
+  onRecordHold,
   onMute,
   onSolo,
   playing,
@@ -522,6 +729,8 @@ function TrackRow({
   picking: boolean
   onSelect: () => void
   onPreview: () => void
+  recording: boolean
+  onRecordHold?: (down: boolean) => void
   onMute: () => void
   onSolo: () => void
   onGrip: (event: ReactPointerEvent<HTMLElement>) => void
@@ -565,7 +774,7 @@ function TrackRow({
         aria-label={`Move or recolor ${instrument.name}`}
         aria-haspopup="dialog"
         aria-expanded={picking}
-        style={playing ? { opacity: 0.2 + 0.8 * Math.min(1, level) } : undefined}
+        style={activityStyle(playing, level)}
         onPointerDown={onGrip}
       />
       {picking ? (
@@ -616,8 +825,17 @@ function TrackRow({
         </button>
       )}
       <span className="track-side">
-        <span className="track-tools">
-          <button type="button" className="pad" data-testid={`pad-${instrument.id}`} style={{ background: color }} aria-label={`Play ${instrument.name}`} onClick={onPreview} />
+        <span className={['track-tools', muted || solo ? 'is-on' : ''].filter(Boolean).join(' ')}>
+          <button
+            type="button"
+            className={muted ? 'mute is-on' : 'mute'}
+            data-testid={`mute-${instrument.id}`}
+            aria-pressed={muted}
+            aria-label={muted ? `Unmute ${instrument.name}` : `Mute ${instrument.name}`}
+            onClick={onMute}
+          >
+            M
+          </button>
           <button
             type="button"
             className={solo ? 'solo is-on' : 'solo'}
@@ -633,12 +851,40 @@ function TrackRow({
           type="button"
           className={muted ? 'track-light is-off' : 'track-light'}
           style={muted ? undefined : { background: color }}
-          aria-pressed={!muted}
-          aria-label={muted ? `Unmute ${instrument.name}` : `Mute ${instrument.name}`}
-          onClick={onMute}
+          data-testid={`pad-${instrument.id}`}
+          aria-label={`Play ${instrument.name}`}
+          onPointerDown={(event) => {
+            if (recording) beginPadHold(onRecordHold, event)
+          }}
+          onClick={() => {
+            if (!recording) onPreview()
+          }}
         />
       </span>
     </li>
     </>
   )
+}
+
+function activityStyle(playing: boolean, level: number): CSSProperties | undefined {
+  if (!playing) return undefined
+  const pulse = Math.min(1, Math.pow(Math.max(0, level), 0.38) * 1.35)
+  return {
+    opacity: 0.42 + 0.58 * pulse,
+    filter: `brightness(${1 + pulse * 1.55})`,
+    boxShadow: pulse > 0.06 ? `0 0 ${8 + pulse * 18}px color-mix(in srgb, var(--voice) ${Math.round(40 + pulse * 60)}%, transparent)` : undefined,
+  }
+}
+
+function beginPadHold(hold: ((down: boolean) => void) | undefined, event: { button: number; preventDefault(): void }) {
+  if (!hold || event.button !== 0) return
+  event.preventDefault()
+  hold(true)
+  const up = () => {
+    hold(false)
+    window.removeEventListener('pointerup', up)
+    window.removeEventListener('pointercancel', up)
+  }
+  window.addEventListener('pointerup', up)
+  window.addEventListener('pointercancel', up)
 }

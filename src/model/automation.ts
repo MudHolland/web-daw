@@ -29,6 +29,7 @@ export type AutomationTarget = {
   min: number
   max: number
   ticks?: number
+  divider?: boolean
 }
 
 const FX_LABEL: Partial<Record<InsertId, string>> = {
@@ -56,6 +57,7 @@ export function automationTargets(rack: Rack, options?: { hideLevel?: boolean })
   const targets: AutomationTarget[] = []
   if (!options?.hideLevel) targets.push({ id: 'mix.level', label: 'Mix.level', min: 0, max: 1 })
   targets.push({ id: 'mix.pan', label: 'Mix.pan', min: -1, max: 1 })
+  if (present.has('probability')) targets.push({ id: 'mix.probability', label: 'Chance', min: 0, max: 1 })
   if (present.has('eq')) {
     for (const band of ['low', 'mid', 'high'] as const) {
       targets.push({ id: `eq.${band}`, label: `EQ.${band}`, min: -24, max: 24 })
@@ -88,6 +90,7 @@ export function automationTargets(rack: Rack, options?: { hideLevel?: boolean })
 export function readParam(rack: Rack, id: string): number {
   if (id === 'mix.level') return rack.level
   if (id === 'mix.pan') return rack.pan
+  if (id === 'mix.probability') return rack.probability ?? 1
   if (id === 'eq.low') return rack.eq.low
   if (id === 'eq.mid') return rack.eq.mid
   if (id === 'eq.high') return rack.eq.high
@@ -104,6 +107,7 @@ export function readParam(rack: Rack, id: string): number {
 export function writeParam(rack: Rack, id: string, value: number): Rack {
   if (id === 'mix.level') return { ...rack, level: clampGain(value) }
   if (id === 'mix.pan') return { ...rack, pan: clamp(value, -1, 1) }
+  if (id === 'mix.probability') return { ...rack, probability: clamp(value, 0, 1) }
   if (id === 'eq.low' || id === 'eq.mid' || id === 'eq.high') {
     const band = id.slice(3) as 'low' | 'mid' | 'high'
     return { ...rack, eq: { ...rack.eq, [band]: clamp(value, -24, 24) } }
@@ -133,6 +137,7 @@ export function storeOf(id: string, slider: number): number {
 export function formatAutomation(id: string, stored: number): string {
   if (id === 'mix.level' || id === 'master.level' || id.endsWith('.level')) return formatGainDb(stored)
   if (id === 'master.shuffle' || id === 'master.accent') return String(Math.round(stored * 100))
+  if (id === 'mix.probability' || id.endsWith('.probability')) return `${Math.round(stored * 100)}%`
   if (id === 'mix.pan' || id === 'master.pan' || id.endsWith('.pan')) {
     const rounded = Math.round(stored * 100)
     if (rounded === 0) return 'C'
@@ -209,6 +214,7 @@ export function hasAutomation(steps: (number | null)[] | undefined): boolean {
 export function paramAvailable(rack: Rack, id: string): boolean {
   if (id === 'mix.level' || id === 'mix.pan') return true
   const inserts = new Set(liveInserts(rack))
+  if (id === 'mix.probability') return inserts.has('probability')
   if (id.startsWith('eq.')) return inserts.has('eq')
   const fx = id.match(/^fx\.([^.]+)\./)
   if (fx) return inserts.has(fx[1] as InsertId)
@@ -244,34 +250,50 @@ export function songAutomationTargets(project: Project, section?: Section): Auto
   ]
   const bus = section?.bus ?? openRack(1)
   for (const item of automationTargets(bus, { hideLevel: true })) {
-    if (item.id === 'mix.pan') continue
+    if (item.id === 'mix.pan' || item.id === 'mix.probability') continue
     targets.push(item)
   }
-  project.groups.forEach((group, index) => {
-    const gr = groupLabel(index)
-    targets.push({ id: `group.${group.id}.level`, label: `${gr}.level`, min: 0, max: 1 })
-    targets.push({ id: `group.${group.id}.pan`, label: `${gr}.pan`, min: -1, max: 1 })
+  if (project.groups.length > 0) targets.push({ id: 'div-groups', label: '', min: 0, max: 0, divider: true })
+  project.groups.forEach((group) => {
+    const name = group.name.trim() || 'Group'
+    targets.push({ id: `group.${group.id}.level`, label: `${name}.level`, min: 0, max: 1 })
+    targets.push({ id: `group.${group.id}.pan`, label: `${name}.pan`, min: -1, max: 1 })
+    const groupRack = section?.groups?.[group.id]
+    if (groupRack?.inserts.includes('probability')) {
+      targets.push({ id: `group.${group.id}.probability`, label: `${name}.chance`, min: 0, max: 1 })
+    }
   })
-  project.instruments.forEach((instrument, index) => {
-    const ch = channelLabel(index)
-    targets.push({ id: `track.${instrument.id}.level`, label: `${ch}.level`, min: 0, max: 1 })
-    targets.push({ id: `track.${instrument.id}.pan`, label: `${ch}.pan`, min: -1, max: 1 })
+  if (project.instruments.length > 0) targets.push({ id: 'div-channels', label: '', min: 0, max: 0, divider: true })
+  project.instruments.forEach((instrument) => {
+    const name = instrument.name.trim() || 'Channel'
+    targets.push({ id: `track.${instrument.id}.level`, label: `${name}.level`, min: 0, max: 1 })
+    targets.push({ id: `track.${instrument.id}.pan`, label: `${name}.pan`, min: -1, max: 1 })
+    const trackRack = section?.slots[instrument.id]?.rack ?? rackFromInstrument(instrument)
+    if (trackRack.inserts.includes('probability')) {
+      targets.push({ id: `track.${instrument.id}.probability`, label: `${name}.chance`, min: 0, max: 1 })
+    }
   })
   return targets
 }
 
+function mixParamOf(field: string): string {
+  if (field === 'level') return 'mix.level'
+  if (field === 'pan') return 'mix.pan'
+  return 'mix.probability'
+}
+
 export function songReadSteps(project: Project, section: Section | undefined, id: string): (number | null)[] {
   if (!section) return []
-  const track = id.match(/^track\.([^.]+)\.(level|pan)$/)
+  const track = id.match(/^track\.([^.]+)\.(level|pan|probability)$/)
   if (track) {
     const instrument = project.instruments.find((item) => item.id === track[1])
     const rack = section.slots[track[1]]?.rack ?? (instrument ? rackFromInstrument(instrument) : openRack())
-    return rack.automation?.[track[2] === 'level' ? 'mix.level' : 'mix.pan'] ?? []
+    return rack.automation?.[mixParamOf(track[2]!)] ?? []
   }
-  const group = id.match(/^group\.([^.]+)\.(level|pan)$/)
+  const group = id.match(/^group\.([^.]+)\.(level|pan|probability)$/)
   if (group) {
     const rack = section.groups?.[group[1]] ?? openRack(1)
-    return rack.automation?.[group[2] === 'level' ? 'mix.level' : 'mix.pan'] ?? []
+    return rack.automation?.[mixParamOf(group[2]!)] ?? []
   }
   if (id === 'master.pan') return section.bus?.automation?.['mix.pan'] ?? []
   return section.bus?.automation?.[id] ?? []
@@ -284,16 +306,20 @@ export function songReadBase(project: Project, section: Section | undefined, id:
   if (!section) return 0
   if (id === 'master.pan') return section.bus?.pan ?? 0
   if (id.startsWith('eq.') || id.startsWith('fx.')) return readParam(section.bus ?? openRack(1), id)
-  const track = id.match(/^track\.([^.]+)\.(level|pan)$/)
+  const track = id.match(/^track\.([^.]+)\.(level|pan|probability)$/)
   if (track) {
     const instrument = project.instruments.find((item) => item.id === track[1])
     const rack = section.slots[track[1]]?.rack ?? (instrument ? rackFromInstrument(instrument) : openRack())
-    return track[2] === 'level' ? rack.level : rack.pan
+    if (track[2] === 'level') return rack.level
+    if (track[2] === 'pan') return rack.pan
+    return rack.probability ?? 1
   }
-  const group = id.match(/^group\.([^.]+)\.(level|pan)$/)
+  const group = id.match(/^group\.([^.]+)\.(level|pan|probability)$/)
   if (group) {
     const rack = section.groups?.[group[1]] ?? openRack(1)
-    return group[2] === 'level' ? rack.level : rack.pan
+    if (group[2] === 'level') return rack.level
+    if (group[2] === 'pan') return rack.pan
+    return rack.probability ?? 1
   }
   return 0
 }
@@ -309,16 +335,14 @@ export function songWriteStep(
   onBus: (update: (rack: Rack) => Rack) => void,
   onGroup: (groupId: string, update: (rack: Rack) => Rack) => void,
 ): void {
-  const track = id.match(/^track\.([^.]+)\.(level|pan)$/)
+  const track = id.match(/^track\.([^.]+)\.(level|pan|probability)$/)
   if (track) {
-    const param = track[2] === 'level' ? 'mix.level' : 'mix.pan'
-    onTrack(track[1], (rack) => setAutomationStep(rack, param, index, stored, length))
+    onTrack(track[1]!, (rack) => setAutomationStep(rack, mixParamOf(track[2]!), index, stored, length))
     return
   }
-  const group = id.match(/^group\.([^.]+)\.(level|pan)$/)
+  const group = id.match(/^group\.([^.]+)\.(level|pan|probability)$/)
   if (group) {
-    const param = group[2] === 'level' ? 'mix.level' : 'mix.pan'
-    onGroup(group[1], (rack) => setAutomationStep(rack, param, index, stored, length))
+    onGroup(group[1]!, (rack) => setAutomationStep(rack, mixParamOf(group[2]!), index, stored, length))
     return
   }
   const param = id === 'master.pan' ? 'mix.pan' : id
