@@ -1,4 +1,4 @@
-import { bassMidi, chordMidis, type ChordQuality } from './harmony.ts'
+import { bassMidi, chordMidis, inferKeyOffset, keyAtOffset, keyRegister, type ChordQuality } from './harmony.ts'
 import { clampGain } from './gain.ts'
 
 export const DRUM_IDS = [
@@ -84,6 +84,8 @@ export type BassSound = {
   decay: number
   glide: number
   wave: Wave
+  /** Holds one oscillator and slides to the next pitch instead of retriggering. */
+  drone?: boolean
 }
 
 export type ChordSound = {
@@ -169,6 +171,7 @@ export type InsertId =
   | 'tape'
   | 'stutter'
   | 'probability'
+  | 'glide'
 
 export const INSERT_IDS: InsertId[] = [
   'adsr',
@@ -187,6 +190,7 @@ export const INSERT_IDS: InsertId[] = [
   'tape',
   'stutter',
   'probability',
+  'glide',
 ]
 
 export function liveInserts(item: { inserts: InsertId[]; off?: InsertId[] }): InsertId[] {
@@ -215,6 +219,8 @@ export type ReverbFx = { size: number; mix: number }
 export type TapeFx = { time: number }
 export type StutterFx = { rate: number }
 
+export type GlideFx = { time: number; place: number }
+
 export type FxSettings = {
   delay: DelayFx
   echo: DelayFx
@@ -228,6 +234,7 @@ export type FxSettings = {
   reverb: ReverbFx
   tape: TapeFx
   stutter: StutterFx
+  glide: GlideFx
 }
 
 export const STUTTER_RATES = [
@@ -315,6 +322,21 @@ export function syncHz(rate: number, bpm: number): number {
   return Math.max(20, bpm) / 60 / beats
 }
 
+/** Slide length for the Glide effect, in musical divisions from 1/16 to 8 beats. */
+export function glideSeconds(amount: number, bpm = 120): number {
+  return syncSeconds(amount, bpm)
+}
+
+/**
+ * Seconds to shift the start of a glide relative to the beat.
+ * 0 lands on the beat, 0.5 is centered, 1 starts on the beat and arrives late.
+ */
+export function glideStartOffset(time: number, place: number, bpm = 120): number {
+  const span = glideSeconds(time, bpm)
+  const t = Math.max(0, Math.min(1, place))
+  return -span * (1 - t)
+}
+
 export function syncSeconds(rate: number, bpm: number): number {
   const beats = SYNC_RATES[syncIndex(rate)]?.beats ?? 1
   return beats * (60 / Math.max(20, bpm))
@@ -325,7 +347,7 @@ export function syncRateKey(effect: keyof FxSettings, key: string): boolean {
 }
 
 export function syncTimeKey(effect: keyof FxSettings, key: string): boolean {
-  return key === 'time' && (effect === 'delay' || effect === 'echo' || effect === 'tape')
+  return key === 'time' && (effect === 'delay' || effect === 'echo' || effect === 'tape' || effect === 'glide')
 }
 
 export const DEFAULT_FX: FxSettings = {
@@ -341,6 +363,7 @@ export const DEFAULT_FX: FxSettings = {
   reverb: { size: 0, mix: 0.3 },
   tape: { time: syncValue(4) },
   stutter: { rate: stutterValue(6) },
+  glide: { time: syncValue(4), place: 0.5 },
 }
 
 export function copyFx(fx: FxSettings = DEFAULT_FX): FxSettings {
@@ -357,6 +380,7 @@ export function copyFx(fx: FxSettings = DEFAULT_FX): FxSettings {
     reverb: { ...(fx.reverb ?? DEFAULT_FX.reverb) },
     tape: { ...(fx.tape ?? DEFAULT_FX.tape) },
     stutter: { ...(fx.stutter ?? DEFAULT_FX.stutter) },
+    glide: { ...(fx.glide ?? DEFAULT_FX.glide) },
   }
 }
 
@@ -425,6 +449,32 @@ export function withInsert(rack: Rack, insert: InsertId): Rack {
 
 export function groupSlot(section: Section | undefined, groupId: string): GroupSlot {
   return section?.groupSlots?.[groupId] ?? { enabled: true, solo: false }
+}
+
+/** Left-to-right order used by the mixer and the instrument list. */
+export function mixerNumbers(project: Project): { groups: Map<string, number>; channels: Map<string, number> } {
+  const groups = new Map<string, number>()
+  const channels = new Map<string, number>()
+  const known = new Set(project.instruments.map((item) => item.id))
+  let channel = 1
+  project.groups.forEach((group, index) => {
+    groups.set(group.id, index + 1)
+    for (const id of group.instrumentIds) {
+      if (!known.has(id) || channels.has(id)) continue
+      channels.set(id, channel)
+      channel += 1
+    }
+  })
+  for (const instrument of project.instruments) {
+    if (channels.has(instrument.id)) continue
+    channels.set(instrument.id, channel)
+    channel += 1
+  }
+  return { groups, channels }
+}
+
+export function padMixerIndex(index: number): string {
+  return String(index).padStart(2, '0')
 }
 
 export function recordStepIndex(position: number, length: number): number {
@@ -544,6 +594,7 @@ export type Section = {
   customBpm?: boolean
   customKey?: boolean
   customMeter?: boolean
+  keyOffset?: number
 }
 
 export type ArrangementNode = {
@@ -819,17 +870,18 @@ export function rollNotes(project: Project, instrumentId: string, sectionId?: st
   const section = sectionId ? sectionById(project, sectionId) : startingSection(project)
   if (!instrument || !pattern || !section) return []
   if (pattern.notes.length > 0) return pattern.notes
+  const register = keyRegister(sectionKeyOffset(project, section))
   if (instrument.voice.type === 'bass' || instrument.voice.type === 'lead') {
     return pattern.steps.flatMap((step, index) =>
       step.on
-        ? [{ pitch: step.pitch ?? (bassMidi(section.key, step.degree) + (instrument.voice.type === 'lead' ? 12 : 0)), start: index, duration: 1, velocity: step.velocity }]
+        ? [{ pitch: step.pitch ?? (bassMidi(section.key, step.degree) + (instrument.voice.type === 'lead' ? 12 : 0) + register), start: index, duration: 1, velocity: step.velocity }]
         : [],
     )
   }
   if (instrument.voice.type === 'chord') {
     return pattern.steps.flatMap((step, index) =>
       step.on
-        ? (step.pitch != null ? [step.pitch] : chordMidis(section.key, step.degree, step.quality)).map((pitch) => ({
+        ? (step.pitch != null ? [step.pitch] : chordMidis(section.key, step.degree, step.quality).map((pitch) => pitch + register)).map((pitch) => ({
             pitch,
             start: index,
             duration: 1,
@@ -1447,6 +1499,7 @@ function parseBass(value: unknown, fallback: BassSound = DEFAULT_BASS): BassSoun
     decay: unit(value.decay, fallback.decay),
     glide: unit(value.glide, fallback.glide),
     wave: isWave(value.wave) ? value.wave : fallback.wave,
+    ...(value.drone === true || fallback.drone === true ? { drone: true as const } : {}),
   }
 }
 
@@ -1509,6 +1562,10 @@ function parseFx(value: unknown): FxSettings {
     },
     tape: { time: unit(isRecord(value.tape) ? value.tape.time : undefined, base.tape.time) },
     stutter: { rate: unit(isRecord(value.stutter) ? value.stutter.rate : undefined, base.stutter.rate) },
+    glide: {
+      time: unit(isRecord(value.glide) ? value.glide.time : undefined, base.glide.time),
+      place: unit(isRecord(value.glide) ? value.glide.place : undefined, base.glide.place),
+    },
   }
 }
 
@@ -1625,6 +1682,10 @@ function parseSection(value: unknown, bpm: number, key: string, songMeter: Meter
     customBpm,
     customKey,
     customMeter,
+    keyOffset:
+      typeof value.keyOffset === 'number' && Number.isFinite(value.keyOffset)
+        ? clamp(Math.round(value.keyOffset), -12, 12)
+        : undefined,
   }
 }
 
@@ -1948,7 +2009,15 @@ export function reorderPart(project: Project, nodeId: string, toIndex: number): 
 }
 
 export function addPartInSong(project: Project, afterNodeId: string): { project: Project; nodeId: string } {
-  const added = addPart(project, afterNodeId)
+  return duplicatePart(project, afterNodeId, afterNodeId)
+}
+
+export function duplicatePart(
+  project: Project,
+  sourceNodeId: string,
+  afterNodeId = sourceNodeId,
+): { project: Project; nodeId: string } {
+  const added = addPart(project, sourceNodeId)
   const created = added.project.arrangement.find((node) => node.id === added.nodeId)
   if (!created) return added
   const order = songOrder(added.project).filter((node) => node.id !== created.id)
@@ -2048,6 +2117,7 @@ export function addPart(project: Project, sourceNodeId: string): { project: Proj
           customBpm: sourceSection?.customBpm,
           customKey: sourceSection?.customKey,
           customMeter: sourceSection?.customMeter,
+          keyOffset: sourceSection?.keyOffset,
         },
       ],
       arrangement: [...project.arrangement, { id: nodeId, sectionId, repeat: source?.repeat ?? 1, nextId: nodeId }],
@@ -2084,12 +2154,17 @@ export type CatalogId =
   | 'stab'
   | 'strings'
   | 'pad'
+  | 'bass-drone'
+  | 'lead-drone'
+
+export type CatalogRole = 'drum' | 'mono' | 'poly' | 'pedal'
 
 export type CatalogEntry = {
   id: CatalogId
   label: string
   family: SoundFamily
   kit?: DrumKit
+  role?: CatalogRole
 }
 
 function kitPieces(kit: DrumKit): readonly DrumId[] {
@@ -2114,23 +2189,25 @@ export function catalogEntries(): CatalogEntry[] {
   }
   return [
     ...drums,
-    { id: 'bass', label: 'Bass', family: 'bass' },
-    { id: 'sub', label: 'Sub', family: 'bass' },
-    { id: 'lead', label: 'Lead', family: 'melodic' },
-    { id: 'pluck', label: 'Pluck', family: 'melodic' },
-    { id: 'brass', label: 'Brass', family: 'melodic' },
-    { id: 'bell', label: 'Bell', family: 'melodic' },
-    { id: 'keys', label: 'Keys', family: 'melodic' },
-    { id: 'organ', label: 'Organ', family: 'melodic' },
-    { id: 'stab', label: 'Stab', family: 'melodic' },
-    { id: 'strings', label: 'Strings', family: 'melodic' },
-    { id: 'pad', label: 'Pad', family: 'melodic' },
+    { id: 'bass', label: 'Bass', family: 'bass', role: 'mono' },
+    { id: 'sub', label: 'Sub', family: 'bass', role: 'mono' },
+    { id: 'bass-drone', label: 'Pedal', family: 'bass', role: 'pedal' },
+    { id: 'lead', label: 'Lead', family: 'melodic', role: 'mono' },
+    { id: 'pluck', label: 'Pluck', family: 'melodic', role: 'mono' },
+    { id: 'brass', label: 'Brass', family: 'melodic', role: 'mono' },
+    { id: 'bell', label: 'Bell', family: 'melodic', role: 'mono' },
+    { id: 'keys', label: 'Keys', family: 'melodic', role: 'poly' },
+    { id: 'organ', label: 'Organ', family: 'melodic', role: 'poly' },
+    { id: 'stab', label: 'Stab', family: 'melodic', role: 'poly' },
+    { id: 'strings', label: 'Strings', family: 'melodic', role: 'poly' },
+    { id: 'pad', label: 'Pad', family: 'melodic', role: 'poly' },
+    { id: 'lead-drone', label: 'Pedal', family: 'melodic', role: 'pedal' },
   ]
 }
 
 export function familyFor(catalog: CatalogId): SoundFamily {
-  if (catalog === 'bass' || catalog === 'sub') return 'bass'
-  if (catalog === 'lead' || catalog === 'pluck' || catalog === 'brass' || catalog === 'bell') return 'melodic'
+  if (catalog === 'bass' || catalog === 'sub' || catalog === 'bass-drone') return 'bass'
+  if (catalog === 'lead' || catalog === 'pluck' || catalog === 'brass' || catalog === 'bell' || catalog === 'lead-drone') return 'melodic'
   if (catalog === 'keys' || catalog === 'organ' || catalog === 'stab' || catalog === 'strings' || catalog === 'pad') return 'melodic'
   return 'drums'
 }
@@ -2150,13 +2227,19 @@ export function groupForFamily(project: Project, family: SoundFamily): { project
   return addGroup(project, name)
 }
 
+export function isDrone(voice: VoiceParams): boolean {
+  return (voice.type === 'bass' || voice.type === 'lead') && voice.sound.drone === true
+}
+
 export function catalogVoice(catalog: CatalogId): VoiceParams {
   if (catalog === 'bass') return { type: 'bass', sound: { ...DEFAULT_BASS } }
   if (catalog === 'sub') return { type: 'bass', sound: { cutoff: 0.2, decay: 0.72, glide: 0.24, wave: 'sine' } }
+  if (catalog === 'bass-drone') return { type: 'bass', sound: { cutoff: 0.28, decay: 0.8, glide: 0, wave: 'triangle', drone: true } }
   if (catalog === 'lead') return { type: 'lead', sound: { ...DEFAULT_LEAD } }
   if (catalog === 'pluck') return { type: 'lead', sound: { cutoff: 0.74, decay: 0.1, glide: 0, wave: 'square' } }
   if (catalog === 'brass') return { type: 'lead', sound: { cutoff: 0.46, decay: 0.58, glide: 0.28, wave: 'saw' } }
   if (catalog === 'bell') return { type: 'lead', sound: { cutoff: 0.92, decay: 0.4, glide: 0, wave: 'sine' } }
+  if (catalog === 'lead-drone') return { type: 'lead', sound: { cutoff: 0.62, decay: 0.8, glide: 0, wave: 'triangle', drone: true } }
   if (catalog === 'keys') return { type: 'chord', sound: { ...DEFAULT_CHORD } }
   if (catalog === 'organ') return { type: 'chord', sound: { cutoff: 0.72, decay: 0.95, wave: 'square' } }
   if (catalog === 'stab') return { type: 'chord', sound: { cutoff: 0.66, decay: 0.14, wave: 'saw' } }
@@ -2175,7 +2258,7 @@ function catalogLabel(catalog: CatalogId): string {
   return catalogEntries().find((item) => item.id === catalog)?.label ?? catalog
 }
 
-const LEAD_IDS: CatalogId[] = ['lead', 'pluck', 'brass', 'bell']
+const LEAD_IDS: CatalogId[] = ['lead', 'pluck', 'brass', 'bell', 'lead-drone']
 const CHORD_IDS: CatalogId[] = ['keys', 'organ', 'stab', 'strings', 'pad']
 
 export function relatedCatalogs(instrument: Instrument): CatalogEntry[] {
@@ -2258,7 +2341,12 @@ export function addTrack(project: Project, groupId: string, catalog: CatalogId):
         ...section,
         slots: {
           ...section.slots,
-          [instrumentId]: { enabled: true, solo: false, patternId: `${instrumentId}-${section.id}`, rack: openRack(instrument.mix.level) },
+          [instrumentId]: {
+            enabled: true,
+            solo: false,
+            patternId: `${instrumentId}-${section.id}`,
+            rack: catalog === 'bass-drone' || catalog === 'lead-drone' ? withInsert(openRack(instrument.mix.level), 'glide') : openRack(instrument.mix.level),
+          },
         },
       })),
     },
@@ -2390,6 +2478,169 @@ export function placeTrack(project: Project, instrumentId: string, groupId: stri
   }
 }
 
+export function duplicateInstrument(project: Project, instrumentId: string): { project: Project; instrumentId: string } | null {
+  const source = project.instruments.find((item) => item.id === instrumentId)
+  const group = project.groups.find((item) => item.instrumentIds.includes(instrumentId))
+  if (!source || !group) return null
+  const nextId = `${instrumentId}-${stamp()}`
+  const patterns = source.patterns.map((item) => ({
+    ...item,
+    id: item.id.replace(instrumentId, nextId),
+    steps: item.steps.map((step) => ({ ...step })),
+    notes: item.notes.map((note) => ({ ...note })),
+  }))
+  const copy: Instrument = {
+    ...source,
+    id: nextId,
+    name: `${source.name} copy`,
+    patterns,
+    mix: { ...source.mix, eq: { ...source.mix.eq } },
+    effects: source.effects.slice(),
+    fx: copyFx(source.fx),
+    inserts: source.inserts.slice(),
+    off: source.off?.slice(),
+    envelope: { ...source.envelope },
+  }
+  const at = group.instrumentIds.indexOf(instrumentId) + 1
+  return {
+    instrumentId: nextId,
+    project: {
+      ...project,
+      instruments: [...project.instruments, copy],
+      groups: project.groups.map((item) => {
+        if (item.id !== group.id) return item
+        const instrumentIds = item.instrumentIds.slice()
+        instrumentIds.splice(at, 0, nextId)
+        return { ...item, instrumentIds }
+      }),
+      sections: project.sections.map((section) => {
+        const slot = section.slots[instrumentId]
+        if (!slot) return section
+        return {
+          ...section,
+          slots: {
+            ...section.slots,
+            [nextId]: {
+              ...slot,
+              patternId: slot.patternId.replace(instrumentId, nextId),
+              rack: slot.rack ? copyRack(slot.rack) : undefined,
+            },
+          },
+        }
+      }),
+    },
+  }
+}
+
+export function copyInstrumentToParts(
+  project: Project,
+  instrumentId: string,
+  fromSectionId: string,
+  toSectionIds?: string[],
+): Project {
+  const source = project.instruments.find((item) => item.id === instrumentId)
+  const from = project.sections.find((item) => item.id === fromSectionId)
+  const fromSlot = from?.slots[instrumentId]
+  const fromPattern = source?.patterns.find((item) => item.id === fromSlot?.patternId)
+  if (!source || !from || !fromSlot || !fromPattern) return project
+  const targets = new Set(
+    (toSectionIds ?? project.sections.map((item) => item.id)).filter((id) => id !== fromSectionId),
+  )
+  if (targets.size === 0) return project
+  return {
+    ...project,
+    instruments: project.instruments.map((instrument) => {
+      if (instrument.id !== instrumentId) return instrument
+      return {
+        ...instrument,
+        patterns: instrument.patterns.map((pattern) => {
+          const section = project.sections.find((item) => item.slots[instrumentId]?.patternId === pattern.id)
+          if (!section || !targets.has(section.id)) return pattern
+          const length = loopSteps(section.meter, section.bars)
+          return {
+            ...pattern,
+            steps: resizeSteps(
+              fromPattern.steps.map((step) => ({ ...step })),
+              length,
+            ),
+            notes: fromPattern.notes
+              .filter((note) => note.start < length)
+              .map((note) => ({ ...note, duration: Math.max(1, Math.min(note.duration, length - note.start)) })),
+          }
+        }),
+      }
+    }),
+    sections: project.sections.map((section) => {
+      if (!targets.has(section.id)) return section
+      const slot = section.slots[instrumentId]
+      if (!slot) return section
+      return {
+        ...section,
+        slots: {
+          ...section.slots,
+          [instrumentId]: {
+            ...slot,
+            enabled: fromSlot.enabled,
+            solo: fromSlot.solo,
+            rack: fromSlot.rack ? copyRack(fromSlot.rack) : slot.rack,
+          },
+        },
+      }
+    }),
+  }
+}
+
+export function copySectionContent(project: Project, fromSectionId: string, toSectionId: string): Project {
+  if (fromSectionId === toSectionId) return project
+  let next = project
+  for (const instrument of project.instruments) {
+    next = copyInstrumentToParts(next, instrument.id, fromSectionId, [toSectionId])
+  }
+  const from = next.sections.find((item) => item.id === fromSectionId)
+  const to = next.sections.find((item) => item.id === toSectionId)
+  if (!from || !to) return next
+  const length = loopSteps(to.meter, to.bars)
+  const accent = from.accent.slice(0, length)
+  while (accent.length < length) accent.push(false)
+  return {
+    ...next,
+    sections: next.sections.map((section) => (section.id === toSectionId ? { ...section, accent } : section)),
+  }
+}
+
+export function duplicateGroup(project: Project, groupId: string): { project: Project; groupId: string } | null {
+  const source = project.groups.find((item) => item.id === groupId)
+  if (!source) return null
+  const nextId = `group-${stamp()}`
+  const at = project.groups.findIndex((item) => item.id === groupId) + 1
+  const groups = project.groups.slice()
+  groups.splice(at, 0, {
+    id: nextId,
+    name: `${source.name} copy`,
+    instrumentIds: [],
+    color: source.color,
+  })
+  let next: Project = {
+    ...project,
+    groups,
+    sections: project.sections.map((section) => ({
+      ...section,
+      groups: { ...section.groups, [nextId]: copyRack(section.groups?.[groupId] ?? openRack(1)) },
+      groupSlots: {
+        ...section.groupSlots,
+        [nextId]: { ...(section.groupSlots?.[groupId] ?? { enabled: true, solo: false }) },
+      },
+    })),
+  }
+  for (const instrumentId of source.instrumentIds) {
+    const copied = duplicateInstrument(next, instrumentId)
+    if (!copied) continue
+    const group = copied.project.groups.find((item) => item.id === nextId)
+    next = placeTrack(copied.project, copied.instrumentId, nextId, group?.instrumentIds.length ?? 0)
+  }
+  return { project: next, groupId: nextId }
+}
+
 export function removeInstrument(project: Project, instrumentId: string): Project {
   if (!project.instruments.some((instrument) => instrument.id === instrumentId)) return project
   return {
@@ -2428,16 +2679,67 @@ export function setMaster(project: Project, master: number): Project {
   return { ...project, master: next }
 }
 
-export function setProjectKey(project: Project, key: string): Project {
-  const label = key.trim()
-  if (!label) return project
+export function sectionKeyOffset(project: Project, section: Section): number {
+  if (typeof section.keyOffset === 'number' && Number.isFinite(section.keyOffset)) {
+    return clamp(Math.round(section.keyOffset), -12, 12)
+  }
+  if (!section.customKey) return 0
+  return inferKeyOffset(project.key, section.key)
+}
+
+function transposeSectionPitches(project: Project, sectionId: string, semis: number): Project {
+  if (semis === 0) return project
+  const section = project.sections.find((item) => item.id === sectionId)
+  if (!section) return project
   return {
     ...project,
-    key: label,
-    sections: project.sections.map((section) =>
-      section.customKey ? section : { ...section, key: label },
-    ),
+    instruments: project.instruments.map((instrument) => {
+      if (instrument.voice.type === '808') return instrument
+      const patternId = section.slots[instrument.id]?.patternId
+      if (!patternId) return instrument
+      return {
+        ...instrument,
+        patterns: instrument.patterns.map((pattern) => {
+          if (pattern.id !== patternId) return pattern
+          return {
+            ...pattern,
+            notes: pattern.notes.map((note) => ({ ...note, pitch: clamp(note.pitch + semis, 0, 127) })),
+            steps: pattern.steps.map((step) =>
+              step.pitch == null ? step : { ...step, pitch: clamp(step.pitch + semis, 0, 127) },
+            ),
+          }
+        }),
+      }
+    }),
   }
+}
+
+export function setProjectKey(project: Project, offset: number): Project {
+  const shift = clamp(Math.round(offset), -12, 12)
+  if (shift === 0) return project
+  const nextKey = keyAtOffset(project.key, shift)
+  let next = project
+  for (const section of project.sections) {
+    const current = sectionKeyOffset(project, section)
+    if (current !== 0) {
+      const moved = clamp(current - shift, -12, 12)
+      next = {
+        ...next,
+        sections: next.sections.map((item) =>
+          item.id === section.id ? { ...item, keyOffset: moved, customKey: moved !== 0 } : item,
+        ),
+      }
+      continue
+    }
+    next = transposeSectionPitches(next, section.id, shift)
+    next = {
+      ...next,
+      sections: next.sections.map((item) =>
+        item.id === section.id ? { ...item, key: nextKey, keyOffset: 0, customKey: false } : item,
+      ),
+    }
+  }
+  return { ...next, key: nextKey }
 }
 
 export function setProjectMeter(project: Project, meter: Meter): Project {
@@ -2463,6 +2765,10 @@ export function adhereSection(
     updated = resizeSection(updated, section, project.meter, section.bars)
   }
 
+  if (kind === 'all' || kind === 'key') {
+    updated = setSectionKey(updated, sectionId, 0)
+  }
+
   return {
     ...updated,
     sections: updated.sections.map((item) => {
@@ -2471,8 +2777,6 @@ export function adhereSection(
         ...item,
         bpm: kind === 'all' || kind === 'bpm' ? project.bpm : item.bpm,
         customBpm: kind === 'all' || kind === 'bpm' ? false : item.customBpm,
-        key: kind === 'all' || kind === 'key' ? project.key : item.key,
-        customKey: kind === 'all' || kind === 'key' ? false : item.customKey,
         customMeter: kind === 'all' || kind === 'meter' ? false : item.customMeter,
       }
     }),
@@ -2490,13 +2794,20 @@ export function setSectionBpm(project: Project, sectionId: string, bpm: number):
   }
 }
 
-export function setSectionKey(project: Project, sectionId: string, key: string): Project {
-  const label = key.trim()
-  if (!label) return project
+export function setSectionKey(project: Project, sectionId: string, offset: number): Project {
+  const section = project.sections.find((item) => item.id === sectionId)
+  if (!section) return project
+  const nextOffset = clamp(Math.round(offset), -12, 12)
+  const current = sectionKeyOffset(project, section)
+  if (nextOffset === current && section.key === keyAtOffset(project.key, nextOffset)) return project
+  const shifted = transposeSectionPitches(project, sectionId, nextOffset - current)
+  const label = keyAtOffset(project.key, nextOffset)
   return {
-    ...project,
-    sections: project.sections.map((section) =>
-      section.id === sectionId ? { ...section, key: label, customKey: label !== project.key } : section,
+    ...shifted,
+    sections: shifted.sections.map((item) =>
+      item.id === sectionId
+        ? { ...item, key: label, keyOffset: nextOffset, customKey: nextOffset !== 0 }
+        : item,
     ),
   }
 }

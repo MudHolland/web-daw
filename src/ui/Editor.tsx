@@ -5,6 +5,7 @@ import {
   compactChordLabel,
   describeChord,
   diatonicDegree,
+  keyRegister,
   KEYS,
   midiName,
   noteName,
@@ -14,6 +15,7 @@ import {
 import {
   flipOff,
   groupSizeForMeter,
+  isDrone,
   matchingCatalog,
   loopSteps,
   openRack,
@@ -21,6 +23,7 @@ import {
   rackFromInstrument,
   relatedCatalogs,
   rollNotes,
+  sectionKeyOffset,
   slotEnabled,
   stepsForMeter,
   withInsert,
@@ -54,8 +57,10 @@ import {
   songReadSteps,
   songWriteStep,
 } from '../model/automation.ts'
+import { FitName } from './fitName.tsx'
 import { AccentRow, StepLane } from './StepSequencer.tsx'
 import { BarPager } from './BarPager.tsx'
+import { DockWhen, EditorStage } from './editorDock.tsx'
 import type { RackScope } from '../model/project.ts'
 
 type EditorProps = {
@@ -86,7 +91,9 @@ type EditorProps = {
   onAddInsert: (instrumentId: string, insert: InsertId) => void
   onRemoveInsert: (instrumentId: string, insert: InsertId) => void
   onToggleInsert: (instrumentId: string, insert: InsertId) => void
-  onPreview: (instrumentId: string) => void
+  onPreview: (instrumentId: string, down: boolean) => void
+  onPreviewMany?: (instrumentIds: string[], down: boolean) => void
+  onPreviewNote?: (instrumentId: string, midi: number, down: boolean) => void
   onRecordHold?: (instrumentId: string, down: boolean) => void
   recording?: boolean
   onNotes: (instrumentId: string, notes: NoteEvent[]) => void
@@ -100,23 +107,33 @@ type EditorProps = {
   onSyncMix?: (scope: RackScope) => void
   onAddInsertAll?: (scope: RackScope, insert: InsertId) => void
   onCopyBar: (instrumentIds: string[], fromBar: number, toBars: number[], copyAccent: boolean) => void
-  onPreviewCatalog: (catalog: CatalogId) => void
+  onPreviewCatalog: (catalog: CatalogId, down: boolean) => void
   onRetune: (instrumentId: string, catalog: CatalogId) => void
+  onSelectInsert?: (insert: InsertId | null) => void
+  selectedInsert?: InsertId | null
   onLiveView?: (live: boolean) => void
   followLive?: boolean
   onFollowLive?: (follow: boolean) => void
+  onCopyContent?: (toSectionId: string) => void
 }
 
 export function Editor(props: EditorProps) {
   const { project, selection, sectionId, partName, playing, activity, level } = props
   const heard = channelLevel(project, selection, activity, level)
+  const copyParts = project.sections.filter((item) => item.id !== sectionId)
+  const fire = (ids: string[]) => (down: boolean) => {
+    if (props.onPreviewMany) props.onPreviewMany(ids, down)
+    else ids.forEach((id) => props.onPreview(id, down))
+  }
   const [chosenStep, setChosenStep] = useState(0)
   const [groupMelodicId, setGroupMelodicId] = useState<string | null>(null)
-  const [effectsOpen, setEffectsOpen] = useState(true)
+  const [effectsOpen, setEffectsOpen] = useState(false)
+  const [automationOpen, setAutomationOpen] = useState(false)
   const effects = { collapsed: !effectsOpen, onToggleCollapsed: () => setEffectsOpen((open) => !open) }
   const section = project.sections.find((item) => item.id === sectionId)
   const groupSize = groupSizeForMeter(section?.meter ?? '4/4')
   const songKey = section?.key ?? project.key
+  const register = section ? keyRegister(sectionKeyOffset(project, section)) : 0
   const barCount = section?.bars ?? 1
   const stepsPerBar = stepsForMeter(section?.meter ?? '4/4')
   const [barPage, setBarPage] = useState(0)
@@ -160,6 +177,8 @@ export function Editor(props: EditorProps) {
       viewStart={0}
       viewLength={autoLength}
       barLength={stepsPerBar}
+      open={automationOpen}
+      onToggle={() => setAutomationOpen((open) => !open)}
     />
   )
 
@@ -179,8 +198,8 @@ export function Editor(props: EditorProps) {
   if (selection.kind === 'song') {
     return (
       <section className="editor">
-        <EditorTitle partName={partName} title="Tracks" playing={playing} level={heard} />
-        <div className="editor-stage">
+        <EditorTitle partName={partName} title="Tracks" playing={playing} level={heard} copyParts={copyParts} onCopyContent={props.onCopyContent} onFire={fire(project.instruments.map((item) => item.id))} />
+        <EditorStage>
           <MixerConsole
             project={project}
             sectionId={sectionId}
@@ -202,39 +221,41 @@ export function Editor(props: EditorProps) {
             onMasterPan={(pan) => props.onSongRack((rack) => ({ ...rack, pan }))}
             onPreview={props.onPreview}
           />
-        </div>
-        <ChannelStrip
-          {...busStrip(
-            busInstrument('song', partName, shownRack(section?.bus ?? openRack(1))),
-            props.onSongRack,
-            props,
-            { kind: 'song' },
-          )}
-          masterGroove={{
-            swing: groove.swing,
-            accentAmount: groove.accentAmount,
-            master: groove.master,
-            onSwing: props.onSwing,
-            onAccentAmount: props.onAccentAmount,
-            onMaster: props.onMaster,
-          }}
-          {...effects}
-        />
-        <AutomationPanel
-          targets={songAutomationTargets(project, section)}
-          stepsOf={(id) => songReadSteps(project, section, id)}
-          baseOf={(id) => songReadBase(project, section, id)}
-          onWrite={(id, index, stored) => {
-            if (!section) return
-            songWriteStep(project, section, id, index, stored, autoLength, props.onTrackRack, props.onSongRack, props.onGroupRack)
-          }}
-          length={autoLength}
-          playhead={props.playhead}
-          groupSize={groupSize}
-          viewStart={0}
-          viewLength={autoLength}
-          barLength={stepsPerBar}
-        />
+          <ChannelStrip
+            {...busStrip(
+              busInstrument('song', partName, shownRack(section?.bus ?? openRack(1))),
+              props.onSongRack,
+              props,
+              { kind: 'song' },
+            )}
+            masterGroove={{
+              swing: groove.swing,
+              accentAmount: groove.accentAmount,
+              master: groove.master,
+              onSwing: props.onSwing,
+              onAccentAmount: props.onAccentAmount,
+              onMaster: props.onMaster,
+            }}
+            {...effects}
+          />
+          <AutomationPanel
+            targets={songAutomationTargets(project, section)}
+            stepsOf={(id) => songReadSteps(project, section, id)}
+            baseOf={(id) => songReadBase(project, section, id)}
+            onWrite={(id, index, stored) => {
+              if (!section) return
+              songWriteStep(project, section, id, index, stored, autoLength, props.onTrackRack, props.onSongRack, props.onGroupRack)
+            }}
+            length={autoLength}
+            playhead={props.playhead}
+            groupSize={groupSize}
+            viewStart={0}
+            viewLength={autoLength}
+            barLength={stepsPerBar}
+            open={automationOpen}
+            onToggle={() => setAutomationOpen((open) => !open)}
+          />
+        </EditorStage>
       </section>
     )
   }
@@ -257,8 +278,11 @@ export function Editor(props: EditorProps) {
             onPreview: props.onPreviewCatalog,
             onPick: (catalog) => props.onRetune(instrument.id, catalog),
           }}
+          copyParts={copyParts}
+          onCopyContent={props.onCopyContent}
+          onFire={fire([instrument.id])}
         />
-        <div className="editor-stage">
+        <EditorStage>
         {instrument.voice.type === '808' ? (
           <>
             <div className="lane-list">
@@ -282,6 +306,7 @@ export function Editor(props: EditorProps) {
           </>
         ) : (
           <KeysRoll
+            key={instrument.id}
             instrument={instrument}
             pattern={patternFor(project, instrument.id, sectionId)}
             notes={rollNotes(project, instrument.id, sectionId)}
@@ -296,25 +321,27 @@ export function Editor(props: EditorProps) {
             onColumn={setChosenStep}
             onChange={(notes) => props.onNotes(instrument.id, notes)}
             onPitch={(stepIndex, pitch) => props.onPitch(instrument.id, stepIndex, pitch)}
+            onHear={(midi, down) => props.onPreviewNote?.(instrument.id, midi, down)}
             scale="major"
-            low={instrument.voice.type === 'bass' ? 24 : 48}
-            high={instrument.voice.type === 'bass' ? 60 : 84}
+            register={register}
+            low={instrument.voice.type === 'bass' ? 24 : instrument.voice.type === 'lead' ? 36 : 48}
+            high={instrument.voice.type === 'bass' ? 72 : 84}
             pager={pager([instrument.id])}
           />
         )}
-        </div>
-        <ChannelStrip
-          {...stripProps(
-            withRack(instrument, shownRack(section?.slots[instrument.id]?.rack ?? rackFromInstrument(instrument))),
-            props,
-            shownRack(section?.slots[instrument.id]?.rack ?? rackFromInstrument(instrument)).probability,
+          <ChannelStrip
+            {...stripProps(
+              withRack(instrument, shownRack(section?.slots[instrument.id]?.rack ?? rackFromInstrument(instrument))),
+              props,
+              shownRack(section?.slots[instrument.id]?.rack ?? rackFromInstrument(instrument)).probability,
+            )}
+            {...effects}
+          />
+          {automation(
+            section?.slots[instrument.id]?.rack ?? rackFromInstrument(instrument),
+            (update) => props.onTrackRack(instrument.id, update),
           )}
-          {...effects}
-        />
-        {automation(
-          section?.slots[instrument.id]?.rack ?? rackFromInstrument(instrument),
-          (update) => props.onTrackRack(instrument.id, update),
-        )}
+        </EditorStage>
       </section>
     )
   }
@@ -331,8 +358,8 @@ export function Editor(props: EditorProps) {
     const activeMelodic = melodicInstruments.find((item) => item.id === groupMelodicId) ?? melodicInstruments[0]!
     return (
       <section className="editor">
-        <EditorTitle partName={partName} title={group?.name ?? 'Melodic'} playing={playing} level={heard} />
-        <div className="editor-stage">
+        <EditorTitle partName={partName} title={group?.name ?? 'Melodic'} playing={playing} level={heard} copyParts={copyParts} onCopyContent={props.onCopyContent} onFire={fire(instruments.map((item) => item.id))} />
+        <EditorStage>
           {melodicInstruments.length > 1 ? (
             <div className="view-switch" style={{ marginBottom: 12 }}>
               {melodicInstruments.map((item) => (
@@ -348,6 +375,7 @@ export function Editor(props: EditorProps) {
             </div>
           ) : null}
           <KeysRoll
+            key={activeMelodic.id}
             instrument={activeMelodic}
             pattern={patternFor(project, activeMelodic.id, sectionId)}
             notes={rollNotes(project, activeMelodic.id, sectionId)}
@@ -362,23 +390,25 @@ export function Editor(props: EditorProps) {
             onColumn={setChosenStep}
             onChange={(notes) => props.onNotes(activeMelodic.id, notes)}
             onPitch={(stepIndex, pitch) => props.onPitch(activeMelodic.id, stepIndex, pitch)}
+            onHear={(midi, down) => props.onPreviewNote?.(activeMelodic.id, midi, down)}
+            register={register}
             scale="major"
             low={48}
             high={84}
             pager={pager([activeMelodic.id])}
           />
-        </div>
-        <ChannelStrip
-          {...busStrip(
-            busInstrument(group?.id ?? 'group', group?.name ?? 'Group', shownRack(section?.groups?.[group?.id ?? ''] ?? openRack(1))),
-            editGroup,
-            props,
-            { kind: 'group', groupId: group?.id ?? 'group' },
-            shownRack(section?.groups?.[group?.id ?? ''] ?? openRack(1)).probability,
-          )}
-          {...effects}
-        />
-        {automation(section?.groups?.[group?.id ?? ''] ?? openRack(1), editGroup)}
+          <ChannelStrip
+            {...busStrip(
+              busInstrument(group?.id ?? 'group', group?.name ?? 'Group', shownRack(section?.groups?.[group?.id ?? ''] ?? openRack(1))),
+              editGroup,
+              props,
+              { kind: 'group', groupId: group?.id ?? 'group' },
+              shownRack(section?.groups?.[group?.id ?? ''] ?? openRack(1)).probability,
+            )}
+            {...effects}
+          />
+          {automation(section?.groups?.[group?.id ?? ''] ?? openRack(1), editGroup)}
+        </EditorStage>
       </section>
     )
   }
@@ -386,31 +416,31 @@ export function Editor(props: EditorProps) {
   if (instruments.length === 0 && (group?.id === 'group-melodic' || group?.name.toLowerCase().includes('melodic'))) {
     return (
       <section className="editor">
-        <EditorTitle partName={partName} title={group?.name ?? 'Melodic'} playing={playing} level={heard} />
-        <div className="editor-stage">
+        <EditorTitle partName={partName} title={group?.name ?? 'Melodic'} playing={playing} level={heard} copyParts={copyParts} onCopyContent={props.onCopyContent} onFire={fire(instruments.map((item) => item.id))} />
+        <EditorStage>
           <p style={{ color: 'var(--muted)', textAlign: 'center', marginTop: 48, fontSize: 14, letterSpacing: '0.08em' }}>
             Add a melodic track in the Tracks drawer to compose on the piano roll
           </p>
-        </div>
-        <ChannelStrip
-          {...busStrip(
-            busInstrument(group?.id ?? 'group', group?.name ?? 'Group', shownRack(section?.groups?.[group?.id ?? ''] ?? openRack(1))),
-            editGroup,
-            props,
-            { kind: 'group', groupId: group?.id ?? 'group' },
-            shownRack(section?.groups?.[group?.id ?? ''] ?? openRack(1)).probability,
-          )}
-          {...effects}
-        />
-        {automation(section?.groups?.[group?.id ?? ''] ?? openRack(1), editGroup)}
+          <ChannelStrip
+            {...busStrip(
+              busInstrument(group?.id ?? 'group', group?.name ?? 'Group', shownRack(section?.groups?.[group?.id ?? ''] ?? openRack(1))),
+              editGroup,
+              props,
+              { kind: 'group', groupId: group?.id ?? 'group' },
+              shownRack(section?.groups?.[group?.id ?? ''] ?? openRack(1)).probability,
+            )}
+            {...effects}
+          />
+          {automation(section?.groups?.[group?.id ?? ''] ?? openRack(1), editGroup)}
+        </EditorStage>
       </section>
     )
   }
 
   return (
     <section className="editor">
-      <EditorTitle partName={partName} title={group?.name ?? 'Tracks'} playing={playing} level={heard} />
-      <div className="editor-stage">
+      <EditorTitle partName={partName} title={group?.name ?? 'Tracks'} playing={playing} level={heard} copyParts={copyParts} onCopyContent={props.onCopyContent} onFire={fire(instruments.map((item) => item.id))} />
+      <EditorStage>
       <div className="lane-list">
         {drums ? (
           <AccentRow
@@ -449,9 +479,9 @@ export function Editor(props: EditorProps) {
                 if (step?.pitch != null) return step.pitch
                 const note = pattern?.notes.find((n) => Math.round(n.start) === stepIndex)
                 if (note?.pitch != null) return note.pitch
-                if (instrument.voice.type === 'bass') return bassMidi(songKey, step?.degree ?? 0)
-                if (instrument.voice.type === 'lead') return bassMidi(songKey, step?.degree ?? 0) + 12
-                return 60
+                if (instrument.voice.type === 'bass') return bassMidi(songKey, step?.degree ?? 0) + register
+                if (instrument.voice.type === 'lead') return bassMidi(songKey, step?.degree ?? 0) + 12 + register
+                return 60 + register
               } : undefined}
               scaleKey={isMelodic ? songKey : undefined}
             />
@@ -459,7 +489,6 @@ export function Editor(props: EditorProps) {
         })}
       </div>
       {pager(instruments.map((instrument) => instrument.id), drums)}
-      </div>
       <ChannelStrip
         {...busStrip(
           busInstrument(group?.id ?? 'group', group?.name ?? 'Group', shownRack(section?.groups?.[group?.id ?? ''] ?? openRack(1))),
@@ -471,6 +500,7 @@ export function Editor(props: EditorProps) {
         {...effects}
       />
       {automation(section?.groups?.[group?.id ?? ''] ?? openRack(1), editGroup)}
+      </EditorStage>
     </section>
   )
 }
@@ -483,6 +513,9 @@ function EditorTitle({
   picker,
   recording,
   onRecordHold,
+  copyParts = [],
+  onCopyContent,
+  onFire,
 }: {
   partName: string
   title: string
@@ -490,20 +523,68 @@ function EditorTitle({
   level: number
   recording?: boolean
   onRecordHold?: (down: boolean) => void
+  copyParts?: { id: string; name: string }[]
+  onCopyContent?: (toSectionId: string) => void
+  onFire?: (down: boolean) => void
   picker?: {
     entries: ReturnType<typeof relatedCatalogs>
     currentId: CatalogId | null
-    onPreview: (catalog: CatalogId) => void
+    onPreview: (catalog: CatalogId, down: boolean) => void
     onPick: (catalog: CatalogId) => void
   }
 }) {
   const [open, setOpen] = useState(false)
+  const [copyOpen, setCopyOpen] = useState(false)
+  const copyRef = useRef<HTMLDivElement>(null)
   const sounds = picker && picker.entries.length > 0 ? picker : null
   const families = sounds ? [...new Set(sounds.entries.map((item) => item.family))] : undefined
   const recordPad = recording && onRecordHold
+  useEffect(() => {
+    if (!copyOpen) return
+    const close = (event: PointerEvent) => {
+      if (!copyRef.current?.contains(event.target as Node)) setCopyOpen(false)
+    }
+    window.addEventListener('pointerdown', close)
+    return () => window.removeEventListener('pointerdown', close)
+  }, [copyOpen])
   return (
     <header className="editor-head">
-      <p className="part-kicker">{partName}</p>
+      {copyParts.length > 0 && onCopyContent ? (
+        <div className="part-copy" ref={copyRef}>
+          <button
+            type="button"
+            className="part-kicker part-copy-btn"
+            data-testid="part-copy"
+            aria-haspopup="menu"
+            aria-expanded={copyOpen}
+            onClick={() => setCopyOpen((value) => !value)}
+          >
+            <FitName name={partName} />
+            <span className="menu-sub-caret" aria-hidden>
+              ▾
+            </span>
+          </button>
+          {copyOpen ? (
+            <div className="menu-pop part-copy-menu" role="menu">
+              <p className="menu-title">Copy content to:</p>
+              {copyParts.map((part) => (
+                <button
+                  key={part.id}
+                  type="button"
+                  onClick={() => {
+                    onCopyContent(part.id)
+                    setCopyOpen(false)
+                  }}
+                >
+                  <FitName name={part.name} />
+                </button>
+              ))}
+            </div>
+          ) : null}
+        </div>
+      ) : (
+        <p className="part-kicker">{partName}</p>
+      )}
       <h2>
         {sounds || recordPad ? (
           <button
@@ -527,7 +608,17 @@ function EditorTitle({
         ) : (
           title
         )}
-        <span className="editor-light" aria-hidden style={playing ? { opacity: 0.2 + 0.8 * Math.min(1, level) } : undefined} />
+        <button
+          type="button"
+          className="editor-light"
+          data-testid="stage-fire"
+          aria-label={`Play ${title}`}
+          style={playing ? { opacity: 0.2 + 0.8 * Math.min(1, level) } : undefined}
+          onPointerDown={(event) => {
+            event.stopPropagation()
+            if (onFire) beginPadHold(onFire, event)
+          }}
+        />
         {sounds && open ? (
           <AddMenu
             includeGroup={false}
@@ -598,12 +689,14 @@ function KeysRoll({
   viewStart,
   viewLength,
   songKey,
+  register,
   sectionId,
   playhead,
   column,
   onColumn,
   onChange,
   onPitch,
+  onHear,
   scale,
   low,
   high,
@@ -617,23 +710,26 @@ function KeysRoll({
   viewStart: number
   viewLength: number
   songKey: string
+  register: number
   sectionId: string
   playhead: number
   column: number
   onColumn: (step: number) => void
   onChange: (notes: NoteEvent[]) => void
   onPitch?: (stepIndex: number, pitch: number) => void
+  onHear?: (midi: number, down: boolean) => void
   scale: 'major' | 'minor'
   low: number
   high: number
   pager: ReactNode
 }) {
   const [root, setRoot] = useState(songKey)
-  const [tones, setTones] = useState<number[]>([4, 7])
+  const [tones, setTones] = useState<number[]>(() => (instrument.voice.type === 'chord' ? [4, 7] : []))
   const [overwrite, setOverwrite] = useState(true)
   const [stepsOpen, setStepsOpen] = useState(true)
   const [rollOpen, setRollOpen] = useState(true)
   const [chordsOpen, setChordsOpen] = useState(true)
+  const [octave, setOctave] = useState(() => defaultBrushOctave(instrument))
   const [span, setSpan] = useState<{ start: number; duration: number } | null>(null)
   const stampedRef = useRef<{ start: number; duration: number } | null>(null)
   const notesRef = useRef(notes)
@@ -651,14 +747,18 @@ function KeysRoll({
   }, [songKey])
 
   useEffect(() => {
+    const next = instrument.voice.type === 'chord' ? [4, 7] : []
+    setTones(next)
+    tonesRef.current = next
+    setOctave(defaultBrushOctave(instrument))
+  }, [instrument.id, instrument.voice.type])
+
+  useEffect(() => {
     release()
   }, [sectionId, instrument.id])
 
   function brushPitches(nextRoot = rootRef.current, nextTones = tonesRef.current) {
-    const voiced = spellIntervals(nextRoot, [0, ...nextTones])
-    if (instrument.voice.type === 'bass') return [voiced[0]! - 24]
-    if (instrument.voice.type === 'lead') return [voiced[0]!]
-    return voiced
+    return spellIntervals(nextRoot, [0, ...nextTones]).map((pitch) => pitch + register + (octave - 4) * 12)
   }
 
   function applyTones(nextTones: number[]) {
@@ -718,89 +818,98 @@ function KeysRoll({
     if (step?.pitch != null) return step.pitch
     const note = notes.find((item) => Math.round(item.start) === stepIndex)
     if (note) return note.pitch
-    if (instrument.voice.type === 'bass') return bassMidi(songKey, step?.degree ?? 0)
-    if (instrument.voice.type === 'lead') return bassMidi(songKey, step?.degree ?? 0) + 12
-    return 60
+    if (instrument.voice.type === 'bass') return bassMidi(songKey, step?.degree ?? 0) + register
+    if (instrument.voice.type === 'lead') return bassMidi(songKey, step?.degree ?? 0) + 12 + register
+    return 60 + register
   }
 
   return (
     <div className="keys-roll">
-      <div className={['seq-stack', stepsOpen ? '' : 'is-collapsed'].filter(Boolean).join(' ')}>
-        <PanelFold label="Steps" open={stepsOpen} testId="steps-toggle" onToggle={() => setStepsOpen((open) => !open)} />
-        {stepsOpen ? (
-          <div className="lane-list">
-            <StepLane
-              instrumentId={instrument.id}
-              name={instrument.name}
-              drum={null}
-              color={instrumentColor(instrument)}
-              pattern={shown}
-              playhead={playhead}
+      <DockWhen collapsed={!stepsOpen}>
+        <div className={['seq-stack', stepsOpen ? '' : 'is-collapsed'].filter(Boolean).join(' ')}>
+          <PanelFold label="Steps" open={stepsOpen} testId="steps-toggle" onToggle={() => setStepsOpen((open) => !open)} />
+          {stepsOpen ? (
+            <div className="lane-list">
+              <StepLane
+                instrumentId={instrument.id}
+                name={instrument.name}
+                drum={null}
+                color={instrumentColor(instrument)}
+                pattern={shown}
+                playhead={playhead}
+                groupSize={groupSize}
+                viewStart={viewStart}
+                viewLength={viewLength}
+                solo
+                face={written && pattern ? noteFace(pattern) : faceFor(songKey, instrument, false)}
+                onPaint={paintStep}
+                onPitch={onPitch}
+                originFor={originFor}
+                scaleKey={songKey}
+              />
+            </div>
+          ) : null}
+        </div>
+      </DockWhen>
+      <DockWhen collapsed={!rollOpen}>
+        <div className={['roll-stack', rollOpen ? '' : 'is-collapsed'].filter(Boolean).join(' ')}>
+          <PanelFold label="Piano roll" open={rollOpen} testId="piano-roll-toggle" onToggle={() => setRollOpen((open) => !open)} />
+          {rollOpen ? (
+            <PianoRoll
+              notes={notes}
+              length={length}
               groupSize={groupSize}
               viewStart={viewStart}
               viewLength={viewLength}
-              solo
-              face={written && pattern ? noteFace(pattern) : faceFor(songKey, instrument, false)}
-              onPaint={paintStep}
-              onPitch={onPitch}
-              originFor={originFor}
-              scaleKey={songKey}
+              songKey={songKey}
+              scale={scale}
+              low={low}
+              high={high}
+              playhead={playhead}
+              column={column}
+              onColumn={onColumn}
+              onChange={onChange}
+              heldSpan={span}
+              onSpan={(next) => write(next)}
+              onHear={onHear}
             />
-          </div>
-        ) : null}
-      </div>
-      <div className={['roll-stack', rollOpen ? '' : 'is-collapsed'].filter(Boolean).join(' ')}>
-        <PanelFold label="Piano roll" open={rollOpen} testId="piano-roll-toggle" onToggle={() => setRollOpen((open) => !open)} />
-        {rollOpen ? (
-          <PianoRoll
-            notes={notes}
-            length={length}
-            groupSize={groupSize}
-            viewStart={viewStart}
-            viewLength={viewLength}
-            songKey={songKey}
-            scale={scale}
-            low={low}
-            high={high}
-            playhead={playhead}
-            column={column}
-            onColumn={onColumn}
-            onChange={onChange}
-            heldSpan={span}
-            onSpan={(next) => write(next)}
+          ) : null}
+        </div>
+      </DockWhen>
+      <DockWhen collapsed={!chordsOpen}>
+        <div className={['chord-stack', chordsOpen ? '' : 'is-collapsed'].filter(Boolean).join(' ')}>
+          <PanelFold
+            label="Chord builder"
+            open={chordsOpen}
+            testId="chord-toggle"
+            onToggle={() => setChordsOpen((open) => !open)}
           />
-        ) : null}
-      </div>
-      <div className={['chord-stack', chordsOpen ? '' : 'is-collapsed'].filter(Boolean).join(' ')}>
-        <PanelFold
-          label="Chord builder"
-          open={chordsOpen}
-          testId="chord-toggle"
-          onToggle={() => setChordsOpen((open) => !open)}
-        />
-        {chordsOpen ? (
-          <ChordBoard
-            songKey={songKey}
-            scale={scale}
-            root={root}
-            tones={tones}
-            overwrite={overwrite}
-            onRoot={applyRoot}
-            onToggle={(semi) => {
-              const nextTones = tonesRef.current.includes(semi)
-                ? tonesRef.current.filter((tone) => tone !== semi)
-                : [...tonesRef.current, semi]
-              applyTones(nextTones)
-            }}
-            onDegree={applyDegree}
-            onOverwrite={(next) => {
-              setOverwrite(next)
-              overwriteRef.current = next
-            }}
-          />
-        ) : null}
-      </div>
-      {pager}
+          {chordsOpen ? (
+            <ChordBoard
+              songKey={songKey}
+              scale={scale}
+              root={root}
+              tones={tones}
+              octave={octave}
+              overwrite={overwrite}
+              onRoot={applyRoot}
+              onToggle={(semi) => {
+                const nextTones = tonesRef.current.includes(semi)
+                  ? tonesRef.current.filter((tone) => tone !== semi)
+                  : [...tonesRef.current, semi]
+                applyTones(nextTones)
+              }}
+              onDegree={applyDegree}
+              onOctave={setOctave}
+              onOverwrite={(next) => {
+                setOverwrite(next)
+                overwriteRef.current = next
+              }}
+            />
+          ) : null}
+        </div>
+      </DockWhen>
+      {stepsOpen || rollOpen ? pager : null}
     </div>
   )
 }
@@ -819,6 +928,12 @@ function retargetChord(
     ...notes.filter((note) => !overlaps(note, span) && !(previous && overlaps(note, previous))),
     ...pitches.map((pitch) => ({ pitch, start: span.start, duration: span.duration, velocity: 0.9 })),
   ]
+}
+
+function defaultBrushOctave(instrument: Instrument): number {
+  if (instrument.voice.type === 'bass') return 2
+  if (instrument.voice.type === 'lead' || isDrone(instrument.voice)) return 3
+  return 4
 }
 
 function withRack(instrument: Instrument, rack: Rack): Instrument {
@@ -891,6 +1006,8 @@ function deckProps(
     onEnvelope: (key: keyof Envelope, value: number) => props.onEnvelope(instrument.id, key, value),
     onSyncInsert: props.onSyncInsert ? (insert: InsertId) => props.onSyncInsert!(scope, insert) : undefined,
     onSyncMix: props.onSyncMix ? () => props.onSyncMix!(scope) : undefined,
+    selectedInsert: props.selectedInsert,
+    onSelectInsert: props.onSelectInsert,
     onAddInsert: (insert: InsertId, allParts?: boolean) => {
       if (allParts && props.onAddInsertAll) {
         props.onAddInsertAll(scope, insert)
@@ -907,7 +1024,7 @@ function deckProps(
       if (!bus && (insert === 'adsr' || insert === 'processing')) props.onToggleInsert(instrument.id, insert)
       else edit((rack) => ({ ...rack, off: flipOff(rack.off, insert) }))
     },
-    onPreview: () => props.onPreview(instrument.id),
+    onPreview: (down: boolean) => props.onPreview(instrument.id, down),
   }
 }
 

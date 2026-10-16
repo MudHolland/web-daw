@@ -15,7 +15,7 @@ export function createBassVoice(ctx: AudioContext): Voice {
     trigger(time, note, velocity, sound, envelope, gate) {
       if (!destination || !('glide' in sound)) return
       const freq = midiFrequency(note)
-      const glide = lastFreq > 0 && time - lastTime < 0.45 ? sound.glide * 0.09 : 0
+      const glide = hintedGlide(sound) ?? (lastFreq > 0 && time - lastTime < 0.45 ? sound.glide * 0.09 : 0)
       const decay = 0.06 + sound.decay * 0.5
       const osc = ctx.createOscillator()
       osc.type = waveType(sound.wave)
@@ -81,4 +81,8 @@ function waveType(wave: string | undefined): OscillatorType {
 
 function midiFrequency(note: number): number {
   return 440 * 2 ** ((note - 69) / 12)
+}
+
+function hintedGlide(sound: { glideSeconds?: number }): number | null {
+  return typeof sound.glideSeconds === 'number' ? Math.max(0, sound.glideSeconds) : null
 }

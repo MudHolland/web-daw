@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import type { StereoLevel } from '../audio/engine.ts'
-import { KEYS } from '../model/harmony.ts'
 import { METERS, type Meter, type Project } from '../model/project.ts'
 import { Fader } from './Fader.tsx'
+import { KeySelect } from './KeySelect.tsx'
 
 type TransportProps = {
   playing: boolean
@@ -11,7 +11,7 @@ type TransportProps = {
   onRecord?: () => void
   project: Project
   onBpm: (bpm: number) => void
-  onKey: (key: string) => void
+  onKey: (offset: number) => void
   onMeter: (meter: Meter) => void
 }
 
@@ -65,7 +65,7 @@ export function Transport({ playing, onToggle, recording = false, onRecord, proj
   }
 
   return (
-    <>
+    <div className="transport">
       {onRecord ? (
         <button
           type="button"
@@ -152,19 +152,14 @@ export function Transport({ playing, onToggle, recording = false, onRecord, proj
             <div className="transport-pop-row">
               <label className="transport-pop-field">
                 <span className="transport-pop-label">Key</span>
-                <select
-                  aria-label="Song Key"
-                  data-testid="song-key"
+                <KeySelect
+                  songKey={project.key}
+                  offset={0}
+                  onChange={onKey}
+                  testId="song-key"
+                  ariaLabel="Song Key"
                   className="transport-pop-select"
-                  value={KEYS.includes(project.key as (typeof KEYS)[number]) ? project.key : 'C'}
-                  onChange={(event) => onKey(event.target.value)}
-                >
-                  {KEYS.map((item) => (
-                    <option key={item} value={item}>
-                      {item}
-                    </option>
-                  ))}
-                </select>
+                />
               </label>
 
               <label className="transport-pop-field">
@@ -191,7 +186,7 @@ export function Transport({ playing, onToggle, recording = false, onRecord, proj
           </div>
         </div>
       ) : null}
-    </>
+    </div>
   )
 }
 
@@ -221,7 +216,7 @@ export function Brand({ live, onLive }: { live: boolean; onLive: () => void }) {
       <div className="wordmark">
         <span className="wordmark-kicker">Groove box</span>
         <strong>Beat Forge</strong>
-        <span className="wordmark-version">VERSION 1.4</span>
+        <span className="wordmark-version">VERSION 1.6</span>
       </div>
       <button
         type="button"

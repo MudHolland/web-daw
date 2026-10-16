@@ -1,9 +1,10 @@
 import { useRef, useState } from 'react'
 import type { PointerEvent as ReactPointerEvent } from 'react'
-import { KEYS } from '../model/harmony.ts'
-import { LOOP_BARS, METERS, songOrder, type LoopBars, type Meter, type Project } from '../model/project.ts'
+import { LOOP_BARS, METERS, sectionKeyOffset, songOrder, type LoopBars, type Meter, type Project } from '../model/project.ts'
 import type { CueMode } from '../audio/scheduler.ts'
 import { Fader } from './Fader.tsx'
+import { FitName, fitNameText } from './fitName.tsx'
+import { KeySelect } from './KeySelect.tsx'
 
 type SongMapProps = {
   project: Project
@@ -20,10 +21,10 @@ type SongMapProps = {
   onDelete: (nodeId: string) => void
   onReorder: (nodeId: string, toIndex: number) => void
   onBpm: (sectionId: string, bpm: number) => void
-  onKey: (sectionId: string, key: string) => void
+  onKey: (sectionId: string, offset: number) => void
   onMeter: (sectionId: string, meter: Meter) => void
   onBars: (sectionId: string, bars: LoopBars) => void
-  onAdhere?: (sectionId: string) => void
+  onAdhere?: (sectionId: string, kind?: 'all' | 'bpm' | 'key' | 'meter') => void
 }
 
 export function SongMap({
@@ -62,7 +63,13 @@ export function SongMap({
   const gapIndex = drag ? Math.min(shown.length, Math.max(0, drag.index)) : -1
 
   function startPartDrag(event: ReactPointerEvent<HTMLElement>, nodeId: string, name: string, meta: string, fromIndex: number) {
+    if (event.button !== 0) return
     if ((event.target as HTMLElement).closest('.part-settings, button, input, select')) return
+    try {
+      event.currentTarget.setPointerCapture(event.pointerId)
+    } catch {
+      /* Pointer capture is unavailable for this gesture. */
+    }
     const startX = event.clientX
     const startY = event.clientY
     let dragging = false
@@ -79,7 +86,10 @@ export function SongMap({
       window.removeEventListener('pointermove', move)
       window.removeEventListener('pointerup', finish)
       window.removeEventListener('pointercancel', finish)
-      if (!dragging) return
+      if (pointer.type === 'pointercancel' || !dragging) {
+        setDrag(null)
+        return
+      }
       const drop = partDropIndex(pointer.clientX, pointer.clientY, nodeId, index)
       const removing = document.elementsFromPoint(pointer.clientX, pointer.clientY).some((node) => node instanceof Element && node.closest('[data-delete-part]'))
       setDrag(null)
@@ -171,6 +181,7 @@ export function SongMap({
                       <button
                         type="button"
                         className="song-name"
+                        title={name}
                         onClick={(event) => {
                           event.stopPropagation()
                           onSelect(node.id)
@@ -178,12 +189,15 @@ export function SongMap({
                           setEditingId(node.sectionId)
                         }}
                       >
-                        {name}
+                        <FitName name={name} />
                       </button>
                     )}
                   </span>
                   <span className="song-block-meta">
-                    <span className="song-timing">{meta}</span>
+                    <span className="song-timing">
+                      {node.repeat}×<span className="song-timing-dot"> · </span>
+                      {loopLabel(section?.bars)}
+                    </span>
                     <button
                       type="button"
                       className={['song-part-toggle', expandedTimingNodeId === node.id && selected ? 'is-open' : ''].filter(Boolean).join(' ')}
@@ -260,7 +274,7 @@ export function SongMap({
                         <option value="">Stop</option>
                         {order.map((item) => (
                           <option key={item.id} value={item.id}>
-                            {nameOf(item.sectionId)}
+                            {fitNameText(nameOf(item.sectionId))}
                           </option>
                         ))}
                       </select>
@@ -270,7 +284,20 @@ export function SongMap({
                         <label className="part-bpm">
                           <span className="part-bpm-label">
                             BPM
-                            {section.customBpm ? <em className="part-custom-tag">custom</em> : null}
+                            {section.customBpm ? (
+                              <button
+                                type="button"
+                                className="part-custom-tag"
+                                title="Reset to song BPM"
+                                onClick={(event) => {
+                                  event.preventDefault()
+                                  event.stopPropagation()
+                                  onAdhere?.(section.id, 'bpm')
+                                }}
+                              >
+                                Custom
+                              </button>
+                            ) : null}
                           </span>
                           <div className="part-bpm-controls">
                             <b>{section.bpm}</b>
@@ -280,25 +307,46 @@ export function SongMap({
                         <label className="transport-select">
                           <span>
                             Key
-                            {section.customKey ? <em className="part-custom-tag">custom</em> : null}
+                            {section.customKey ? (
+                              <button
+                                type="button"
+                                className="part-custom-tag"
+                                title="Reset to song key"
+                                onClick={(event) => {
+                                  event.preventDefault()
+                                  event.stopPropagation()
+                                  onAdhere?.(section.id, 'key')
+                                }}
+                              >
+                                Custom
+                              </button>
+                            ) : null}
                           </span>
-                          <select
-                            aria-label="Key"
-                            data-testid="key"
-                            value={KEYS.includes(section.key as (typeof KEYS)[number]) ? section.key : 'C'}
-                            onChange={(event) => onKey(section.id, event.target.value)}
-                          >
-                            {KEYS.map((item) => (
-                              <option key={item} value={item}>
-                                {item}
-                              </option>
-                            ))}
-                          </select>
+                          <KeySelect
+                            songKey={project.key}
+                            offset={sectionKeyOffset(project, section)}
+                            onChange={(offset) => onKey(section.id, offset)}
+                            testId="key"
+                            ariaLabel="Key"
+                          />
                         </label>
                         <label className="transport-select">
                           <span>
                             Meter
-                            {section.customMeter ? <em className="part-custom-tag">custom</em> : null}
+                            {section.customMeter ? (
+                              <button
+                                type="button"
+                                className="part-custom-tag"
+                                title="Reset to song meter"
+                                onClick={(event) => {
+                                  event.preventDefault()
+                                  event.stopPropagation()
+                                  onAdhere?.(section.id, 'meter')
+                                }}
+                              >
+                                Custom
+                              </button>
+                            ) : null}
                           </span>
                           <select
                             aria-label="Time signature"

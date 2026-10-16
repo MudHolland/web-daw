@@ -7,6 +7,7 @@ import {
   storeOf,
   type AutomationTarget,
 } from '../model/automation.ts'
+import { DockWhen } from './editorDock.tsx'
 
 type AutomationPanelProps = {
   targets: AutomationTarget[]
@@ -19,6 +20,8 @@ type AutomationPanelProps = {
   viewStart: number
   viewLength: number
   barLength: number
+  open: boolean
+  onToggle: () => void
 }
 
 function groupsOf(length: number, size: number): number[][] {
@@ -51,8 +54,9 @@ export function AutomationPanel({
   viewStart,
   viewLength,
   barLength,
+  open,
+  onToggle,
 }: AutomationPanelProps) {
-  const [open, setOpen] = useState(true)
   const choices = targets.filter((item) => !item.divider)
   const [selected, setSelected] = useState(choices[0]?.id ?? '')
   const target = choices.find((item) => item.id === selected) ?? choices[0]
@@ -112,6 +116,7 @@ export function AutomationPanel({
   }
 
   return (
+    <DockWhen collapsed={!open}>
     <article className={open ? 'automation-panel' : 'automation-panel is-collapsed'}>
       <button
         type="button"
@@ -119,7 +124,7 @@ export function AutomationPanel({
         aria-expanded={open}
         aria-label={open ? 'Minimize automation' : 'Show automation'}
         data-testid="automation-toggle"
-        onClick={() => setOpen((value) => !value)}
+        onClick={onToggle}
       >
         <span>Automation</span>
         <svg viewBox="0 0 12 12" aria-hidden="true">
@@ -197,5 +202,6 @@ export function AutomationPanel({
         </div>
       ) : null}
     </article>
+    </DockWhen>
   )
 }

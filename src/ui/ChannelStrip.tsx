@@ -30,6 +30,7 @@ import {
 } from '../model/project.ts'
 import { instrumentColor } from './drums.ts'
 import { Fader, GainFader, formatGainDb } from './Fader.tsx'
+import { DockWhen } from './editorDock.tsx'
 
 type ChannelStripProps = {
   instrument: Instrument
@@ -50,7 +51,9 @@ type ChannelStripProps = {
   onToggleInsert: (insert: InsertId) => void
   onSyncInsert?: (insert: InsertId) => void
   onSyncMix?: () => void
-  onPreview: () => void
+  onPreview: (down: boolean) => void
+  selectedInsert?: InsertId | null
+  onSelectInsert?: (insert: InsertId | null) => void
   bus?: boolean
   collapsed?: boolean
   onToggleCollapsed?: () => void
@@ -81,6 +84,7 @@ const INSERTS: { id: InsertId; label: string }[] = [
   { id: 'reverb', label: 'Reverb' },
   { id: 'tape', label: 'Tape Stop' },
   { id: 'stutter', label: 'Repeat' },
+  { id: 'glide', label: 'Glide' },
 ]
 
 const VOICE_INSERTS = new Set<InsertId>(['adsr', 'processing'])
@@ -105,6 +109,8 @@ export function ChannelStrip({
   onSyncInsert,
   onSyncMix,
   onPreview,
+  selectedInsert = null,
+  onSelectInsert,
   bus = false,
   collapsed = false,
   onToggleCollapsed,
@@ -118,6 +124,7 @@ export function ChannelStrip({
   const available = INSERTS.filter((item) => !instrument.inserts.includes(item.id) && !(bus && VOICE_INSERTS.has(item.id)))
 
   return (
+    <DockWhen collapsed={Boolean(collapsed && layout === 'full')}>
     <article className={[layout === 'full' ? 'strip strip-full' : 'strip strip-compact', collapsed ? 'is-collapsed' : ''].filter(Boolean).join(' ')} style={style}>
       {layout === 'full' && onToggleCollapsed ? (
         <button
@@ -137,7 +144,24 @@ export function ChannelStrip({
         <>
       {layout === 'compact' ? (
         <header className="strip-head">
-          <button type="button" className="pad" style={{ background: color }} aria-label={`Play ${instrument.name}`} onClick={onPreview} />
+          <button
+            type="button"
+            className="pad"
+            style={{ background: color }}
+            aria-label={`Play ${instrument.name}`}
+            onPointerDown={(event) => {
+              if (event.button !== 0) return
+              event.preventDefault()
+              onPreview(true)
+              const up = () => {
+                onPreview(false)
+                window.removeEventListener('pointerup', up)
+                window.removeEventListener('pointercancel', up)
+              }
+              window.addEventListener('pointerup', up)
+              window.addEventListener('pointercancel', up)
+            }}
+          />
           <h3>{instrument.name}</h3>
         </header>
       ) : null}
@@ -218,7 +242,14 @@ export function ChannelStrip({
           const live = !instrument.off?.includes(insert)
           const label = INSERTS.find((item) => item.id === insert)?.label ?? insert
           return (
-          <section key={insert} className={live ? 'fader-bank' : 'fader-bank is-off'} data-testid={`insert-${insert}-${instrument.id}`}>
+          <section
+            key={insert}
+            className={[live ? 'fader-bank' : 'fader-bank is-off', selectedInsert === insert ? 'is-selected' : '']
+              .filter(Boolean)
+              .join(' ')}
+            data-testid={`insert-${insert}-${instrument.id}`}
+            onClick={() => onSelectInsert?.(insert)}
+          >
             <header className="bank-name">
               <button
                 type="button"
@@ -342,6 +373,7 @@ export function ChannelStrip({
         </>
       )}
     </article>
+    </DockWhen>
   )
 }
 
@@ -383,9 +415,11 @@ function Processing({
           <Knob label="Decay" valueLabel={String(Math.round(bass.decay * 100))}>
             <Fader vertical min={0} max={1} step={0.01} value={bass.decay} reset={(instrument.voice.type === 'lead' ? DEFAULT_LEAD : DEFAULT_BASS).decay} testId={`decay-${instrument.id}`} onChange={(value) => onBass('decay', value)} />
           </Knob>
-          <Knob label="Glide" valueLabel={String(Math.round(bass.glide * 100))}>
-            <Fader vertical min={0} max={1} step={0.01} value={bass.glide} reset={(instrument.voice.type === 'lead' ? DEFAULT_LEAD : DEFAULT_BASS).glide} testId={`glide-${instrument.id}`} onChange={(value) => onBass('glide', value)} />
-          </Knob>
+          {bass.drone ? null : (
+            <Knob label="Glide" valueLabel={String(Math.round(bass.glide * 100))}>
+              <Fader vertical min={0} max={1} step={0.01} value={bass.glide} reset={(instrument.voice.type === 'lead' ? DEFAULT_LEAD : DEFAULT_BASS).glide} testId={`glide-${instrument.id}`} onChange={(value) => onBass('glide', value)} />
+            </Knob>
+          )}
         </>
       ) : null}
       {chord ? (
@@ -446,7 +480,7 @@ function EffectKnobs({
               step={steps ? 1 : 0.01}
               value={steps ? steps.index(settings[key]) : settings[key]}
               reset={steps ? steps.index(home) : home}
-              split={key === 'mix'}
+              split={key === 'mix' || (effect === 'glide' && key === 'place')}
               testId={`${effect}-${key}-${instrument.id}`}
               onChange={(value) => onFx(effect, key, steps ? steps.value(value) : value)}
             />
@@ -465,6 +499,7 @@ function stepScale(effect: keyof FxSettings, key: string) {
 
 function knobLabel(key: string): string {
   if (key === 'semi') return 'oct'
+  if (key === 'place') return 'place'
   return key
 }
 
@@ -477,6 +512,11 @@ function formatFx(effect: string, key: string, value: number): string {
   if (key === 'semi') {
     const semis = Math.round((value - 0.5) * 24)
     return semis > 0 ? `+${semis}` : String(semis)
+  }
+  if (effect === 'glide' && key === 'place') {
+    if (value < 0.42) return 'Before'
+    if (value > 0.58) return 'After'
+    return 'On'
   }
   if (effect === 'cutoff' && key === 'low') return value <= 0.01 ? 'Open' : formatHz(fxLowCutHz(value))
   if (effect === 'cutoff' && key === 'high') return value >= 0.99 ? 'Open' : formatHz(fxHighCutHz(value))

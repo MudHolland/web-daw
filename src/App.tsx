@@ -51,6 +51,10 @@ import {
   updateRack,
   setSwing,
   slotEnabled,
+  copySectionContent,
+  duplicateGroup,
+  duplicateInstrument,
+  duplicatePart,
   addInsert,
   removeInsert,
   toggleInsert,
@@ -73,6 +77,7 @@ import {
 import { createHistory } from './model/history.ts'
 import { downloadProject, loadStoredProject, readProjectFile, saveStoredProject } from './model/storage.ts'
 import { Editor } from './ui/Editor.tsx'
+import { FitName } from './ui/fitName.tsx'
 import { GroupList, type Selection } from './ui/InstrumentList.tsx'
 import { SongMap } from './ui/SongMap.tsx'
 import { DocsOverlay, type DocsPage } from './ui/DocsOverlay.tsx'
@@ -113,6 +118,11 @@ const NUMPAD_GROUP: Record<string, number> = {
 }
 
 const NUMPAD_SHIFT_KEYS = new Set(['End', 'Home', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'PageUp', 'PageDown', 'Clear', 'Insert'])
+
+type Clip =
+  | { kind: 'part'; nodeId: string }
+  | { kind: 'instrument'; instrumentId: string }
+  | { kind: 'group'; groupId: string }
 
 const RECORD_KEYS = [
   'KeyA',
@@ -165,6 +175,74 @@ export function App() {
     setProjectState((current) => historyRef.current.redo(current) ?? current)
   }
 
+  function clipOf(
+    current: Project,
+    pick: Selection,
+    nodeId: string,
+    focus: 'part' | 'instrument' | 'group' | 'insert',
+  ): Clip | null {
+    if (focus === 'instrument' && pick.kind === 'instrument') {
+      return { kind: 'instrument', instrumentId: pick.instrumentId }
+    }
+    if (focus === 'group' && pick.kind === 'group') {
+      return { kind: 'group', groupId: pick.groupId }
+    }
+    if (current.arrangement.some((node) => node.id === nodeId)) return { kind: 'part', nodeId }
+    return null
+  }
+
+  function clipLabel(current: Project, item: Clip | null): string {
+    if (!item) return ''
+    if (item.kind === 'instrument') {
+      return current.instruments.find((entry) => entry.id === item.instrumentId)?.name ?? 'instrument'
+    }
+    if (item.kind === 'group') {
+      return current.groups.find((entry) => entry.id === item.groupId)?.name ?? 'group'
+    }
+    const node = current.arrangement.find((entry) => entry.id === item.nodeId)
+    return current.sections.find((section) => section.id === node?.sectionId)?.name ?? 'part'
+  }
+
+  function copySelection() {
+    const item = clipOf(projectRef.current, selectionRef.current, editNodeIdRef.current, focusRef.current)
+    if (item) clipRef.current = item
+  }
+
+  function duplicateClip(item: Clip | null, afterNodeId: string) {
+    if (!item) return
+    if (item.kind === 'instrument') {
+      const result = duplicateInstrument(projectRef.current, item.instrumentId)
+      if (!result) return
+      setProject(result.project)
+      setSelection({ kind: 'instrument', instrumentId: result.instrumentId })
+      focusRef.current = 'instrument'
+      return
+    }
+    if (item.kind === 'group') {
+      const result = duplicateGroup(projectRef.current, item.groupId)
+      if (!result) return
+      setProject(result.project)
+      setSelection({ kind: 'group', groupId: result.groupId })
+      focusRef.current = 'group'
+      return
+    }
+    const added = duplicatePart(projectRef.current, item.nodeId, afterNodeId)
+    setProject(added.project)
+    setEditNodeId(added.nodeId)
+    focusRef.current = 'part'
+  }
+
+  function pasteClipboard() {
+    duplicateClip(clipRef.current, editNodeIdRef.current)
+  }
+
+  function duplicateSelection() {
+    duplicateClip(
+      clipOf(projectRef.current, selectionRef.current, editNodeIdRef.current, focusRef.current),
+      editNodeIdRef.current,
+    )
+  }
+
   function replaceSong(next: Project) {
     historyRef.current.clear()
     setProjectState(next)
@@ -174,8 +252,8 @@ export function App() {
   )
   const [editNodeId, setEditNodeId] = useState(project.startNodeId)
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({ drums: true })
-  const [songOpen, setSongOpen] = useState(true)
-  const [tracksOpen, setTracksOpen] = useState(true)
+  const [songOpen, setSongOpen] = useState(() => window.matchMedia('(min-width: 1281px)').matches)
+  const [tracksOpen, setTracksOpen] = useState(() => window.matchMedia('(min-width: 1281px)').matches)
   const [resetArmed, setResetArmed] = useState(false)
   const [fileOpen, setFileOpen] = useState(false)
   const [docs, setDocs] = useState<DocsPage | null>(null)
@@ -183,6 +261,7 @@ export function App() {
   const [playback, setPlayback] = useState<PlaybackView>({ playing: false, step: -1, position: -1, nodeId: null, level: { left: 0, right: 0 }, voices: {}, queuedNodeId: null, cueMode: null })
   const [liveView, setLiveView] = useState(false)
   const [followLive, setFollowLive] = useState(true)
+  const [selectedInsert, setSelectedInsert] = useState<InsertId | null>(null)
   const [namingSong, setNamingSong] = useState(false)
   const [songDraft, setSongDraft] = useState(project.name)
   const cancelSongName = useRef(false)
@@ -195,12 +274,16 @@ export function App() {
   const heldPads = useRef(new Map<string, number>())
   const shiftHeld = useRef(false)
   const docsRef = useRef<DocsPage | null>(null)
+  const focusRef = useRef<'part' | 'instrument' | 'group' | 'insert'>('part')
+  const selectedInsertRef = useRef<InsertId | null>(null)
+  const clipRef = useRef<Clip | null>(null)
   followLiveRef.current = followLive
   editNodeIdRef.current = editNodeId
   recordingRef.current = recording
   selectionRef.current = selection
   projectRef.current = project
   docsRef.current = docs
+  selectedInsertRef.current = selectedInsert
   if (!recording) heldPads.current.clear()
   const fileRef = useRef<HTMLInputElement>(null)
   const engineRef = useRef<Engine | null>(null)
@@ -322,6 +405,21 @@ export function App() {
         redo()
         return
       }
+      if ((event.ctrlKey || event.metaKey) && event.code === 'KeyC' && !event.shiftKey && !event.altKey) {
+        event.preventDefault()
+        copySelection()
+        return
+      }
+      if ((event.ctrlKey || event.metaKey) && event.code === 'KeyV' && !event.shiftKey && !event.altKey) {
+        event.preventDefault()
+        pasteClipboard()
+        return
+      }
+      if ((event.ctrlKey || event.metaKey) && event.code === 'KeyD' && !event.shiftKey && !event.altKey) {
+        event.preventDefault()
+        duplicateSelection()
+        return
+      }
 
       if (event.code === 'KeyR' && !event.ctrlKey && !event.metaKey && !event.altKey && !event.shiftKey) {
         event.preventDefault()
@@ -354,6 +452,44 @@ export function App() {
         if (instrument) {
           event.preventDefault()
           mute(instrument.id)
+        }
+        return
+      }
+
+      if ((event.key === 'Delete' || event.key === 'Backspace') && !event.ctrlKey && !event.metaKey && !event.altKey) {
+        const from = event.target
+        if (from instanceof Element && from.closest('.piano-roll, .keys-roll .roll-stack')) return
+        event.preventDefault()
+        const focus = focusRef.current
+        const current = projectRef.current
+        const pick = selectionRef.current
+        if (focus === 'insert' && selectedInsertRef.current && pick.kind === 'instrument') {
+          const insert = selectedInsertRef.current
+          setProject((item) => removeInsert(item, pick.instrumentId, insert))
+          setSelectedInsert(null)
+          return
+        }
+        if (focus === 'instrument' && pick.kind === 'instrument') {
+          setProject((item) => removeInstrument(item, pick.instrumentId))
+          setSelection({ kind: 'song' })
+          focusRef.current = 'part'
+          return
+        }
+        if (focus === 'group' && pick.kind === 'group') {
+          const members = current.groups.find((group) => group.id === pick.groupId)?.instrumentIds ?? []
+          setProject((item) => removeGroup(item, pick.groupId))
+          setSelection({ kind: 'song' })
+          focusRef.current = 'part'
+          void members
+          return
+        }
+        if (current.arrangement.length > 1) {
+          const nodeId = editNodeIdRef.current
+          setProject((item) => {
+            const next = removePart(item, nodeId)
+            if (!next.arrangement.some((node) => node.id === editNodeIdRef.current)) setEditNodeId(next.startNodeId)
+            return next
+          })
         }
         return
       }
@@ -626,6 +762,48 @@ export function App() {
                 <hr className="menu-line" />
                 <button
                   type="button"
+                  data-testid="clip-duplicate"
+                  onClick={() => {
+                    duplicateSelection()
+                    setFileOpen(false)
+                  }}
+                >
+                  Duplicate{' '}
+                  <FitName name={clipLabel(project, clipOf(project, selection, editNodeId, focusRef.current))} />
+                </button>
+                {project.sections.some((section) => section.id !== sectionId) ? (
+                  <>
+                    <hr className="menu-line" />
+                    <div className="menu-sub">
+                      <button type="button" className="menu-sub-btn" data-testid="clip-content">
+                        Copy content to
+                        <span className="menu-sub-caret" aria-hidden>
+                          ▸
+                        </span>
+                      </button>
+                      <div className="menu-flyout" role="menu">
+                        {project.sections
+                          .filter((section) => section.id !== sectionId)
+                          .map((section) => (
+                            <button
+                              key={section.id}
+                              type="button"
+                              data-testid={`clip-content-${section.id}`}
+                              onClick={() => {
+                                setProject((current) => copySectionContent(current, sectionId, section.id))
+                                setFileOpen(false)
+                              }}
+                            >
+                              <FitName name={section.name} />
+                            </button>
+                          ))}
+                      </div>
+                    </div>
+                  </>
+                ) : null}
+                <hr className="menu-line" />
+                <button
+                  type="button"
                   data-testid="load"
                   onClick={() => {
                     setFileOpen(false)
@@ -722,7 +900,7 @@ export function App() {
           }}
           project={project}
           onBpm={(bpm) => setProject((current) => setProjectBpm(current, bpm), 'live:bpm')}
-          onKey={(key) => setProject((current) => setProjectKey(current, key))}
+          onKey={(offset) => setProject((current) => setProjectKey(current, offset))}
           onMeter={(meter) => setProject((current) => setProjectMeter(current, meter))}
         />
         <div className="top-side is-end">
@@ -750,6 +928,7 @@ export function App() {
             onSelect={(nodeId) => {
               setFollowLive(false)
               setEditNodeId(nodeId)
+              focusRef.current = 'part'
             }}
             onJump={(nodeId) => {
               setFollowLive(true)
@@ -773,10 +952,10 @@ export function App() {
               setEditNodeId(added.nodeId)
             }}
             onBpm={(targetSectionId, bpm) => setProject((current) => setSectionBpm(current, targetSectionId, bpm))}
-            onKey={(targetSectionId, key) => setProject((current) => setSectionKey(current, targetSectionId, key))}
+            onKey={(targetSectionId, offset) => setProject((current) => setSectionKey(current, targetSectionId, offset))}
             onMeter={(targetSectionId, meter: Meter) => setProject((current) => setSectionMeter(current, targetSectionId, meter))}
             onBars={(targetSectionId, bars: LoopBars) => setProject((current) => setSectionBars(current, targetSectionId, bars))}
-            onAdhere={(targetSectionId) => setProject((current) => adhereSection(current, targetSectionId))}
+            onAdhere={(targetSectionId, kind) => setProject((current) => adhereSection(current, targetSectionId, kind ?? 'all'))}
           />
           {loadError ? (
             <footer className="drawer-foot">
@@ -830,7 +1009,9 @@ export function App() {
           onAddInsert={(instrumentId, insert: InsertId) => setProject((current) => addInsert(current, instrumentId, insert))}
           onRemoveInsert={(instrumentId, insert: InsertId) => setProject((current) => removeInsert(current, instrumentId, insert))}
           onToggleInsert={(instrumentId, insert: InsertId) => setProject((current) => toggleInsert(current, instrumentId, insert))}
-          onPreview={(instrumentId) => engine.preview(instrumentId)}
+          onPreview={(instrumentId, down) => engine.preview(instrumentId, down)}
+          onPreviewMany={(ids, down) => engine.previewMany(ids, down)}
+          onPreviewNote={(instrumentId, midi, down) => engine.previewNote(instrumentId, midi, down)}
           onRecordHold={recordHold}
           recording={recording}
           onNotes={(instrumentId, notes) => setProject((current) => setRollNotes(current, instrumentId, notes, sectionId))}
@@ -849,7 +1030,15 @@ export function App() {
           onLiveView={setLiveView}
           followLive={followLive}
           onFollowLive={setFollowLive}
-          onPreviewCatalog={(catalog) => engine.previewCatalog(catalog)}
+          onCopyContent={(toSectionId) =>
+            setProject((current) => copySectionContent(current, sectionId, toSectionId))
+          }
+          onSelectInsert={(insert) => {
+            setSelectedInsert(insert)
+            focusRef.current = 'insert'
+          }}
+          selectedInsert={selectedInsert}
+          onPreviewCatalog={(catalog, down) => (down ? engine.previewCatalog(catalog) : engine.previewCatalog(catalog, false))}
           onRetune={(instrumentId, catalog) =>
             setProject((current) => {
               const next = retuneInstrument(current, instrumentId, catalog)
@@ -867,10 +1056,20 @@ export function App() {
             openGroups={openGroups}
             sectionId={sectionId}
             onToggleGroup={(groupId) => setOpenGroups((current) => ({ ...current, [groupId]: current[groupId] === false }))}
-            onSelectSong={() => setSelection({ kind: 'song' })}
-            onSelectGroup={(groupId) => setSelection({ kind: 'group', groupId })}
-            onSelectInstrument={(instrumentId) => setSelection({ kind: 'instrument', instrumentId })}
-            onPreview={(instrumentId) => engine.preview(instrumentId)}
+            onSelectSong={() => {
+              setSelection({ kind: 'song' })
+              focusRef.current = 'part'
+            }}
+            onSelectGroup={(groupId) => {
+              setSelection({ kind: 'group', groupId })
+              focusRef.current = 'group'
+            }}
+            onSelectInstrument={(instrumentId) => {
+              setSelection({ kind: 'instrument', instrumentId })
+              focusRef.current = 'instrument'
+              setSelectedInsert(null)
+            }}
+            onPreview={(instrumentId, down) => engine.preview(instrumentId, down)}
             onRecordHold={recordHold}
             recording={recording}
             onMute={mute}
@@ -879,7 +1078,7 @@ export function App() {
             onSoloGroup={soloGroup}
             onAddGroup={createGroup}
             onAddTrack={createTrack}
-            onPreviewCatalog={(catalog) => engine.previewCatalog(catalog)}
+            onPreviewCatalog={(catalog, down) => (down ? engine.previewCatalog(catalog) : engine.previewCatalog(catalog, false))}
             onRenameGroup={(groupId, name) => setProject((current) => renameGroup(current, groupId, name))}
             onRenameInstrument={(instrumentId, name) => setProject((current) => renameInstrument(current, instrumentId, name))}
             onPlace={(instrumentId, groupId, index) => setProject((current) => placeTrack(current, instrumentId, groupId, index))}

@@ -5,6 +5,8 @@ import {
   catalogEntries,
   familiesForGroup,
   groupSlot,
+  mixerNumbers,
+  padMixerIndex,
   kitLabel,
   slotEnabled,
   type CatalogEntry,
@@ -30,7 +32,7 @@ type GroupListProps = {
   onSelectSong: () => void
   onSelectGroup: (groupId: string) => void
   onSelectInstrument: (instrumentId: string) => void
-  onPreview: (instrumentId: string) => void
+  onPreview: (instrumentId: string, down: boolean) => void
   onRecordHold?: (instrumentId: string, down: boolean) => void
   recording?: boolean
   onMute: (instrumentId: string) => void
@@ -39,7 +41,7 @@ type GroupListProps = {
   onSoloGroup: (groupId: string) => void
   onAddGroup: (name: string) => void
   onAddTrack: (groupId: string | null, catalog: CatalogId) => void
-  onPreviewCatalog: (catalog: CatalogId) => void
+  onPreviewCatalog: (catalog: CatalogId, down: boolean) => void
   onRenameGroup: (groupId: string, name: string) => void
   onRenameInstrument: (instrumentId: string, name: string) => void
   onPlace: (instrumentId: string, groupId: string, index: number) => void
@@ -92,6 +94,8 @@ export function GroupList({
         ? project.groups.find((item) => item.instrumentIds.includes(selection.instrumentId))
         : undefined
 
+  const numbers = mixerNumbers(project)
+
   return (
     <div className="track-pane">
       <div className="pane-title">
@@ -100,7 +104,7 @@ export function GroupList({
         </button>
       </div>
       <div className="group-list">
-        {project.groups.map((group) => {
+        {project.groups.map((group, index) => {
           const slot = groupSlot(project.sections.find((item) => item.id === sectionId), group.id)
           const remaining = project.groups.filter((item) => item.id !== (drag?.kind === 'group' ? drag.groupId : ''))
           const restIndex = remaining.findIndex((item) => item.id === group.id)
@@ -112,6 +116,8 @@ export function GroupList({
               <GroupBlock
                 group={group}
                 project={project}
+                groupNumber={numbers.groups.get(group.id) ?? index + 1}
+                channelNumbers={numbers.channels}
                 open={openGroups[group.id] !== false}
                 selected={selection.kind === 'group' && selection.groupId === group.id}
                 selectedInstrumentId={selection.kind === 'instrument' ? selection.instrumentId : null}
@@ -200,8 +206,14 @@ export function GroupList({
   )
 
   function beginDrag(event: ReactPointerEvent<HTMLElement>, instrument: Instrument, groupId: string) {
+    if (event.button !== 0) return
     event.preventDefault()
     event.stopPropagation()
+    try {
+      event.currentTarget.setPointerCapture(event.pointerId)
+    } catch {
+      /* Pointer capture is unavailable for this gesture. */
+    }
     const originX = event.clientX
     const originY = event.clientY
     let lifted = false
@@ -233,6 +245,10 @@ export function GroupList({
       window.removeEventListener('pointermove', move)
       window.removeEventListener('pointerup', finish)
       window.removeEventListener('pointercancel', finish)
+      if (pointer.type === 'pointercancel') {
+        setDrag(null)
+        return
+      }
       if (!lifted) {
         setColorPick((current) => (current?.kind === 'track' && current.id === instrument.id ? null : { kind: 'track', id: instrument.id }))
         return
@@ -248,8 +264,14 @@ export function GroupList({
   }
 
   function beginGroupDrag(event: ReactPointerEvent<HTMLElement>, group: InstrumentGroup) {
+    if (event.button !== 0) return
     event.preventDefault()
     event.stopPropagation()
+    try {
+      event.currentTarget.setPointerCapture(event.pointerId)
+    } catch {
+      /* Pointer capture is unavailable for this gesture. */
+    }
     const originX = event.clientX
     const originY = event.clientY
     let lifted = false
@@ -281,6 +303,10 @@ export function GroupList({
       window.removeEventListener('pointermove', move)
       window.removeEventListener('pointerup', finish)
       window.removeEventListener('pointercancel', finish)
+      if (pointer.type === 'pointercancel') {
+        setDrag(null)
+        return
+      }
       if (!lifted) {
         setColorPick((current) => (current?.kind === 'group' && current.id === group.id ? null : { kind: 'group', id: group.id }))
         return
@@ -379,7 +405,7 @@ export function AddMenu({
   currentId?: CatalogId | null
   onClose: () => void
   onGroup?: () => void
-  onPreview: (catalog: CatalogId) => void
+  onPreview: (catalog: CatalogId, down: boolean) => void
   onTrack: (catalog: CatalogId) => void
 }) {
   const ref = useRef<HTMLDivElement>(null)
@@ -414,10 +440,24 @@ export function AddMenu({
             {kits.map((kit) => {
               const kitItems = kit ? items.filter((item) => item.kit === kit) : items
               if (kitItems.length === 0) return null
+              const roles = kit
+                ? [undefined]
+                : (['mono', 'poly', 'pedal'] as const).filter((role) => kitItems.some((item) => item.role === role))
+              const chunks = roles.length > 0 ? roles : [undefined]
               return (
                 <div key={kit ?? section.family}>
                   {kit ? <p className="add-menu-kit">{kitLabel(kit)}</p> : null}
-                  {kitItems.map((item) => {
+                  {chunks.map((role) => {
+                    const roleItems = role ? kitItems.filter((item) => item.role === role) : kitItems
+                    if (roleItems.length === 0) return null
+                    return (
+                      <div key={role ?? 'all'}>
+                        {role ? (
+                          <p className="add-menu-kit">
+                            {role === 'mono' ? 'Mono · one note' : role === 'poly' ? 'Poly · three notes' : 'Pedal · held note'}
+                          </p>
+                        ) : null}
+                        {roleItems.map((item) => {
                     const label = kit ? item.label.replace(new RegExp(`^${kitLabel(kit)} `, 'i'), '') : item.label
                     const color = catalogColor(item.id)
                     const current = item.id === currentId
@@ -433,9 +473,9 @@ export function AddMenu({
                           data-testid={`preview-${item.id.replace(':', '-')}`}
                           aria-label={`Preview ${item.label}`}
                           style={{ background: color }}
-                          onClick={(event) => {
+                          onPointerDown={(event) => {
                             event.stopPropagation()
-                            onPreview(item.id)
+                            beginPadHold((down) => onPreview(item.id, down), event)
                           }}
                         />
                         <button
@@ -448,6 +488,9 @@ export function AddMenu({
                         >
                           {label}
                         </button>
+                      </div>
+                    )
+                        })}
                       </div>
                     )
                   })}
@@ -474,7 +517,7 @@ type GroupBlockProps = {
   onToggle: () => void
   onSelect: () => void
   onSelectInstrument: (instrumentId: string) => void
-  onPreview: (instrumentId: string) => void
+  onPreview: (instrumentId: string, down: boolean) => void
   recording: boolean
   onRecordHold?: (instrumentId: string, down: boolean) => void
   onMute: (instrumentId: string) => void
@@ -488,6 +531,8 @@ type GroupBlockProps = {
   playing: boolean
   activity: Record<string, number>
   colorPick: { kind: 'track' | 'group'; id: string } | null
+  groupNumber: number
+  channelNumbers: Map<string, number>
   onGrip: (event: ReactPointerEvent<HTMLElement>, instrument: Instrument) => void
   onGroupGrip: (event: ReactPointerEvent<HTMLElement>) => void
   onColor: (instrumentId: string, color: string | null) => void
@@ -522,6 +567,8 @@ function GroupBlock({
   dragId,
   dropIndex,
   colorPick,
+  groupNumber,
+  channelNumbers,
   onGrip,
   onGroupGrip,
   onColor,
@@ -552,25 +599,37 @@ function GroupBlock({
   }
 
   const resting = instruments.filter((instrument) => instrument.id !== dragId)
+  const groupLevel =
+    activity[group.id] ?? instruments.reduce((peak, item) => Math.max(peak, activity[item.id] ?? 0), 0)
+  const groupPulse = activityPulse(playing, groupLevel)
   let place = 0
 
   return (
     <section
-      className={[selected ? 'group is-selected' : 'group', muted ? 'is-muted' : '', solo ? 'is-solo' : '', lifted ? 'is-lifted' : '']
+      className={[
+        selected ? 'group is-selected' : 'group',
+        muted ? 'is-muted' : '',
+        solo ? 'is-solo' : '',
+        lifted ? 'is-lifted' : '',
+        groupPulse > 0.06 ? 'is-lit' : '',
+      ]
         .filter(Boolean)
         .join(' ')}
       data-group-id={group.id}
     >
       <div ref={headRef} className="group-head" style={{ '--voice': color } as CSSProperties}>
+        <span className="track-bloom" style={bloomStyle(groupPulse)} aria-hidden />
         <button
           type="button"
           className="group-grip"
-          aria-label={`Move or recolor ${group.name}`}
+          aria-label={`Group ${padMixerIndex(groupNumber)}, move or recolor ${group.name}`}
           aria-haspopup="dialog"
           aria-expanded={picking}
-          style={activityStyle(playing, activity[group.id] ?? instruments.reduce((peak, item) => Math.max(peak, activity[item.id] ?? 0), 0))}
+          style={activityStyle(groupPulse)}
           onPointerDown={onGroupGrip}
-        />
+        >
+          <span className="grip-index">{padMixerIndex(groupNumber)}</span>
+        </button>
         {picking ? (
           <div className="color-picker" role="dialog" aria-label={`Color for ${group.name}`}>
             {TRACK_COLORS.map((swatch) => {
@@ -607,6 +666,7 @@ function GroupBlock({
           <button
             type="button"
             className="group-select"
+            title={group.name}
             data-testid={`group-${group.id}`}
             aria-pressed={selected}
             onClick={onSelect}
@@ -669,13 +729,14 @@ function GroupBlock({
               <TrackRow
                 key={instrument.id}
                 instrument={instrument}
+                channelNumber={channelNumbers.get(instrument.id) ?? 1}
                 active={instrument.id === selectedInstrumentId}
                 muted={!slotEnabled(project, instrument.id, sectionId)}
                 solo={project.sections.find((item) => item.id === sectionId)?.slots[instrument.id]?.solo === true}
                 lifted={instrument.id === dragId}
                 gap={openGap ? slot : null}
                 onSelect={() => onSelectInstrument(instrument.id)}
-                onPreview={() => onPreview(instrument.id)}
+                onPreview={(down) => onPreview(instrument.id, down)}
                 recording={recording}
                 onRecordHold={(down) => onRecordHold?.(instrument.id, down)}
                 onMute={() => onMute(instrument.id)}
@@ -699,6 +760,7 @@ function GroupBlock({
 
 function TrackRow({
   instrument,
+  channelNumber,
   active,
   muted,
   solo,
@@ -719,6 +781,7 @@ function TrackRow({
   onClosePicker,
 }: {
   instrument: Instrument
+  channelNumber: number
   active: boolean
   muted: boolean
   solo: boolean
@@ -728,7 +791,7 @@ function TrackRow({
   level: number
   picking: boolean
   onSelect: () => void
-  onPreview: () => void
+  onPreview: (down: boolean) => void
   recording: boolean
   onRecordHold?: (down: boolean) => void
   onMute: () => void
@@ -739,6 +802,7 @@ function TrackRow({
   onClosePicker: () => void
 }) {
   const color = instrumentColor(instrument)
+  const pulse = activityPulse(playing, level)
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(instrument.name)
   const rowRef = useRef<HTMLLIElement>(null)
@@ -763,20 +827,34 @@ function TrackRow({
     <li
       ref={rowRef}
       data-track-id={instrument.id}
-      className={[active ? 'is-selected' : '', muted ? 'is-muted' : '', solo ? 'is-solo' : '', lifted ? 'is-lifted' : '']
+      className={[
+        active ? 'is-selected' : '',
+        muted ? 'is-muted' : '',
+        solo ? 'is-solo' : '',
+        lifted ? 'is-lifted' : '',
+        pulse > 0.06 ? 'is-lit' : '',
+      ]
         .filter(Boolean)
         .join(' ')}
       style={{ '--voice': color } as CSSProperties}
+      onClick={(event) => {
+        const target = event.target as HTMLElement
+        if (target.closest('.mute, .solo, .track-light, .track-grip, .color-picker, .rename')) return
+        onSelect()
+      }}
     >
+      <span className="track-bloom" style={bloomStyle(pulse)} aria-hidden />
       <button
         type="button"
         className="track-grip"
-        aria-label={`Move or recolor ${instrument.name}`}
+        aria-label={`Channel ${padMixerIndex(channelNumber)}, move or recolor ${instrument.name}`}
         aria-haspopup="dialog"
         aria-expanded={picking}
-        style={activityStyle(playing, level)}
+        style={activityStyle(pulse)}
         onPointerDown={onGrip}
-      />
+      >
+        <span className="grip-index">{padMixerIndex(channelNumber)}</span>
+      </button>
       {picking ? (
         <div className="color-picker" role="dialog" aria-label={`Color for ${instrument.name}`}>
           {TRACK_COLORS.map((swatch) => {
@@ -813,6 +891,7 @@ function TrackRow({
         <button
           type="button"
           className="instrument-select"
+          title={instrument.name}
           data-testid={`instrument-${instrument.id}`}
           aria-pressed={active}
           onClick={onSelect}
@@ -832,7 +911,10 @@ function TrackRow({
             data-testid={`mute-${instrument.id}`}
             aria-pressed={muted}
             aria-label={muted ? `Unmute ${instrument.name}` : `Mute ${instrument.name}`}
-            onClick={onMute}
+            onClick={(event) => {
+              event.stopPropagation()
+              onMute()
+            }}
           >
             M
           </button>
@@ -842,7 +924,10 @@ function TrackRow({
             data-testid={`solo-${instrument.id}`}
             aria-pressed={solo}
             aria-label={`Solo ${instrument.name}`}
-            onClick={onSolo}
+            onClick={(event) => {
+              event.stopPropagation()
+              onSolo()
+            }}
           >
             S
           </button>
@@ -854,10 +939,9 @@ function TrackRow({
           data-testid={`pad-${instrument.id}`}
           aria-label={`Play ${instrument.name}`}
           onPointerDown={(event) => {
+            event.stopPropagation()
             if (recording) beginPadHold(onRecordHold, event)
-          }}
-          onClick={() => {
-            if (!recording) onPreview()
+            else beginPadHold(onPreview, event)
           }}
         />
       </span>
@@ -866,17 +950,27 @@ function TrackRow({
   )
 }
 
-function activityStyle(playing: boolean, level: number): CSSProperties | undefined {
-  if (!playing) return undefined
-  const pulse = Math.min(1, Math.pow(Math.max(0, level), 0.38) * 1.35)
+function activityPulse(playing: boolean, level: number) {
+  if (!playing) return 0
+  return Math.min(1, Math.pow(Math.max(0, level), 0.38) * 1.35)
+}
+
+function activityStyle(pulse: number): CSSProperties | undefined {
+  if (pulse <= 0) return undefined
   return {
     opacity: 0.42 + 0.58 * pulse,
     filter: `brightness(${1 + pulse * 1.55})`,
-    boxShadow: pulse > 0.06 ? `0 0 ${8 + pulse * 18}px color-mix(in srgb, var(--voice) ${Math.round(40 + pulse * 60)}%, transparent)` : undefined,
   }
 }
 
-function beginPadHold(hold: ((down: boolean) => void) | undefined, event: { button: number; preventDefault(): void }) {
+function bloomStyle(pulse: number): CSSProperties | undefined {
+  if (pulse <= 0.06) return undefined
+  return {
+    boxShadow: `0 0 ${8 + pulse * 18}px color-mix(in srgb, var(--voice) ${Math.round(40 + pulse * 60)}%, transparent)`,
+  }
+}
+
+export function beginPadHold(hold: ((down: boolean) => void) | undefined, event: { button: number; preventDefault(): void }) {
   if (!hold || event.button !== 0) return
   event.preventDefault()
   hold(true)

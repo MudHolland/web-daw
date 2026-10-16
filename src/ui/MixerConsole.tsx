@@ -1,5 +1,5 @@
 import { applyRackAutomation, heardMasterMix } from '../model/automation.ts'
-import { groupSlot, openRack, type Project, type Rack } from '../model/project.ts'
+import { groupSlot, mixerNumbers, openRack, padMixerIndex, type Project, type Rack } from '../model/project.ts'
 import { formatPan } from './ChannelStrip.tsx'
 import { groupColor, instrumentColor } from './drums.ts'
 import { Fader, GainFader, formatGainDb } from './Fader.tsx'
@@ -22,7 +22,7 @@ type MixerConsoleProps = {
   onGroupRack: (groupId: string, update: (rack: Rack) => Rack) => void
   onMaster: (master: number) => void
   onMasterPan: (pan: number) => void
-  onPreview?: (instrumentId: string) => void
+  onPreview?: (instrumentId: string, down: boolean) => void
   motionAt?: number
 }
 
@@ -51,9 +51,9 @@ export function MixerConsole({
   const groove = heardMasterMix(project, section, motionAt)
   const grouped = new Set(project.groups.flatMap((group) => group.instrumentIds))
   const loose = project.instruments.filter((instrument) => !grouped.has(instrument.id))
+  const numbers = mixerNumbers(project)
 
   function trackStrip(instrument: (typeof project.instruments)[number]) {
-    const index = project.instruments.findIndex((item) => item.id === instrument.id)
     const slot = section?.slots[instrument.id]
     const stored = slot?.rack ?? {
       level: instrument.mix.level,
@@ -67,7 +67,7 @@ export function MixerConsole({
     const isMuted = slot ? !slot.enabled : false
     const isSoloed = slot?.solo === true
     const color = instrumentColor(instrument)
-    const chNum = String(Math.max(0, index) + 1).padStart(2, '0')
+    const chNum = padMixerIndex(numbers.channels.get(instrument.id) ?? 1)
     const voiceBadge =
       instrument.voice.type === '808'
         ? '808'
@@ -110,10 +110,7 @@ export function MixerConsole({
             onPointerDown={(event) => {
               event.stopPropagation()
               if (recording) beginPadHold((down) => onRecordHold?.(instrument.id, down), event)
-            }}
-            onClick={(e) => {
-              e.stopPropagation()
-              if (!recording) onPreview?.(instrument.id)
+              else beginPadHold((down) => onPreview?.(instrument.id, down), event)
             }}
           >
             {voiceBadge}
@@ -174,6 +171,7 @@ export function MixerConsole({
   return (
     <div className="mixer-console" data-testid="mixer-console">
       <div className="mixer-console-strips">
+        <div className="mixer-console-channels">
         {project.groups.map((group, index) => {
           const stored = section?.groups?.[group.id] ?? openRack(1)
           const rack = motionAt >= 0 ? applyRackAutomation(stored, motionAt) : stored
@@ -182,7 +180,7 @@ export function MixerConsole({
           const flags = groupSlot(section, group.id)
           const groupMuted = !flags.enabled
           const groupSoloed = flags.solo
-          const grNum = String(index + 1).padStart(2, '0')
+          const grNum = padMixerIndex(numbers.groups.get(group.id) ?? index + 1)
           const members = group.instrumentIds
             .map((id) => project.instruments.find((item) => item.id === id))
             .filter((item): item is (typeof project.instruments)[number] => item != null)
@@ -263,6 +261,7 @@ export function MixerConsole({
           )
         })}
         {loose.length > 0 ? <div className="console-bay">{loose.map((instrument) => trackStrip(instrument))}</div> : null}
+        </div>
 
         <div className="console-strip console-strip-master">
           <div className="console-strip-color is-master" />

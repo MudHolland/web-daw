@@ -1,4 +1,4 @@
-import { bassMidi, chordMidis } from '../model/harmony.ts'
+import { bassMidi, chordMidis, keyRegister } from '../model/harmony.ts'
 import { applyFx, createFx, rampParam, scheduleParam, type FxChain, type FxGrid } from './effects.ts'
 import { applyRackAutomation, hasAutomation, lerpAutomation } from '../model/automation.ts'
 import {
@@ -7,10 +7,14 @@ import {
   DEFAULT_SOUND,
   groupSlot,
   insertOn,
+  isDrone,
+  glideSeconds,
+  glideStartOffset,
   liveInserts,
   openRack,
   rackChance,
   rackFromInstrument,
+  sectionKeyOffset,
   syncHz,
   type CatalogId,
   type FxSettings,
@@ -26,12 +30,14 @@ import {
   TICK_MS,
   bpmFor,
   stepDuration,
+  sectionStepLength,
   takeSteps,
   type CueMode,
   type PlaybackCursor,
 } from './scheduler.ts'
 import type { TriggerSound, Voice } from './types.ts'
 import { createBassVoice } from './voices/bass.ts'
+import { createDroneVoice } from './voices/drone.ts'
 import { createChordVoice } from './voices/chord.ts'
 import { create808Voice, createNoiseBuffer, drumNote } from './voices/kit808.ts'
 
@@ -178,6 +184,7 @@ function shapedSound(instrument: Instrument) {
 
 function voiceKind(instrument: Instrument): string {
   if (instrument.voice.type === '808') return `808:${instrument.voice.kit}:${instrument.voice.drum}`
+  if (isDrone(instrument.voice)) return `${instrument.voice.type}:drone`
   return instrument.voice.type
 }
 
@@ -193,6 +200,7 @@ export class Engine {
   private strips = new Map<string, Strip>()
   private voices = new Map<string, Voice>()
   private voiceKinds = new Map<string, string>()
+  private droneHeld = new Map<string, { pitch: number; arriveStep: number; fromStep: number } | null>()
   private timer: number | null = null
   private playing = false
   private nextNoteTime = 0
@@ -207,6 +215,7 @@ export class Engine {
   private focusId = ''
   private armedSectionId = ''
   private gridOrigin = 0
+  private auditions: { voice: Voice; sticky: boolean }[] = []
 
   constructor(project: Project) {
     this.project = project
@@ -304,50 +313,128 @@ export class Engine {
       this.timer = null
     }
     this.displayQueue = []
+    this.releasePreview()
     if (!this.ctx) return
     const time = this.ctx.currentTime
     for (const voice of this.voices.values()) voice.silence(time)
+    this.droneHeld.clear()
     this.applyAllMix()
   }
 
-  preview(instrumentId: string): void {
+  preview(instrumentId: string, hold?: boolean): void {
+    this.previewMany([instrumentId], hold)
+  }
+
+  previewNote(instrumentId: string, midi: number, hold?: boolean): void {
+    if (hold === false) {
+      this.releasePreview()
+      return
+    }
+    this.armPreview()
+    this.releasePreview()
+    this.firePreview(instrumentId, hold === true, true, midi)
+  }
+
+  previewMany(instrumentIds: string[], hold?: boolean): void {
+    if (hold === false) {
+      this.releasePreview()
+      return
+    }
+    this.armPreview()
+    this.releasePreview()
+    for (const instrumentId of instrumentIds) this.firePreview(instrumentId, hold === true, true)
+  }
+
+  private armPreview(): void {
     const ctx = this.ensureContext()
     void ctx.resume()
     this.ensureGraph()
+    if (this.playing) this.applyLiveMix()
+    else this.applyAllMix()
+  }
+
+  private firePreview(instrumentId: string, hold: boolean, stack: boolean, midi?: number): void {
+    const ctx = this.ctx
+    if (!ctx) return
     const instrument = this.project.instruments.find((item) => item.id === instrumentId)
-    const voice = this.voices.get(instrumentId)
-    if (!instrument || !voice) return
-    const time = ctx.currentTime + 0.02
-    const envelope = insertOn(instrument, 'adsr') ? instrument.envelope : null
+    if (!instrument) return
     const section = this.project.sections.find((item) => item.id === this.focusId) ?? this.project.sections[0]
+    const register = section ? keyRegister(sectionKeyOffset(this.project, section)) : 0
+    const key = section?.key ?? this.project.key
     const semis = section ? noteShift(this.project, section, instrumentId) : 0
+    const envelope = insertOn(instrument, 'adsr') ? instrument.envelope : null
+    const gate = hold && instrument.voice.type !== '808' ? 30 : undefined
+    const voice =
+      instrument.voice.type === '808'
+        ? this.voices.get(instrumentId)
+        : hold
+          ? this.beginAudition(instrument, false, stack)
+          : this.voices.get(instrumentId)
+    if (!voice) return
+    const time = ctx.currentTime + 0.02
     const play = (pitch: number, velocity: number, sound: TriggerSound) => {
-      voice.trigger(time, Math.max(0, Math.min(127, Math.round(pitch + semis))), velocity, sound, envelope)
+      voice.trigger(time, Math.max(0, Math.min(127, Math.round(pitch + semis))), velocity, sound, envelope, gate)
     }
     if (instrument.voice.type === '808') {
       const sound = insertOn(instrument, 'processing') ? (instrument.voice.sound ?? DEFAULT_SOUND) : DEFAULT_SOUND
       play(drumNote(instrument.voice.drum), 0.9, sound)
       return
     }
+    if (midi != null) {
+      play(midi, 0.9, shapedSound(instrument))
+      return
+    }
     if (instrument.voice.type === 'bass' || instrument.voice.type === 'lead') {
-      const note = bassMidi(section?.key ?? this.project.key, 0) + (instrument.voice.type === 'lead' ? 12 : 0)
+      const note = bassMidi(key, 0) + (instrument.voice.type === 'lead' ? 12 : 0) + register
       play(note, 0.9, shapedSound(instrument))
       return
     }
     const sound = shapedSound(instrument)
-    for (const note of chordMidis(section?.key ?? this.project.key, 0, 'triad')) play(note, 0.8, sound)
+    for (const note of chordMidis(key, 0, 'triad')) play(note + register, 0.8, sound)
   }
 
-  previewCatalog(catalog: CatalogId): void {
-    const ctx = this.ensureContext()
-    void ctx.resume()
-    this.ensureGraph()
-    if (!this.master) return
+  private beginAudition(instrument: Instrument, sticky: boolean, stack = false): Voice | null {
+    const ctx = this.ctx
+    if (!ctx || !this.master) return null
+    if (!stack) this.releasePreview()
+    const dest = this.strips.get(instrument.id)?.input ?? this.songBus?.input ?? this.master
+    const voice =
+      instrument.voice.type === '808' && this.noise
+        ? create808Voice(ctx, instrument.voice.drum, this.noise, instrument.voice.kit)
+        : instrument.voice.type === 'bass' || instrument.voice.type === 'lead'
+          ? isDrone(instrument.voice)
+            ? createDroneVoice(ctx)
+            : createBassVoice(ctx)
+          : instrument.voice.type === 'chord'
+            ? createChordVoice(ctx)
+            : null
+    if (!voice) return null
+    voice.connect(dest)
+    this.auditions.push({ voice, sticky })
+    return voice
+  }
+
+  private releasePreview(): void {
+    const time = this.ctx?.currentTime ?? 0
+    for (const item of this.auditions) item.voice.silence(time)
+    this.auditions = []
+  }
+
+  previewCatalog(catalog: CatalogId, hold?: boolean): void {
+    if (hold === false) {
+      this.releasePreview()
+      return
+    }
+    this.armPreview()
+    const ctx = this.ctx
+    if (!this.master || !ctx) return
+    this.releasePreview()
     const dest = this.songBus?.input ?? this.master
     const time = ctx.currentTime + 0.02
     const section = this.project.sections.find((item) => item.id === this.focusId) ?? this.project.sections[0]
     const key = section?.key ?? this.project.key
     const params = catalogVoice(catalog)
+    const gate = params.type === '808' ? undefined : 30
     if (params.type === '808') {
       if (!this.noise) return
       const voice = create808Voice(ctx, params.drum, this.noise, params.kit)
@@ -356,15 +443,17 @@ export class Engine {
       return
     }
     if (params.type === 'bass' || params.type === 'lead') {
-      const voice = createBassVoice(ctx)
+      const voice = isDrone(params) ? createDroneVoice(ctx) : createBassVoice(ctx)
       voice.connect(dest)
       const note = bassMidi(key, 0) + (params.type === 'lead' ? 12 : 0)
-      voice.trigger(time, note, 0.9, params.sound)
+      voice.trigger(time, note, 0.9, params.sound, null, gate)
+      this.auditions.push({ voice, sticky: false })
       return
     }
     const voice = createChordVoice(ctx)
     voice.connect(dest)
-    for (const note of chordMidis(key, 0, 'triad')) voice.trigger(time, note, 0.8, params.sound)
+    for (const note of chordMidis(key, 0, 'triad')) voice.trigger(time, note, 0.8, params.sound, null, gate)
+    this.auditions.push({ voice, sticky: false })
   }
 
   getPlayback(): PlaybackState {
@@ -440,7 +529,9 @@ export class Engine {
         instrument.voice.type === '808' && this.noise
           ? create808Voice(ctx, instrument.voice.drum, this.noise, instrument.voice.kit)
           : instrument.voice.type === 'bass' || instrument.voice.type === 'lead'
-            ? createBassVoice(ctx)
+            ? isDrone(instrument.voice)
+              ? createDroneVoice(ctx)
+              : createBassVoice(ctx)
             : instrument.voice.type === 'chord'
               ? createChordVoice(ctx)
               : null
@@ -560,7 +651,11 @@ export class Engine {
     this.gridOrigin = time
     const at = Math.max(this.ctx.currentTime + 0.001, time - 0.005)
     this.applyAllMix(at, true)
-    for (const voice of this.voices.values()) voice.rearticulate?.()
+    for (const [id, voice] of this.voices) {
+      const instrument = this.project.instruments.find((item) => item.id === id)
+      if (instrument && isDrone(instrument.voice)) continue
+      voice.rearticulate?.()
+    }
   }
 
   private applyStepMix(time: number, cursor: PlaybackCursor, duration: number): void {
@@ -648,6 +743,7 @@ export class Engine {
       this.applyStepMix(step.time, step.cursor, step.duration)
       this.fireStep(step.time, step.cursor, step.duration)
     }
+    this.updateDrones(now)
     this.cursor = batch.cursor
     this.queuedNodeId = batch.queuedNodeId
     this.nextNoteTime = batch.nextNoteTime
@@ -659,6 +755,96 @@ export class Engine {
       return
     }
     this.queueTick()
+  }
+
+  private updateDrones(now: number): void {
+    const anchor =
+      [...this.displayQueue].reverse().find((event) => event.time <= now + 0.03) ??
+      this.displayQueue.find((event) => event.time > now)
+    if (!anchor) return
+    const node = this.project.arrangement.find((item) => item.id === anchor.nodeId)
+    const section = node ? this.project.sections.find((item) => item.id === node.sectionId) : undefined
+    if (!section) return
+    const bpm = section.bpm ?? this.project.bpm
+    const length = Math.max(1, sectionStepLength(this.project, section))
+    const stepNow = anchor.time <= now ? anchor.step : (anchor.step - 1 + length) % length
+    const anyTrackSolo = this.project.instruments.some((item) => section.slots[item.id]?.solo)
+    const anyGroupSolo = this.project.groups.some((group) => groupSlot(section, group.id).solo)
+    for (const instrument of this.project.instruments) {
+      if (!isDrone(instrument.voice)) continue
+      const slot = section.slots[instrument.id]
+      if (!slot) continue
+      const group = this.project.groups.find((item) => item.instrumentIds.includes(instrument.id))
+      const flags = group ? groupSlot(section, group.id) : { enabled: true, solo: false }
+      const voice = this.voices.get(instrument.id)
+      if (!voice) continue
+      const muted = !slot.enabled || !flags.enabled
+      const excluded = !slot.solo && ((anyTrackSolo && !anyGroupSolo) || (anyGroupSolo && !flags.solo))
+      if (muted || excluded) {
+        this.releaseDrone(instrument.id, voice, now)
+        continue
+      }
+      const pitchNow = pitchAtStep(this.project, instrument, section, stepNow, length)
+      const held = this.droneHeld.get(instrument.id) ?? null
+      if (held && stillApproaching(held, stepNow, length)) {
+        if (pitchNow == null) this.releaseDrone(instrument.id, voice, now)
+        continue
+      }
+      if (pitchNow == null) {
+        this.releaseDrone(instrument.id, voice, now)
+        continue
+      }
+      if (!held || held.pitch !== pitchNow) {
+        const legato = held != null
+        const trackRack = applyRackAutomation(slot.rack ?? rackFromInstrument(instrument), stepNow)
+        const cue = glideCue(trackRack, bpm)
+        const start = clockOf(anchor.time, anchor.step, stepNow, length, bpm, this.project.swing) + (legato ? (cue?.offset ?? 0) : 0)
+        if (now + 0.04 < start) continue
+        this.playDrone(instrument, section, voice, pitchNow, legato ? (cue?.seconds ?? 0) : 0, start, now, stepNow, stepNow)
+        continue
+      }
+      const next = nextPitchChange(this.project, instrument, section, stepNow, held.pitch, length)
+      if (!next) continue
+      const trackRack = applyRackAutomation(slot.rack ?? rackFromInstrument(instrument), next.step)
+      const cue = glideCue(trackRack, bpm)
+      const start = clockForward(anchor.time, anchor.step, next.step, length, bpm, this.project.swing) + (cue?.offset ?? 0)
+      if (now + 0.04 < start) continue
+      this.playDrone(instrument, section, voice, next.pitch, cue?.seconds ?? 0, start, now, next.step, stepNow)
+    }
+  }
+
+  private releaseDrone(instrumentId: string, voice: Voice, now: number): void {
+    if (!this.droneHeld.get(instrumentId)) return
+    voice.silence(now)
+    this.droneHeld.set(instrumentId, null)
+  }
+
+  private playDrone(
+    instrument: Instrument,
+    section: Section,
+    voice: Voice,
+    pitch: number,
+    glide: number,
+    start: number,
+    now: number,
+    arriveStep: number,
+    fromStep: number,
+  ): void {
+    if (instrument.voice.type !== 'bass' && instrument.voice.type !== 'lead') return
+    const slot = section.slots[instrument.id]
+    const group = this.project.groups.find((item) => item.instrumentIds.includes(instrument.id))
+    const trackRack = applyRackAutomation(slot?.rack ?? rackFromInstrument(instrument), arriveStep)
+    const groupRack = group ? applyRackAutomation(section.groups?.[group.id] ?? openRack(1), arriveStep) : undefined
+    const busRack = applyRackAutomation(section.bus ?? openRack(1), arriveStep)
+    const semis = shiftSemis(trackRack) + shiftSemis(groupRack) + shiftSemis(busRack)
+    voice.trigger(
+      Math.max(start, now),
+      Math.max(0, Math.min(127, Math.round(pitch + semis))),
+      0.9,
+      { ...instrument.voice.sound, glideSeconds: glide },
+      insertOn(instrument, 'adsr') ? instrument.envelope : null,
+    )
+    this.droneHeld.set(instrument.id, { pitch, arriveStep, fromStep })
   }
 
   private fireStep(time: number, cursor: PlaybackCursor, duration: number): void {
@@ -680,6 +866,7 @@ export class Engine {
         if (!slot.enabled) continue
         if (!flags.enabled) continue
       }
+      if (isDrone(instrument.voice)) continue
       const trackRack = applyRackAutomation(slot.rack ?? rackFromInstrument(instrument), cursor.step)
       const groupRack = group ? applyRackAutomation(section.groups?.[group.id] ?? openRack(1), cursor.step) : undefined
       const busRack = applyRackAutomation(section.bus ?? openRack(1), cursor.step)
@@ -691,10 +878,14 @@ export class Engine {
       if (!voice) continue
       const envelope = insertOn(instrument, 'adsr') ? instrument.envelope : null
       const semis = shiftSemis(trackRack) + shiftSemis(groupRack) + shiftSemis(busRack)
+      const cue = glideCue(trackRack, section.bpm ?? this.project.bpm)
+      const when = Math.max(time + (cue?.offset ?? 0), this.ctx?.currentTime ?? time)
       const play = (pitch: number, velocity: number, sound: TriggerSound, gate?: number) => {
-        voice.trigger(time, Math.max(0, Math.min(127, Math.round(pitch + semis))), velocity, sound, envelope, gate)
+        const shaped = cue && 'cutoff' in sound ? { ...sound, glideSeconds: cue.seconds } : sound
+        voice.trigger(when, Math.max(0, Math.min(127, Math.round(pitch + semis))), velocity, shaped, envelope, gate)
       }
       const step = pattern.steps[cursor.step]
+      const register = keyRegister(sectionKeyOffset(this.project, section))
       if (step?.on && step.pitch != null && instrument.voice.type !== '808') {
         play(step.pitch, step.velocity, shapedSound(instrument))
         continue
@@ -723,13 +914,15 @@ export class Engine {
         continue
       }
       if (instrument.voice.type === 'bass' || instrument.voice.type === 'lead') {
-        const note = (step.pitch ?? bassMidi(section.key, step.degree)) + (instrument.voice.type === 'lead' && step.pitch == null ? 12 : 0)
+        const note =
+          (step.pitch ?? bassMidi(section.key, step.degree) + register) +
+          (instrument.voice.type === 'lead' && step.pitch == null ? 12 : 0)
         play(note, step.velocity, shapedSound(instrument))
         continue
       }
       const sound = shapedSound(instrument)
       for (const note of chordMidis(section.key, step.degree, step.quality)) {
-        play(note, step.velocity, sound)
+        play(note + register, step.velocity, sound)
       }
     }
   }
@@ -759,6 +952,77 @@ export class Engine {
     }
     return levels
   }
+}
+
+function glideCue(rack: Rack | undefined, bpm: number): { seconds: number; offset: number } | null {
+  if (!rack || !insertOn(rack, 'glide')) return null
+  return {
+    seconds: glideSeconds(rack.fx.glide.time, bpm),
+    offset: glideStartOffset(rack.fx.glide.time, rack.fx.glide.place, bpm),
+  }
+}
+
+function pitchAtStep(project: Project, instrument: Instrument, section: Section, stepIndex: number, length: number): number | null {
+  const slot = section.slots[instrument.id]
+  const pattern = instrument.patterns.find((item) => item.id === slot?.patternId)
+  if (!pattern || instrument.voice.type === '808' || instrument.voice.type === 'chord') return null
+  const index = ((stepIndex % length) + length) % length
+  let covered: (typeof pattern.notes)[number] | undefined
+  for (const note of pattern.notes) {
+    if (note.start <= index && index < note.start + note.duration && (!covered || note.start >= covered.start)) covered = note
+  }
+  if (covered) return covered.pitch
+  const step = pattern.steps[index]
+  if (!step?.on) return null
+  if (step.pitch != null) return step.pitch
+  const register = keyRegister(sectionKeyOffset(project, section))
+  return bassMidi(section.key, step.degree) + register + (instrument.voice.type === 'lead' ? 12 : 0)
+}
+
+function nextPitchChange(
+  project: Project,
+  instrument: Instrument,
+  section: Section,
+  stepNow: number,
+  pitch: number,
+  length: number,
+): { step: number; pitch: number } | null {
+  for (let ahead = 1; ahead < length; ahead += 1) {
+    const step = (stepNow + ahead) % length
+    const next = pitchAtStep(project, instrument, section, step, length)
+    if (next == null) return null
+    if (next !== pitch) return { step, pitch: next }
+  }
+  return null
+}
+
+function stepsAhead(from: number, target: number, length: number): number {
+  return (target - from + length) % length
+}
+
+function stillApproaching(held: { arriveStep: number; fromStep: number }, stepNow: number, length: number): boolean {
+  const span = stepsAhead(held.fromStep, held.arriveStep, length)
+  if (span === 0) return false
+  return stepsAhead(held.fromStep, stepNow, length) < span
+}
+
+function clockForward(anchorTime: number, anchorStep: number, targetStep: number, length: number, bpm: number, swing: number): number {
+  const ahead = stepsAhead(anchorStep, targetStep, length)
+  let time = anchorTime
+  for (let index = 0; index < ahead; index += 1) time += stepDuration(bpm, swing, (anchorStep + index) % length)
+  return time
+}
+
+function clockOf(anchorTime: number, anchorStep: number, targetStep: number, length: number, bpm: number, swing: number): number {
+  if (targetStep === anchorStep) return anchorTime
+  if (targetStep < anchorStep) {
+    let time = anchorTime
+    for (let step = targetStep; step < anchorStep; step += 1) time -= stepDuration(bpm, swing, step)
+    return time
+  }
+  let time = anchorTime
+  for (let step = anchorStep; step < targetStep && step < anchorStep + length; step += 1) time += stepDuration(bpm, swing, step)
+  return time
 }
 
 function sectionHasMotion(section: Section): boolean {

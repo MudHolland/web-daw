@@ -44,6 +44,7 @@ const FX_LABEL: Partial<Record<InsertId, string>> = {
   cutoff: 'Cutoff',
   reverb: 'Reverb',
   stutter: 'Repeat',
+  glide: 'Glide',
 }
 
 const FX_INSERTS = Object.keys(FX_LABEL) as InsertId[]

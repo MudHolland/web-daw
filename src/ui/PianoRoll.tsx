@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { CSSProperties, PointerEvent as ReactPointerEvent } from 'react'
 import { midiName, scaleTone } from '../model/harmony.ts'
 import type { NoteEvent } from '../model/project.ts'
+import { beginPadHold } from './InstrumentList.tsx'
 
 type PianoRollProps = {
   notes: NoteEvent[]
@@ -19,6 +20,7 @@ type PianoRollProps = {
   onChange: (notes: NoteEvent[]) => void
   onSpan?: (span: { start: number; duration: number }) => void
   heldSpan?: { start: number; duration: number } | null
+  onHear?: (midi: number, down: boolean) => void
 }
 
 type Drag =
@@ -44,6 +46,7 @@ export function PianoRoll({
   onChange,
   onSpan,
   heldSpan,
+  onHear,
 }: PianoRollProps) {
   const gridRef = useRef<HTMLDivElement>(null)
   const beatsRef = useRef<HTMLDivElement>(null)
@@ -298,9 +301,14 @@ export function PianoRoll({
               const black = BLACK.has(pc)
               const inKey = scaleTone(songKey, pitch, scale)
               return (
-                <div key={pitch} className={['roll-pitch', black ? 'is-black' : '', inKey ? 'is-scale' : ''].filter(Boolean).join(' ')}>
+                <button
+                  key={pitch}
+                  type="button"
+                  className={['roll-pitch', black ? 'is-black' : '', inKey ? 'is-scale' : ''].filter(Boolean).join(' ')}
+                  onPointerDown={(event) => beginPadHold(onHear ? (down) => onHear(pitch, down) : undefined, event)}
+                >
                   {midiName(pitch)}
-                </div>
+                </button>
               )
             })}
           </div>

@@ -2,6 +2,11 @@ export const SCALE = [0, 2, 3, 5, 7, 8, 10] as const
 
 export const KEYS = ['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'] as const
 
+export const KEY_SHIFTS = Array.from({ length: 25 }, (_, index) => index - 12)
+
+const FLAT_KEYS = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'] as const
+const SHARP_KEYS = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'] as const
+
 const ROOTS: Record<string, number> = {
   C: 0,
   'C#': 1,
@@ -163,6 +168,32 @@ function formula(root: string, tones: number[]): string {
 
 export function keyRoot(key: string): number {
   return ROOTS[key] ?? 0
+}
+
+export function wrapPitchClass(semitones: number): number {
+  return ((Math.round(semitones) % 12) + 12) % 12
+}
+
+export function keyAtOffset(songKey: string, offset: number): string {
+  return KEYS[wrapPitchClass(keyRoot(songKey) + offset)] ?? 'C'
+}
+
+export function keyRegister(offset: number): number {
+  return Math.trunc(Math.round(offset) / 12) * 12
+}
+
+export function inferKeyOffset(songKey: string, partKey: string): number {
+  let delta = keyRoot(partKey) - keyRoot(songKey)
+  if (delta > 6) delta -= 12
+  if (delta < -6) delta += 12
+  return delta
+}
+
+export function formatKeyShift(songKey: string, offset: number): string {
+  const pc = wrapPitchClass(keyRoot(songKey) + offset)
+  const name = pc === 6 ? `${SHARP_KEYS[pc]}/${FLAT_KEYS[pc]}` : FLAT_KEYS[pc]
+  const mark = offset === 0 ? '0' : offset > 0 ? `+${offset}` : `${offset}`
+  return `${name} (${mark})`
 }
 
 export function noteName(key: string, degree: number): string {
