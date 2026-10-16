@@ -80,7 +80,7 @@ function HelpCopy() {
       <ul>
         <li>Song structure sidebar open/close: open or close the left sidebar to see the song structure.</li>
         <li>Song name: click the song name to change it.</li>
-        <li>Song options: click the triangle to the right of the name for undo (Ctrl+Z), redo (Ctrl+Y or Ctrl+Shift+Z), duplicate of the selected part, instrument, or group (Ctrl+D), Copy content to part, Open/Save songs, Reset to start over, Help, Shortcuts, and Change log.</li>
+        <li>Song options: click the triangle to the right of the name for undo (Ctrl+Z), redo (Ctrl+Y or Ctrl+Shift+Z), duplicate of the selected part, instrument, or group (Ctrl+D), Copy content to (the selected track or group&apos;s steps and piano roll onto another part), Open/Save songs, Reset to start over, Help, Shortcuts, and Change log.</li>
         <li>Beat Forge: the name of the product.</li>
         <li>LIVE: follow the sounding part and show the playing bar.</li>
         <li>Record: arm recording, then tap a track name or hold A-L an Z-M to write notes onto the sequencer.</li>
@@ -121,7 +121,7 @@ function HelpCopy() {
         <li>M and S button: Hover over the group row to see the M and S buttons. This way you can mute or solo the entire group at once. </li>
         <li>Click the chevron to the right of a group name to open or close the group to show/hide the tracks inside the group.</li>
       </ul>
-      <p>Tracks: click anywhere on a track row (except Mute, Solo, or the fire pad) to select it. Duplicate in the song menu (or Ctrl+D) applies to the selected part, instrument, or group. Copy content to part writes this part&apos;s patterns onto a part you pick, from the song menu or the part name in the stage header. Delete or Backspace removes the last clicked part, instrument, group, or effect.</p>
+      <p>Tracks: click anywhere on a track row (except Mute, Solo, or the fire pad) to select it. Duplicate in the song menu (or Ctrl+D) applies to the selected part, instrument, or group. Copy content to writes the selected track or group&apos;s steps and piano-roll notes onto a part you pick, from the song menu or the part name in the stage header. Delete or Backspace removes the last clicked part, instrument, group, or effect.</p>
       <ul>
       <li>Color bar: a drag handle. Drag an instrument track to the change the order of tracks or all the way to the bottom to delete the track. Click to open a color picker.</li>
         <li>Track name: click the name to edit the track name.</li>
@@ -234,12 +234,19 @@ function ChangeLogCopy() {
   return (
     <>
       <article className="docs-version">
+      <h4>
+          1.6.1 <span></span>
+        </h4>
+        <ul>
+          <li>Fixed the sound picker in center stage instrument name dropdown.</li>
+          <li>Fixed the copy content to part menu to copy only the selected instrument.</li>
+        </ul>
         <h3>
           1.6 <span>Utility</span>
         </h3>
         <ul>
           <li>Delete or Backspace short cuts remove the last clicked part, track, group, or effect.</li>
-          <li>Copy (Ctrl+C), Paste (Ctrl+V) and Duplicate (Ctrl+D) parts, tracks and groups, and Copy track/group content to other parts. These options live in the song menu. Copy also sits on the part name in the center stage header.</li>
+          <li>Copy (Ctrl+C), Paste (Ctrl+V) and Duplicate (Ctrl+D) parts, tracks and groups, and Copy content to other parts for the selected track or group (steps and piano roll only). These options live in the song menu. Copy also sits on the part name in the center stage header.</li>
           <li>Part, track, and group names truncate to fit and keep the last word.</li>
           <li>The fire light in the center stage header plays drums as one-shots, and bass or melody through the channel so you can audition the sound of the instrument including effects. Hold to sustain. A group light fires every instrument together.</li>
           <li>Press a piano-roll note name to audition that pitch while the song plays.</li>
@@ -291,9 +298,11 @@ function ChangeLogCopy() {
           1.2 <span>Control</span>
         </h3>
         <ul>
-          <li>Improved sounds.</li>
+          <li>Instrument tracks and groups.</li>
+          <li>Mixer with volume and pan controls.</li>
+          <li>Meter 3/4, 6/8, and 12/8 time signatures.</li>
           <li>Song parts with BPM, key, and meter.</li>
-          <li>Insert racks, mixer, and JSON save in the browser.</li>
+          <li>Insert racks and JSON save in the browser.</li>
           <li>Added effects.</li>
         </ul>
       </article>
@@ -304,6 +313,15 @@ function ChangeLogCopy() {
         <ul>
           <li>Synthesized 808 / 909 / rock kit, bass, lead, and chords with sequencers.</li>
           <li>Song BPM, key, and meter.</li>
+        </ul>
+      </article>
+      <article className="docs-version">
+        <h3>
+          1.0 <span>808 sequencer</span>
+        </h3>
+        <ul>
+          <li>808 sequencer with a kick, snare, and open and closed hi-hat.</li>
+          <li>Song BPM.</li>
         </ul>
       </article>
     </>

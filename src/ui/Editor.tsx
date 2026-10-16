@@ -198,7 +198,7 @@ export function Editor(props: EditorProps) {
   if (selection.kind === 'song') {
     return (
       <section className="editor">
-        <EditorTitle partName={partName} title="Tracks" playing={playing} level={heard} copyParts={copyParts} onCopyContent={props.onCopyContent} onFire={fire(project.instruments.map((item) => item.id))} />
+        <EditorTitle partName={partName} title="Tracks" playing={playing} level={heard} copyParts={copyParts} onFire={fire(project.instruments.map((item) => item.id))} />
         <EditorStage>
           <MixerConsole
             project={project}
@@ -604,6 +604,11 @@ function EditorTitle({
             }}
           >
             {title}
+            {sounds && !recordPad ? (
+              <span className="menu-sub-caret" aria-hidden>
+                ▾
+              </span>
+            ) : null}
           </button>
         ) : (
           title

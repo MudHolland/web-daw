@@ -755,7 +755,7 @@ button.song-banner {
 
 .menu-pop button {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 0.35em;
   min-width: 0;
   height: 34px;
@@ -941,7 +941,7 @@ button.song-banner {
 
 .song-name {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   min-width: 0;
   max-width: 100%;
   overflow: hidden;
@@ -955,7 +955,7 @@ button.song-banner {
 
 .name-fit {
   display: inline-flex;
-  align-items: baseline;
+  align-items: center;
   min-width: 0;
   max-width: 100%;
   overflow: hidden;
@@ -2310,7 +2310,7 @@ button.song-banner {
   padding: 12px 22px 8px;
   min-width: 0;
   min-height: 0;
-  overflow: hidden;
+  overflow: visible;
   border-radius: 0;
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.025), transparent 48px),
@@ -2359,6 +2359,8 @@ button.song-banner {
 }
 
 .editor-head {
+  position: relative;
+  z-index: 8;
   display: flex;
   align-items: center;
   justify-content: flex-start;
@@ -2432,6 +2434,10 @@ button.song-banner {
 }
 
 .editor-sound {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
   border: 0;
   background: transparent;
   padding: 0;
@@ -2439,6 +2445,11 @@ button.song-banner {
   font: inherit;
   letter-spacing: inherit;
   cursor: pointer;
+}
+
+.editor-sound .menu-sub-caret {
+  font-size: 14px;
+  color: var(--muted);
 }
 
 .editor-sound:hover,
@@ -2449,6 +2460,10 @@ button.song-banner {
 .editor-head .add-menu {
   left: auto;
   right: 0;
+  font-family: var(--font-face);
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
 }
 
 .add-menu-item.is-on {
@@ -4710,6 +4725,15 @@ input:focus-visible {
   text-transform: uppercase;
 }
 
+.docs-body h4 {
+  margin: 18px 0 8px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
 .docs-keys {
   margin: 0 0 10px;
   display: grid;
@@ -4760,6 +4784,19 @@ input:focus-visible {
 .docs-version h3 span {
   color: var(--muted);
   font-size: 11px;
+  letter-spacing: 0.16em;
+}
+
+.docs-version h4 {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-top: 0;
+}
+
+.docs-version h4 span {
+  color: var(--muted);
+  font-size: 10px;
   letter-spacing: 0.16em;
 }
 

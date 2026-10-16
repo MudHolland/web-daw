@@ -51,7 +51,7 @@ import {
   updateRack,
   setSwing,
   slotEnabled,
-  copySectionContent,
+  copyTrackContentToPart,
   duplicateGroup,
   duplicateInstrument,
   duplicatePart,
@@ -201,6 +201,12 @@ export function App() {
     }
     const node = current.arrangement.find((entry) => entry.id === item.nodeId)
     return current.sections.find((section) => section.id === node?.sectionId)?.name ?? 'part'
+  }
+
+  function selectedContentIds(current: Project, pick: Selection): string[] | null {
+    if (pick.kind === 'instrument') return [pick.instrumentId]
+    if (pick.kind === 'group') return current.groups.find((entry) => entry.id === pick.groupId)?.instrumentIds ?? []
+    return null
   }
 
   function copySelection() {
@@ -771,7 +777,7 @@ export function App() {
                   Duplicate{' '}
                   <FitName name={clipLabel(project, clipOf(project, selection, editNodeId, focusRef.current))} />
                 </button>
-                {project.sections.some((section) => section.id !== sectionId) ? (
+                {selectedContentIds(project, selection) && project.sections.some((section) => section.id !== sectionId) ? (
                   <>
                     <hr className="menu-line" />
                     <div className="menu-sub">
@@ -790,7 +796,10 @@ export function App() {
                               type="button"
                               data-testid={`clip-content-${section.id}`}
                               onClick={() => {
-                                setProject((current) => copySectionContent(current, sectionId, section.id))
+                                const ids = selectedContentIds(project, selection)
+                                if (ids) {
+                                  setProject((current) => copyTrackContentToPart(current, sectionId, section.id, ids))
+                                }
                                 setFileOpen(false)
                               }}
                             >
@@ -1030,8 +1039,13 @@ export function App() {
           onLiveView={setLiveView}
           followLive={followLive}
           onFollowLive={setFollowLive}
-          onCopyContent={(toSectionId) =>
-            setProject((current) => copySectionContent(current, sectionId, toSectionId))
+          onCopyContent={
+            selectedContentIds(project, selection)
+              ? (toSectionId) => {
+                  const ids = selectedContentIds(project, selection)
+                  if (ids) setProject((current) => copyTrackContentToPart(current, sectionId, toSectionId, ids))
+                }
+              : undefined
           }
           onSelectInsert={(insert) => {
             setSelectedInsert(insert)

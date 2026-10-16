@@ -2258,18 +2258,13 @@ function catalogLabel(catalog: CatalogId): string {
   return catalogEntries().find((item) => item.id === catalog)?.label ?? catalog
 }
 
-const LEAD_IDS: CatalogId[] = ['lead', 'pluck', 'brass', 'bell', 'lead-drone']
-const CHORD_IDS: CatalogId[] = ['keys', 'organ', 'stab', 'strings', 'pad']
-
 export function relatedCatalogs(instrument: Instrument): CatalogEntry[] {
   const entries = catalogEntries()
-  if (instrument.voice.type === '808') {
-    const drum = instrument.voice.drum
-    return entries.filter((item) => item.id.endsWith(`:${drum}`))
-  }
+  if (instrument.voice.type === '808') return entries.filter((item) => item.family === 'drums')
   if (instrument.voice.type === 'bass') return entries.filter((item) => item.family === 'bass')
-  if (instrument.voice.type === 'lead') return entries.filter((item) => LEAD_IDS.includes(item.id))
-  if (instrument.voice.type === 'chord') return entries.filter((item) => CHORD_IDS.includes(item.id))
+  if (instrument.voice.type === 'lead' || instrument.voice.type === 'chord') {
+    return entries.filter((item) => item.family === 'melodic')
+  }
   return []
 }
 
@@ -2590,21 +2585,55 @@ export function copyInstrumentToParts(
   }
 }
 
-export function copySectionContent(project: Project, fromSectionId: string, toSectionId: string): Project {
-  if (fromSectionId === toSectionId) return project
+export function copyTrackContentToPart(
+  project: Project,
+  fromSectionId: string,
+  toSectionId: string,
+  instrumentIds: string[],
+): Project {
+  if (fromSectionId === toSectionId || instrumentIds.length === 0) return project
   let next = project
-  for (const instrument of project.instruments) {
-    next = copyInstrumentToParts(next, instrument.id, fromSectionId, [toSectionId])
+  for (const instrumentId of instrumentIds) {
+    next = copyPatternToPart(next, instrumentId, fromSectionId, toSectionId)
   }
-  const from = next.sections.find((item) => item.id === fromSectionId)
-  const to = next.sections.find((item) => item.id === toSectionId)
-  if (!from || !to) return next
+  return next
+}
+
+function copyPatternToPart(
+  project: Project,
+  instrumentId: string,
+  fromSectionId: string,
+  toSectionId: string,
+): Project {
+  const source = project.instruments.find((item) => item.id === instrumentId)
+  const from = project.sections.find((item) => item.id === fromSectionId)
+  const to = project.sections.find((item) => item.id === toSectionId)
+  const fromSlot = from?.slots[instrumentId]
+  const toSlot = to?.slots[instrumentId]
+  const fromPattern = source?.patterns.find((item) => item.id === fromSlot?.patternId)
+  if (!source || !from || !to || !fromSlot || !toSlot || !fromPattern) return project
   const length = loopSteps(to.meter, to.bars)
-  const accent = from.accent.slice(0, length)
-  while (accent.length < length) accent.push(false)
   return {
-    ...next,
-    sections: next.sections.map((section) => (section.id === toSectionId ? { ...section, accent } : section)),
+    ...project,
+    instruments: project.instruments.map((instrument) => {
+      if (instrument.id !== instrumentId) return instrument
+      return {
+        ...instrument,
+        patterns: instrument.patterns.map((pattern) => {
+          if (pattern.id !== toSlot.patternId) return pattern
+          return {
+            ...pattern,
+            steps: resizeSteps(
+              fromPattern.steps.map((step) => ({ ...step })),
+              length,
+            ),
+            notes: fromPattern.notes
+              .filter((note) => note.start < length)
+              .map((note) => ({ ...note, duration: Math.max(1, Math.min(note.duration, length - note.start)) })),
+          }
+        }),
+      }
+    }),
   }
 }
 
