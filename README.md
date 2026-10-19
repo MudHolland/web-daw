@@ -1,12 +1,12 @@
-# Beat Forge
+# LoopAnvil Studio LIVE
 
-> A hardware-inspired in-browser groovebox, pattern sequencer, and multi-track audio workstation powered by the Web Audio API.
+> A hardware-inspired in-browser studio, pattern sequencer, and multi-track audio workstation powered by the Web Audio API.
 
 ---
 
 ### 🌐 Live Demo
 
-You can try Beat Forge directly in your browser at the temporary hosted address:
+You can try LoopAnvil Studio LIVE directly in your browser at the temporary hosted address:
 
 👉 **[https://mediumaquamarine-jaguar-971401.hostingersite.com/](https://mediumaquamarine-jaguar-971401.hostingersite.com/)**
 
@@ -57,7 +57,7 @@ You can try Beat Forge directly in your browser at the temporary hosted address:
 
 1. Clone or navigate to the repository:
    ```bash
-   cd web-daw
+   cd loopanvil-studio
    ```
 
 2. Install dependencies:

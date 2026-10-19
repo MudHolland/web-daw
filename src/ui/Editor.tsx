@@ -94,6 +94,7 @@ type EditorProps = {
   onPreview: (instrumentId: string, down: boolean) => void
   onPreviewMany?: (instrumentIds: string[], down: boolean) => void
   onPreviewNote?: (instrumentId: string, midi: number, down: boolean) => void
+  onPreviewPitches?: (instrumentId: string, pitches: number[], down: boolean) => void
   onRecordHold?: (instrumentId: string, down: boolean) => void
   recording?: boolean
   onNotes: (instrumentId: string, notes: NoteEvent[]) => void
@@ -114,7 +115,9 @@ type EditorProps = {
   onLiveView?: (live: boolean) => void
   followLive?: boolean
   onFollowLive?: (follow: boolean) => void
+  onLive?: () => void
   onCopyContent?: (toSectionId: string) => void
+  onRequestAddTrack?: (groupId: string | null) => void
 }
 
 export function Editor(props: EditorProps) {
@@ -137,6 +140,10 @@ export function Editor(props: EditorProps) {
   const barCount = section?.bars ?? 1
   const stepsPerBar = stepsForMeter(section?.meter ?? '4/4')
   const [barPage, setBarPage] = useState(0)
+  const [barsOpen, setBarsOpen] = useState(selection.kind !== 'song')
+  useLayoutEffect(() => {
+    setBarsOpen(selection.kind !== 'song')
+  }, [selection.kind])
   const followLive = props.followLive ?? true
   const page = Math.min(barPage, Math.max(0, barCount - 1))
   const viewStart = page * stepsPerBar
@@ -187,6 +194,11 @@ export function Editor(props: EditorProps) {
       bars={barCount}
       page={page}
       playingBar={playingBar}
+      open={barsOpen}
+      onToggle={() => setBarsOpen((open) => !open)}
+      follow={followLive}
+      selected={!followLive}
+      onFollow={() => props.onLive?.()}
       onPage={(bar) => {
         props.onFollowLive?.(false)
         setBarPage(bar)
@@ -198,7 +210,7 @@ export function Editor(props: EditorProps) {
   if (selection.kind === 'song') {
     return (
       <section className="editor">
-        <EditorTitle partName={partName} title="Tracks" playing={playing} level={heard} copyParts={copyParts} onFire={fire(project.instruments.map((item) => item.id))} />
+        <EditorTitle partName={partName} title="Mixer" playing={playing} level={heard} copyParts={copyParts} onFire={fire(project.instruments.map((item) => item.id))} />
         <EditorStage>
           <MixerConsole
             project={project}
@@ -220,6 +232,7 @@ export function Editor(props: EditorProps) {
             onMaster={props.onMaster}
             onMasterPan={(pan) => props.onSongRack((rack) => ({ ...rack, pan }))}
             onPreview={props.onPreview}
+            onAddTrack={() => props.onRequestAddTrack?.(null)}
           />
           <ChannelStrip
             {...busStrip(
@@ -255,6 +268,7 @@ export function Editor(props: EditorProps) {
             open={automationOpen}
             onToggle={() => setAutomationOpen((open) => !open)}
           />
+          {pager(project.instruments.map((item) => item.id), project.instruments.some((item) => item.voice.type === '808'))}
         </EditorStage>
       </section>
     )
@@ -322,6 +336,7 @@ export function Editor(props: EditorProps) {
             onChange={(notes) => props.onNotes(instrument.id, notes)}
             onPitch={(stepIndex, pitch) => props.onPitch(instrument.id, stepIndex, pitch)}
             onHear={(midi, down) => props.onPreviewNote?.(instrument.id, midi, down)}
+            onHearChord={(pitches, down) => props.onPreviewPitches?.(instrument.id, pitches, down)}
             scale="major"
             register={register}
             low={instrument.voice.type === 'bass' ? 24 : instrument.voice.type === 'lead' ? 36 : 48}
@@ -391,6 +406,7 @@ export function Editor(props: EditorProps) {
             onChange={(notes) => props.onNotes(activeMelodic.id, notes)}
             onPitch={(stepIndex, pitch) => props.onPitch(activeMelodic.id, stepIndex, pitch)}
             onHear={(midi, down) => props.onPreviewNote?.(activeMelodic.id, midi, down)}
+            onHearChord={(pitches, down) => props.onPreviewPitches?.(activeMelodic.id, pitches, down)}
             register={register}
             scale="major"
             low={48}
@@ -413,14 +429,19 @@ export function Editor(props: EditorProps) {
     )
   }
 
-  if (instruments.length === 0 && (group?.id === 'group-melodic' || group?.name.toLowerCase().includes('melodic'))) {
+  if (instruments.length === 0) {
     return (
       <section className="editor">
-        <EditorTitle partName={partName} title={group?.name ?? 'Melodic'} playing={playing} level={heard} copyParts={copyParts} onCopyContent={props.onCopyContent} onFire={fire(instruments.map((item) => item.id))} />
+        <EditorTitle partName={partName} title={group?.name ?? 'Group'} playing={playing} level={heard} copyParts={copyParts} onCopyContent={props.onCopyContent} onFire={fire(instruments.map((item) => item.id))} />
         <EditorStage>
-          <p style={{ color: 'var(--muted)', textAlign: 'center', marginTop: 48, fontSize: 14, letterSpacing: '0.08em' }}>
-            Add a melodic track in the Tracks drawer to compose on the piano roll
-          </p>
+          <button
+            type="button"
+            className="stage-add-track"
+            data-testid="stage-add-track"
+            onClick={() => props.onRequestAddTrack?.(group?.id ?? null)}
+          >
+            Add track
+          </button>
           <ChannelStrip
             {...busStrip(
               busInstrument(group?.id ?? 'group', group?.name ?? 'Group', shownRack(section?.groups?.[group?.id ?? ''] ?? openRack(1))),
@@ -439,7 +460,7 @@ export function Editor(props: EditorProps) {
 
   return (
     <section className="editor">
-      <EditorTitle partName={partName} title={group?.name ?? 'Tracks'} playing={playing} level={heard} copyParts={copyParts} onCopyContent={props.onCopyContent} onFire={fire(instruments.map((item) => item.id))} />
+        <EditorTitle partName={partName} title={group?.name ?? 'Tracks'} playing={playing} level={heard} copyParts={copyParts} onCopyContent={props.onCopyContent} onFire={fire(instruments.map((item) => item.id))} />
       <EditorStage>
       <div className="lane-list">
         {drums ? (
@@ -702,6 +723,7 @@ function KeysRoll({
   onChange,
   onPitch,
   onHear,
+  onHearChord,
   scale,
   low,
   high,
@@ -723,13 +745,15 @@ function KeysRoll({
   onChange: (notes: NoteEvent[]) => void
   onPitch?: (stepIndex: number, pitch: number) => void
   onHear?: (midi: number, down: boolean) => void
+  onHearChord?: (pitches: number[], down: boolean) => void
   scale: 'major' | 'minor'
   low: number
   high: number
   pager: ReactNode
 }) {
   const [root, setRoot] = useState(songKey)
-  const [tones, setTones] = useState<number[]>(() => (instrument.voice.type === 'chord' ? [4, 7] : []))
+  const [tones, setTones] = useState<number[]>(() => (instrument.voice.type === 'chord' ? [0, 4, 7] : [0]))
+  const [bass, setBass] = useState<number[]>([])
   const [overwrite, setOverwrite] = useState(true)
   const [stepsOpen, setStepsOpen] = useState(true)
   const [rollOpen, setRollOpen] = useState(true)
@@ -739,10 +763,12 @@ function KeysRoll({
   const stampedRef = useRef<{ start: number; duration: number } | null>(null)
   const notesRef = useRef(notes)
   const tonesRef = useRef(tones)
+  const bassRef = useRef(bass)
   const rootRef = useRef(root)
   const overwriteRef = useRef(overwrite)
   notesRef.current = notes
   tonesRef.current = tones
+  bassRef.current = bass
   rootRef.current = root
   overwriteRef.current = overwrite
 
@@ -752,9 +778,11 @@ function KeysRoll({
   }, [songKey])
 
   useEffect(() => {
-    const next = instrument.voice.type === 'chord' ? [4, 7] : []
+    const next = instrument.voice.type === 'chord' ? [0, 4, 7] : [0]
     setTones(next)
     tonesRef.current = next
+    setBass([])
+    bassRef.current = []
     setOctave(defaultBrushOctave(instrument))
   }, [instrument.id, instrument.voice.type])
 
@@ -762,13 +790,19 @@ function KeysRoll({
     release()
   }, [sectionId, instrument.id])
 
-  function brushPitches(nextRoot = rootRef.current, nextTones = tonesRef.current) {
-    return spellIntervals(nextRoot, [0, ...nextTones]).map((pitch) => pitch + register + (octave - 4) * 12)
+  function brushPitches(nextRoot = rootRef.current, nextTones = tonesRef.current, nextBass = bassRef.current) {
+    const intervals = [...nextBass.map((semi) => semi - 12), ...nextTones]
+    return spellIntervals(nextRoot, intervals).map((pitch) => pitch + register + (octave - 4) * 12)
   }
 
   function applyTones(nextTones: number[]) {
     setTones(nextTones)
     tonesRef.current = nextTones
+  }
+
+  function applyBass(nextBass: number[]) {
+    setBass(nextBass)
+    bassRef.current = nextBass
   }
 
   function applyRoot(next: string) {
@@ -780,12 +814,16 @@ function KeysRoll({
     const next = diatonicDegree(songKey, degree, scale)
     setRoot(next.root)
     rootRef.current = next.root
-    setTones(next.tones)
-    tonesRef.current = next.tones
+    const nextTones = [0, ...next.tones]
+    setTones(nextTones)
+    tonesRef.current = nextTones
+    setBass([])
+    bassRef.current = []
   }
 
   function write(next: { start: number; duration: number }) {
     const pitches = brushPitches()
+    if (pitches.length === 0) return
     if (!overwriteRef.current) {
       if (notesRef.current.some((note) => overlaps(note, next))) return
       onChange([
@@ -895,6 +933,7 @@ function KeysRoll({
               scale={scale}
               root={root}
               tones={tones}
+              bass={bass}
               octave={octave}
               overwrite={overwrite}
               onRoot={applyRoot}
@@ -904,17 +943,24 @@ function KeysRoll({
                   : [...tonesRef.current, semi]
                 applyTones(nextTones)
               }}
+              onToggleBass={(semi) => {
+                const nextBass = bassRef.current.includes(semi)
+                  ? bassRef.current.filter((tone) => tone !== semi)
+                  : [...bassRef.current, semi]
+                applyBass(nextBass)
+              }}
               onDegree={applyDegree}
               onOctave={setOctave}
               onOverwrite={(next) => {
                 setOverwrite(next)
                 overwriteRef.current = next
               }}
+              onHear={onHearChord ? (down) => onHearChord(brushPitches(), down) : undefined}
             />
           ) : null}
         </div>
       </DockWhen>
-      {stepsOpen || rollOpen ? pager : null}
+      {pager}
     </div>
   )
 }

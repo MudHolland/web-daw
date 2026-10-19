@@ -1,39 +1,48 @@
-import { CHORD_TONES, KEYS, degreeLabels, inKey, matchingDegree, nameChord } from '../model/harmony.ts'
+import { CHORD_TONES, KEYS, degreeLabels, inKey, matchingDegree, nameChordWithBass } from '../model/harmony.ts'
+import { beginPadHold } from './InstrumentList.tsx'
 
 type ChordBoardProps = {
   songKey: string
   scale: 'major' | 'minor'
   root: string
   tones: number[]
+  bass: number[]
   octave: number
   overwrite: boolean
   onRoot: (root: string) => void
   onToggle: (semi: number) => void
+  onToggleBass: (semi: number) => void
   onDegree: (degree: number) => void
   onOctave: (octave: number) => void
   onOverwrite: (overwrite: boolean) => void
+  onHear?: (down: boolean) => void
 }
 
 const CORE = CHORD_TONES.filter((tone) => tone.semi <= 11)
 const COLOR = CHORD_TONES.filter((tone) => tone.semi > 11)
+const QUIET_COLOR = new Set(['8', '10', '12', 'b14', '14'])
 
 export function ChordBoard({
   songKey,
   scale,
   root,
   tones,
+  bass,
   octave,
   overwrite,
   onRoot,
   onToggle,
+  onToggleBass,
   onDegree,
   onOctave,
   onOverwrite,
+  onHear,
 }: ChordBoardProps) {
-  const selected = [0, ...tones]
-  const symbol = nameChord(root, selected)
+  const symbol = nameChordWithBass(root, tones, bass)
   const activeDegree = matchingDegree(songKey, root, tones, scale)
   const degrees = degreeLabels(scale)
+  const origin = Math.max(0, KEYS.indexOf(root as (typeof KEYS)[number]))
+  const roots = origin === 0 ? KEYS : [...KEYS.slice(origin), ...KEYS.slice(0, origin)]
   const hint = overwrite
     ? 'Click a step to stamp this chord. Overwrite replaces notes under the brush.'
     : 'Click an empty step to stamp. Click a lit step to clear it.'
@@ -80,7 +89,7 @@ export function ChordBoard({
         <div className="chord-pick-row">
           <span>Root</span>
           <div className="chord-keys">
-            {KEYS.map((note) => {
+            {roots.map((note) => {
               const scaleNote = inKey(songKey, note, scale)
               const on = root === note
               return (
@@ -99,10 +108,30 @@ export function ChordBoard({
           </div>
         </div>
         <div className="chord-pick-row">
+          <span>Bass</span>
+          <div className="chord-keys">
+            {CORE.map((tone) => {
+              const on = bass.includes(tone.semi)
+              return (
+                <button
+                  key={`bass-${tone.label}`}
+                  type="button"
+                  className={on ? 'chord-key is-on' : 'chord-key'}
+                  aria-pressed={on}
+                  aria-label={`Bass ${tone.label}`}
+                  onClick={() => onToggleBass(tone.semi)}
+                >
+                  {tone.label}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+        <div className="chord-pick-row">
           <span>Tones</span>
           <div className="chord-keys">
             {CORE.map((tone) => {
-              const on = tone.semi === 0 || tones.includes(tone.semi)
+              const on = tones.includes(tone.semi)
               return (
                 <button
                   key={tone.label}
@@ -110,9 +139,7 @@ export function ChordBoard({
                   className={on ? 'chord-key is-on' : 'chord-key'}
                   aria-pressed={on}
                   aria-label={`Tone ${tone.label}`}
-                  onClick={() => {
-                    if (tone.semi !== 0) onToggle(tone.semi)
-                  }}
+                  onClick={() => onToggle(tone.semi)}
                 >
                   {tone.label}
                 </button>
@@ -125,12 +152,14 @@ export function ChordBoard({
           <div className="chord-keys">
             {COLOR.map((tone) => {
               const on = tones.includes(tone.semi)
+              const quiet = QUIET_COLOR.has(tone.label)
               return (
                 <button
                   key={tone.label}
                   type="button"
-                  className={on ? 'chord-key is-on' : 'chord-key'}
+                  className={['chord-key', on ? 'is-on' : '', quiet ? 'is-quiet' : ''].filter(Boolean).join(' ')}
                   aria-pressed={on}
+                  aria-label={`Tone ${tone.label}`}
                   onClick={() => onToggle(tone.semi)}
                 >
                   {tone.label}
@@ -141,9 +170,20 @@ export function ChordBoard({
         </div>
       </div>
       <div className="chord-commit">
-        <p className="chord-symbol" aria-live="polite">
-          {symbol}
-        </p>
+        <div className="chord-symbol-row">
+          <p className="chord-symbol" aria-live="polite">
+            {symbol}
+          </p>
+          {onHear ? (
+            <button
+              type="button"
+              className="editor-light chord-fire"
+              data-testid="chord-fire"
+              aria-label={`Play ${symbol}`}
+              onPointerDown={(event) => beginPadHold(onHear, event)}
+            />
+          ) : null}
+        </div>
         <div className="chord-modes">
           <div className="chord-mode-row" role="group" aria-label="Overwrite">
             <button

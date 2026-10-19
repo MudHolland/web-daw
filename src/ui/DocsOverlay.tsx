@@ -3,7 +3,7 @@ import { useEffect, useRef } from 'react'
 export type DocsPage = 'help' | 'log' | 'keys'
 
 const DOCS_TITLE: Record<DocsPage, string> = {
-  help: 'Help',
+  help: 'User Guide',
   log: 'Change log',
   keys: 'Shortcuts',
 }
@@ -45,9 +45,9 @@ export function DocsOverlay({ page, onClose }: DocsOverlayProps) {
       <section className="docs-sheet" role="dialog" aria-modal="true" aria-labelledby="docs-title">
         <header className="docs-head">
           <div className="docs-brand">
-            <span className="wordmark-kicker">Groove box</span>
+            <span className="wordmark-kicker">LoopAnvil</span>
             <strong id="docs-title">{DOCS_TITLE[page]}</strong>
-            <span className="wordmark-version">VERSION 1.6</span>
+            <span className="wordmark-version">VERSION 1.8.1</span>
           </div>
           <button ref={closeRef} type="button" className="docs-close" aria-label="Close" onClick={onClose}>
             Close
@@ -64,7 +64,7 @@ export function DocsOverlay({ page, onClose }: DocsOverlayProps) {
 function HelpCopy() {
   return (
     <>
-      <p className="docs-lead">Beat Forge is a browser groovebox for making songs and live sets that can be saved, shared, and changed in front of an audience. Songs are built from parts. Each part holds instruments with sequencer and/or piano-roll patterns, effects, and automation. All Tracks is the mixer, where tracks and groups can be muted, soloed, or automated, and where the master can be adjusted.</p>
+      <p className="docs-lead">LoopAnvil Studio LIVE is a browser studio for making songs and live sets that can be saved, shared, and changed in front of an audience. Songs are built from sections. Each section holds instruments with sequencer and/or piano-roll patterns, effects, and automation. Mixer is the fader overview, where tracks and groups can be muted, soloed, or automated, and where the master can be adjusted.</p>
 
       <h3>How to use</h3>
       <p>The interface consists of multiple parts:</p>
@@ -72,7 +72,7 @@ function HelpCopy() {
         <li>The <b>top bar</b> contains the transport controls, the master audio output view, and buttons to open/close the sidebars.</li>
         <li>The <b>left sidebar</b> of the screen contains the song structure.</li>
         <li>The <b>right sidebar</b> of the screen contains the instrument tracks.</li>
-        <li>The <b>center Stage</b> contains the tools to adjust the selected track, its effects and automation of track properties, as well as the mixer when in All Tracks overview.</li>
+        <li>The <b>center Stage</b> contains the tools to adjust the selected track, its effects and automation of track properties, as well as the Mixer overview.</li>
       </ul>
 
       <h3>Top Bar: Transport and Master Output</h3>
@@ -80,40 +80,38 @@ function HelpCopy() {
       <ul>
         <li>Song structure sidebar open/close: open or close the left sidebar to see the song structure.</li>
         <li>Song name: click the song name to change it.</li>
-        <li>Song options: click the triangle to the right of the name for undo (Ctrl+Z), redo (Ctrl+Y or Ctrl+Shift+Z), duplicate of the selected part, instrument, or group (Ctrl+D), Copy content to (the selected track or group&apos;s steps and piano roll onto another part), Open/Save songs, Reset to start over, Help, Shortcuts, and Change log.</li>
-        <li>Beat Forge: the name of the product.</li>
-        <li>LIVE: follow the sounding part and show the playing bar.</li>
-        <li>Record: arm recording, then tap a track name or hold A-L an Z-M to write notes onto the sequencer.</li>
+        <li>Song options: click the triangle to the right of the name for undo (Ctrl+Z), redo (Ctrl+Y or Ctrl+Shift+Z), duplicate of the selected section, instrument, or group (Ctrl+D), Copy content to (the selected track or group&apos;s steps and piano roll onto another section), Open/Save songs, MIDI-input (Device, Learn CC, Forget this fader), Reset to start over, User Guide, Shortcuts, and Change log.</li>
+        <li>LoopAnvil Studio LIVE: the name of the product.</li>
         <li>Play/Stop: play or stop the song (Spacebar).</li>
-        <li>Song Settings: open Song Master to set the song BPM, key, and meter. Changing key transposes parts that still follow the song. Parts follow these unless customized.</li>
+        <li>Song settings: click the BPM, key, and meter next to Play to set song tempo, key, and meter, or to arm Record. Changing key transposes sections that still follow the song. Sections follow these unless customized. Arm record, then tap a track name or hold A–L and Z–M to write notes onto the sequencer.</li>
         <li>Master Output: a visualization of the master audio output. This is a visual representation of the audio output of the master track, showing the volume and pan of the track.</li>
         <li>Instrument tracks sidebar open/close: open or close the right sidebar to see the instrument tracks and groups.</li>
       </ul>
 
       <h3>Left Sidebar: Song structure</h3>
-      <p>Each block on the left is a song part (Part A, Verse, Drop, Chorus, etc.). Click the part name to change it. The light in the top left shows the part&apos;s state:</p>
+      <p>Each block on the left is a song section (Section A, Verse, Drop, Chorus, etc.). Click the section name to change it. The light in the top left shows the section&apos;s state:</p>
       <ul>
         <li>Unlit: not playing.</li>
         <li>Lit: currently playing.</li>
-        <li>Blinking: the part is cued. Click once to play after the current part&apos;s repeat. Click again to play after the currently playing bar.</li>
+        <li>Blinking: the section is cued. Click once to play after the current section&apos;s repeat. Click again to play after the currently playing bar.</li>
       </ul>
-      <p>Select a part to edit its settings:</p>
+      <p>Select a section to edit its settings:</p>
       <ul>
-        <li>Bars: how many bars the part spans.</li>
-        <li>Repeat: how many times the part repeats.</li>
-        <li>Next: what plays next — the same part, another part, or stop.</li>
+        <li>Bars: how many bars the section spans.</li>
+        <li>Repeat: how many times the section repeats.</li>
+        <li>Next: what plays next — the same section, another section, or stop.</li>
       </ul>
-      <p>Open the chevron on a selected part to override the song BPM, key, and meter. A Custom tag appears next to any setting that differs from the song. Hover it until it glows red, then click to reset that setting. Adhere to song at the bottom resets BPM, key, and meter together:</p>
+      <p>Open the chevron on a selected section to override the song BPM, key, and meter. A Custom tag appears next to any setting that differs from the song. Hover it until it glows red, then click to reset that setting. Adhere to song at the bottom resets BPM, key, and meter together:</p>
       <ul>
-        <li>BPM: the tempo of the song part.</li>
-        <li>Key: the musical key of the part, shown as an interval from the song (-12 to +12). Changing it chromatically transposes sequencer and piano-roll notes.</li>
-        <li>Meter: the time signature of the part. This determines how many beats and steps are in a bar.</li>
+        <li>BPM: the tempo of the song section.</li>
+        <li>Key: the musical key of the section, shown as an interval from the song (-12 to +12). Changing it chromatically transposes sequencer and piano-roll notes.</li>
+        <li>Meter: the time signature of the section. This determines how many beats and steps are in a bar.</li>
       </ul>
-      <p>Add button: the button at the bottom adds a part by duplicating the selected part and adding it to the song structure and linking the selected part to the newly added part. </p>
+      <p>Add section: the button at the bottom duplicates the selected section, adds it to the song structure, and links the selected section to the new one.</p>
 
       <h3>Tracks</h3>
       <p>The right sidebar contains the instrument tracks. Each track is a different instrument, and each track can have a different instrument, effects, and automation.</p>
-      <p>All Tracks: the top line shows the mixer for all tracks and groups in the center screen. The mixer shows the volume and pan of the tracks and groups, as well as the mute and solo status of the tracks and groups.</p>
+      <p>Mixer: the top button opens the mixer for all tracks and groups in the center screen. The mixer shows the volume and pan of the tracks and groups, as well as the mute and solo status of the tracks and groups. Empty groups stay in the track list so you can add into them, but they do not take a bay in the mixer.</p>
       <p>Groups: the groups are a way to group tracks together. Every clean project is prepared with a group for the drums, a group for the bass, and a group for the melodic Instruments. Click the group name to view the sequencers of all instruments in a group. </p>
       <ul>
         <li>Color bar: a drag handle. Drag a group the change the order of groups or all the way to the bottom to delete the group. Click to open a color picker.</li>
@@ -121,26 +119,27 @@ function HelpCopy() {
         <li>M and S button: Hover over the group row to see the M and S buttons. This way you can mute or solo the entire group at once. </li>
         <li>Click the chevron to the right of a group name to open or close the group to show/hide the tracks inside the group.</li>
       </ul>
-      <p>Tracks: click anywhere on a track row (except Mute, Solo, or the fire pad) to select it. Duplicate in the song menu (or Ctrl+D) applies to the selected part, instrument, or group. Copy content to writes the selected track or group&apos;s steps and piano-roll notes onto a part you pick, from the song menu or the part name in the stage header. Delete or Backspace removes the last clicked part, instrument, group, or effect.</p>
+      <p>Tracks: click anywhere on a track row (except Mute, Solo, or the fire pad) to select it. Duplicate in the song menu (or Ctrl+D) applies to the selected section, instrument, or group. Copy content to writes the selected track or group&apos;s steps and piano-roll notes onto a section you pick, from the song menu or the section name in the stage header. Delete or Backspace removes the last clicked section, instrument, group, or effect.</p>
       <ul>
       <li>Color bar: a drag handle. Drag an instrument track to the change the order of tracks or all the way to the bottom to delete the track. Click to open a color picker.</li>
         <li>Track name: click the name to edit the track name.</li>
         <li>M and S button: Hover over the track row to see the M and S buttons to mute or solo the track.</li>
         <li>Fire light: drums play through to the end. Bass, lead, and chords use the channel (including effects); hold to keep the note ringing. On a group, the light fires every instrument in the group.</li>
       </ul>
-      <p>Add button: the button at the bottom opens a menu to add a group or any instrument. Bass and lead entries are mono (one note). Keys, organ, stab, strings, and pad are poly (three-note chords). Pedal holds one note until an empty step.</p>
+      <p>Add track: each group has an Add track button, and the footer of the track list opens the same picker (plus Add group). An empty group in the center stage has Add track too; it opens the track list and that picker.</p>
 
       <h3>Center Stage</h3>
-      <p>The center of the screen is where the magic happens. This is the main area where you can adjust the selected track, its effects and automation of track properties, as well as the mixer when in All Tracks overview.</p>
+      <p>The center of the screen is where the magic happens. This is the main area where you can adjust the selected track, its effects and automation of track properties, as well as the Mixer overview.</p>
       <h4>Tracks and Groups view</h4>
       <p>When in Tracks and Groups view, the center stage is divided into multiple parts:</p>
       <ul>
         <li>The top part contains the sequencer and piano roll of the selected track. Press a piano-roll pitch (C4, and so on) to hear that note on the channel, even while the song is playing.</li>
+        <li>Bars (in the dock): pick which bar you are editing, copy that bar to others, or press Follow to jump to the playing section and stay on the sounding bar.</li>
         <li>The middle part contains the effects and automation of the selected track.</li>
         <li>The bottom part contains the mixer of the selected track and group.</li>
       </ul>
-      <h4>All Tracks view</h4>
-      <p>When in All Tracks view, the center stage is the mixer for all tracks and groups. This is the main area where you can adjust the volume and pan of all tracks and groups at once.</p>
+      <h4>Mixer view</h4>
+      <p>When Mixer is selected, the center stage is the mixer for all tracks and groups that have members. Adjust volume and pan of those tracks and groups at once.</p>
       <h4>Effects</h4>
       <p>The effects are the different effects that can be applied to the selected track, group or all tracks. Each effect has a different set of parameters that can be adjusted to change the sound.</p>
       <h4>Automation</h4>
@@ -155,7 +154,7 @@ function HelpCopy() {
 function ShortcutsCopy() {
   return (
     <>
-      <p className="docs-lead">Shortcuts are ignored while a name field is focused, and while Help, Shortcuts, or the change log is open. On Mac, use Cmd in place of Ctrl.</p>
+      <p className="docs-lead">Shortcuts are ignored while a name field is focused, and while User Guide, Shortcuts, or the change log is open. On Mac, use Cmd in place of Ctrl.</p>
 
       <h3>Global</h3>
       <div className="docs-keys">
@@ -181,11 +180,11 @@ function ShortcutsCopy() {
         </div>
         <div>
           <kbd>Ctrl+D</kbd>
-          <span>Duplicate the selected part, instrument, or group</span>
+          <span>Duplicate the selected section, instrument, or group</span>
         </div>
         <div>
           <kbd>Delete</kbd>
-          <span>Delete the last clicked part, instrument, group, or effect (or a selected piano-roll note)</span>
+          <span>Delete the last clicked section, instrument, group, or effect (or a selected piano-roll note)</span>
         </div>
       </div>
 
@@ -211,7 +210,7 @@ function ShortcutsCopy() {
       </div>
 
       <h3>Record</h3>
-      <p>Arm record, then play. Click a track name to write the current step, or hold a pad for the next step. Pads follow the selected track, group, or All Tracks order.</p>
+      <p>Open song settings (the BPM readout next to Play) and arm Record, then play. Click a track name to write the current step, or hold a pad for the next step. Pads follow the selected track, group, or Mixer order.</p>
       <div className="docs-keys">
         <div>
           <kbd>R</kbd>
@@ -233,8 +232,53 @@ function ShortcutsCopy() {
 function ChangeLogCopy() {
   return (
     <>
+    <article className="docs-version">
+        <h4>
+          1.8.1<span></span>
+        </h4>
+        <ul>
+          <li>Muted tracks keep M, S, and an unlit fire pad in place so hover no longer shifts the buttons.</li>
+          <li>Piano roll fills leftover center-stage height and shrinks when other panels open.</li>
+          <li>The bar pager is its own panel, the follow button is in the bar pager now, and the bar pager can be folded to save space.</li>
+          <li>Reworked the top bar to be more compact and easier to use on very narrow screens.</li>
+        </ul>
+        <h3>
+          1.8 <span>Console</span>
+        </h3>
+        <ul>
+          <li>Mixer groups envelope nested tracks, with TR labels, group mute dimming those tracks, and the master color line on the right.</li>
+          <li>Add track is on each group, empty Mixer, and the track-list footer. Song list uses Add section. Parts are labeled Sections in the UI.</li>
+          <li>Top bar: song on the left, logo and LIVE in the center, play, BPM/key/meter, VU, and tracks on the right. Play, VU, and sidebar toggles share the same height.</li>
+          <li>On short and phone layouts, expanded effects use their full height and the center stage scrolls. Mixer strips keep names, badges, and pan labels inside the channel.</li>
+        </ul>
+      </article>
       <article className="docs-version">
-      <h4>
+        <h3>
+          1.7 <span>Influence</span>
+        </h3>
+        <ul>
+          <li>Sidebars on smaller screens hide automatically when not in use.</li>
+          <li>Height of the center stage panels is reworked to fit better on most screen types.</li>
+          <li>EXPERIMENTAL: MIDI Fader control through MIDI input and Learn CC (click a fader, Song Menu then Learn CC, and move a knob on a midi controller to link the fader to the knob).</li>
+          <li>Mixer view (was All Tracks). Add track on each group, empty groups, and the track-list footer. Add section on the song list.</li>
+        </ul>
+      </article>
+      <article className="docs-version">
+        <h4>
+          1.6.3<span></span>
+        </h4>
+        <ul>
+          <li>Chord builder bass notes (slash chords), full Color row, and quieter unconventional color keys.</li>
+          <li>Piano-roll marquee select, group move, and Delete removes selected notes not the track.</li>
+          <li>Updated logo for legibility.</li>
+        </ul>
+        <h4>
+          1.6.2<span></span>
+        </h4>
+        <ul>
+          <li>Added proper branding and logo.</li>
+        </ul>
+        <h4>
           1.6.1 <span></span>
         </h4>
         <ul>

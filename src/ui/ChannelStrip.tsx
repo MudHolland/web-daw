@@ -212,8 +212,8 @@ export function ChannelStrip({
               <button
                 type="button"
                 className={['fx-sync-btn', syncedMix ? 'is-synced' : ''].filter(Boolean).join(' ')}
-                aria-label="Apply Level and Pan to all parts"
-                title="Apply Level and Pan to all song parts"
+                aria-label="Apply Level and Pan to all sections"
+                title="Apply Level and Pan to all song sections"
                 data-testid={`sync-mix-${instrument.id}`}
                 onClick={() => {
                   onSyncMix()
@@ -264,8 +264,8 @@ export function ChannelStrip({
                 <button
                   type="button"
                   className={['fx-sync-btn', syncedInsert === insert ? 'is-synced' : ''].filter(Boolean).join(' ')}
-                  aria-label={`Apply ${label} settings to all parts`}
-                  title="Apply this effect and its settings to all song parts"
+                  aria-label={`Apply ${label} settings to all sections`}
+                  title="Apply this effect and its settings to all song sections"
                   data-testid={`sync-${insert}-${instrument.id}`}
                   onClick={() => {
                     onSyncInsert(insert)
@@ -349,10 +349,10 @@ export function ChannelStrip({
                 className={['add-scope-toggle', addAll ? 'is-all' : ''].filter(Boolean).join(' ')}
                 aria-pressed={addAll}
                 data-testid={`add-scope-${instrument.id}`}
-                title={addAll ? 'New effects are added to ALL song parts' : 'New effects are added only to this part'}
+                title={addAll ? 'New effects are added to ALL song sections' : 'New effects are added only to this section'}
                 onClick={() => setAddAll((prev) => !prev)}
               >
-                {addAll ? 'All parts' : 'This part'}
+                {addAll ? 'All sections' : 'This section'}
               </button>
             </header>
             <div className="add-plugins">

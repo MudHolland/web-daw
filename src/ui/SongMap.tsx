@@ -56,7 +56,7 @@ export function SongMap({
   const firstId = order[0]?.id ?? ''
 
   function nameOf(sectionId: string) {
-    return project.sections.find((item) => item.id === sectionId)?.name ?? 'Part'
+    return project.sections.find((item) => item.id === sectionId)?.name ?? 'Section'
   }
 
   const shown = drag ? order.filter((node) => node.id !== drag.nodeId) : order
@@ -203,7 +203,7 @@ export function SongMap({
                       className={['song-part-toggle', expandedTimingNodeId === node.id && selected ? 'is-open' : ''].filter(Boolean).join(' ')}
                       data-testid="part-settings-toggle"
                       aria-expanded={expandedTimingNodeId === node.id && selected}
-                      aria-label={expandedTimingNodeId === node.id && selected ? 'Hide part settings' : 'Show part settings'}
+                      aria-label={expandedTimingNodeId === node.id && selected ? 'Hide section settings' : 'Show section settings'}
                       onClick={(event) => {
                         event.stopPropagation()
                         if (!selected) {
@@ -267,7 +267,7 @@ export function SongMap({
                     <label className="transport-select">
                       <span>Next</span>
                       <select
-                        aria-label="Next part"
+                        aria-label="Next section"
                         value={node.nextId ?? ''}
                         onChange={(event) => onNext(node.id, event.target.value === '' ? null : event.target.value)}
                       >
@@ -411,8 +411,8 @@ export function SongMap({
             Delete
           </div>
         ) : (
-          <button type="button" className="song-add" data-testid="add-part" aria-label="Add part" onClick={onAdd}>
-            +
+          <button type="button" className="song-add" data-testid="add-part" aria-label="Add section" onClick={onAdd}>
+            Add section
           </button>
         )}
       </div>

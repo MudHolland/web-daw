@@ -744,7 +744,7 @@ export function createDefaultProject(): Project {
 
   const sections: Section[] = PARTS.map((part, index) => ({
     id: `section-${part}`,
-    name: index === 0 ? 'Part A' : index === 1 ? 'Part B' : 'Part C',
+    name: index === 0 ? 'Section A' : index === 1 ? 'Section B' : 'Section C',
     bpm: 120,
     key: 'C',
     meter: '4/4',
@@ -808,7 +808,7 @@ export function createBlankProject(): Project {
     sections: [
       {
         id: sectionId,
-        name: 'Part A',
+        name: 'Section A',
         bpm: 120,
         key: 'C',
         meter: '4/4',
@@ -2046,13 +2046,13 @@ export function setNext(project: Project, nodeId: string, nextId: string | null)
 
 export function nextPartName(project: Project): string {
   const names = project.sections.map((s) => s.name.trim())
-  const hasPartPrefix = names.some((n) => /^Part\s+[A-Z]$/i.test(n))
+  const hasSectionPrefix = names.some((n) => /^(?:Part|Section)\s+[A-Z]$/i.test(n))
   const hasSingleLetter = names.some((n) => /^[A-Z]$/i.test(n))
-  const prefix = hasSingleLetter && !hasPartPrefix ? '' : 'Part '
+  const prefix = hasSingleLetter && !hasSectionPrefix ? '' : 'Section '
 
   let maxCode = -1
   for (const name of names) {
-    const match = name.match(/^(?:Part\s+)?([A-Z])$/i)
+    const match = name.match(/^(?:(?:Part|Section)\s+)?([A-Z])$/i)
     if (match) {
       const code = match[1].toUpperCase().charCodeAt(0) - 65
       if (code > maxCode) maxCode = code

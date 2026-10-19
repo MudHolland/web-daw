@@ -24,6 +24,7 @@ type MixerConsoleProps = {
   onMasterPan: (pan: number) => void
   onPreview?: (instrumentId: string, down: boolean) => void
   motionAt?: number
+  onAddTrack?: () => void
 }
 
 export function MixerConsole({
@@ -45,6 +46,7 @@ export function MixerConsole({
   onMasterPan,
   onPreview,
   motionAt = -1,
+  onAddTrack,
 }: MixerConsoleProps) {
   const section = project.sections.find((item) => item.id === sectionId)
   const masterRack = motionAt >= 0 && section?.bus ? applyRackAutomation(section.bus, motionAt) : section?.bus
@@ -86,7 +88,7 @@ export function MixerConsole({
       >
         <div className="console-strip-color" style={{ background: color }} />
         <div className="console-strip-head">
-          <span className="console-strip-ch">CH {chNum}</span>
+          <span className="console-strip-ch">TR {chNum}</span>
           <button
             type="button"
             className={['console-strip-name', recording ? 'is-record' : ''].filter(Boolean).join(' ')}
@@ -184,12 +186,16 @@ export function MixerConsole({
           const members = group.instrumentIds
             .map((id) => project.instruments.find((item) => item.id === id))
             .filter((item): item is (typeof project.instruments)[number] => item != null)
+          if (members.length === 0) return null
 
           return (
-            <div key={group.id} className="console-bay">
+            <div
+              key={group.id}
+              className={['console-bay', groupMuted ? 'is-muted' : '', groupSoloed ? 'is-soloed' : ''].filter(Boolean).join(' ')}
+              style={{ '--voice': color } as React.CSSProperties}
+            >
               <div
                 className={['console-strip', 'console-strip-group', groupMuted ? 'is-muted' : '', groupSoloed ? 'is-soloed' : ''].filter(Boolean).join(' ')}
-                style={{ '--voice': color } as React.CSSProperties}
                 data-testid={`console-strip-group-${group.id}`}
               >
                 <div className="console-strip-color" style={{ background: color }} />
@@ -256,11 +262,18 @@ export function MixerConsole({
                 </div>
                 <InsertLights rack={rack} />
               </div>
-              {members.map((instrument) => trackStrip(instrument))}
+              <div className="console-bay-tracks">
+                {members.map((instrument) => trackStrip(instrument))}
+              </div>
             </div>
           )
         })}
         {loose.length > 0 ? <div className="console-bay">{loose.map((instrument) => trackStrip(instrument))}</div> : null}
+        {onAddTrack && project.instruments.length === 0 ? (
+          <button type="button" className="console-strip-add" data-testid="mixer-add-track" onClick={onAddTrack}>
+            Add track
+          </button>
+        ) : null}
         </div>
 
         <div className="console-strip console-strip-master">

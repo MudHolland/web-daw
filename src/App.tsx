@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react'
 import type { ChangeEvent } from 'react'
 import { Engine, type StereoLevel } from './audio/engine.ts'
 import type { CueMode } from './audio/scheduler.ts'
@@ -76,6 +76,15 @@ import {
 } from './model/project.ts'
 import { createHistory } from './model/history.ts'
 import { downloadProject, loadStoredProject, readProjectFile, saveStoredProject } from './model/storage.ts'
+import {
+  beginCcLearn,
+  cancelCcLearn,
+  clearCcForTarget,
+  enableMidi,
+  midiSnapshot,
+  setMidiPort,
+  subscribeMidi,
+} from './midi/ccBus.ts'
 import { Editor } from './ui/Editor.tsx'
 import { FitName } from './ui/fitName.tsx'
 import { GroupList, type Selection } from './ui/InstrumentList.tsx'
@@ -262,10 +271,13 @@ export function App() {
   const [tracksOpen, setTracksOpen] = useState(() => window.matchMedia('(min-width: 1281px)').matches)
   const [resetArmed, setResetArmed] = useState(false)
   const [fileOpen, setFileOpen] = useState(false)
+  const [openFlyout, setOpenFlyout] = useState<string | null>(null)
+  const [addMenu, setAddMenu] = useState<{ groupId: string | null } | null>(null)
+  const midi = useSyncExternalStore(subscribeMidi, midiSnapshot, midiSnapshot)
   const [docs, setDocs] = useState<DocsPage | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [playback, setPlayback] = useState<PlaybackView>({ playing: false, step: -1, position: -1, nodeId: null, level: { left: 0, right: 0 }, voices: {}, queuedNodeId: null, cueMode: null })
-  const [liveView, setLiveView] = useState(false)
+  const [, setLiveView] = useState(false)
   const [followLive, setFollowLive] = useState(true)
   const [selectedInsert, setSelectedInsert] = useState<InsertId | null>(null)
   const [namingSong, setNamingSong] = useState(false)
@@ -344,6 +356,7 @@ export function App() {
         return
       }
       setFileOpen(false)
+      setOpenFlyout(null)
       setResetArmed(false)
     }
     window.addEventListener('pointerdown', onPointer)
@@ -397,6 +410,7 @@ export function App() {
 
     const onKey = (event: KeyboardEvent) => {
       if (event.code === 'ShiftLeft' || event.code === 'ShiftRight') shiftHeld.current = true
+      if (event.key === 'Escape') cancelCcLearn()
       if (docsRef.current) return
       if (typing(event)) return
 
@@ -464,7 +478,8 @@ export function App() {
 
       if ((event.key === 'Delete' || event.key === 'Backspace') && !event.ctrlKey && !event.metaKey && !event.altKey) {
         const from = event.target
-        if (from instanceof Element && from.closest('.piano-roll, .keys-roll .roll-stack')) return
+        if (from instanceof Element && from.closest('[data-testid="piano-roll"], .roll-stack')) return
+        if (document.querySelector('[data-testid="piano-roll"][data-note-selection="on"]')) return
         event.preventDefault()
         const focus = focusRef.current
         const current = projectRef.current
@@ -680,21 +695,18 @@ export function App() {
     }
   }
 
-  return (
-    <div className={['app', songOpen ? '' : 'is-song-closed', tracksOpen ? '' : 'is-tracks-closed'].filter(Boolean).join(' ')}>
-      <header className="top">
-        <div className="top-side">
-          <button
-            type="button"
-            className={songOpen ? 'drawer-toggle is-on' : 'drawer-toggle'}
-            data-testid="menu"
-            aria-expanded={songOpen}
-            aria-label={songOpen ? 'Hide song' : 'Show song'}
-            onClick={() => setSongOpen((open) => !open)}
-          >
-            <span />
-          </button>
-          <div className="song-home">
+  const compactHeader = useSyncExternalStore(
+    (onChange) => {
+      const query = window.matchMedia('(max-width: 600px)')
+      query.addEventListener('change', onChange)
+      return () => query.removeEventListener('change', onChange)
+    },
+    () => window.matchMedia('(max-width: 600px)').matches,
+    () => false,
+  )
+
+  const songHome = (
+    <div className="song-home">
             {namingSong ? (
               <input
                 className="song-banner-input"
@@ -737,7 +749,10 @@ export function App() {
               data-testid="file-menu"
               aria-expanded={fileOpen}
               aria-label="Song file"
-              onClick={() => setFileOpen((open) => !open)}
+              onClick={() => {
+                setOpenFlyout(null)
+                setFileOpen((open) => !open)
+              }}
             >
               ▾
             </button>
@@ -747,28 +762,33 @@ export function App() {
                   type="button"
                   data-testid="undo"
                   disabled={!historyRef.current.canUndo()}
+                  onPointerEnter={() => setOpenFlyout(null)}
                   onClick={() => {
                     setFileOpen(false)
                     undo()
                   }}
                 >
                   Undo
+                  <span className="menu-shortcut">Ctrl+Z</span>
                 </button>
                 <button
                   type="button"
                   data-testid="redo"
                   disabled={!historyRef.current.canRedo()}
+                  onPointerEnter={() => setOpenFlyout(null)}
                   onClick={() => {
                     setFileOpen(false)
                     redo()
                   }}
                 >
                   Redo
+                  <span className="menu-shortcut">Ctrl+Y</span>
                 </button>
                 <hr className="menu-line" />
                 <button
                   type="button"
                   data-testid="clip-duplicate"
+                  onPointerEnter={() => setOpenFlyout(null)}
                   onClick={() => {
                     duplicateSelection()
                     setFileOpen(false)
@@ -776,11 +796,15 @@ export function App() {
                 >
                   Duplicate{' '}
                   <FitName name={clipLabel(project, clipOf(project, selection, editNodeId, focusRef.current))} />
+                  <span className="menu-shortcut">Ctrl+D</span>
                 </button>
                 {selectedContentIds(project, selection) && project.sections.some((section) => section.id !== sectionId) ? (
                   <>
                     <hr className="menu-line" />
-                    <div className="menu-sub">
+                    <div
+                      className={openFlyout === 'copy' || openFlyout?.startsWith('copy-') ? 'menu-sub is-open' : 'menu-sub'}
+                      onPointerEnter={() => setOpenFlyout('copy')}
+                    >
                       <button type="button" className="menu-sub-btn" data-testid="clip-content">
                         Copy content to
                         <span className="menu-sub-caret" aria-hidden>
@@ -814,6 +838,7 @@ export function App() {
                 <button
                   type="button"
                   data-testid="load"
+                  onPointerEnter={() => setOpenFlyout(null)}
                   onClick={() => {
                     setFileOpen(false)
                     fileRef.current?.click()
@@ -824,6 +849,7 @@ export function App() {
                 <button
                   type="button"
                   data-testid="save"
+                  onPointerEnter={() => setOpenFlyout(null)}
                   onClick={() => {
                     setFileOpen(false)
                     downloadProject(project)
@@ -832,11 +858,94 @@ export function App() {
                   Save
                 </button>
                 <hr className="menu-line" />
+                <div
+                  className={openFlyout === 'midi' || openFlyout?.startsWith('midi-') ? 'menu-sub is-open' : 'menu-sub'}
+                  onPointerEnter={() => {
+                    setOpenFlyout((current) => (current?.startsWith('midi') ? current : 'midi'))
+                    void enableMidi()
+                  }}
+                >
+                  <button type="button" className="menu-sub-btn" data-testid="midi-input">
+                    MIDI-input
+                    <span className="menu-sub-caret" aria-hidden>
+                      ▸
+                    </span>
+                  </button>
+                  <div className="menu-flyout" role="menu">
+                    <div
+                      className={openFlyout === 'midi-device' || openFlyout?.startsWith('midi-device') ? 'menu-sub is-open' : 'menu-sub'}
+                      onPointerEnter={() => setOpenFlyout('midi-device')}
+                    >
+                      <button type="button" className="menu-sub-btn" data-testid="midi-device">
+                        Device
+                        <span className="menu-sub-caret" aria-hidden>
+                          ▸
+                        </span>
+                      </button>
+                      <div className="menu-flyout" role="menu">
+                        {!midi.supported ? (
+                          <button type="button" disabled>
+                            Not available
+                          </button>
+                        ) : midi.inputs.length === 0 ? (
+                          <button
+                            type="button"
+                            data-testid="midi-enable"
+                            onClick={() => {
+                              void enableMidi()
+                            }}
+                          >
+                            Enable MIDI
+                          </button>
+                        ) : (
+                          midi.inputs.map((input) => (
+                            <button
+                              key={input.id}
+                              type="button"
+                              data-testid={`midi-input-${input.id}`}
+                              className={midi.portId === input.id ? 'is-on' : undefined}
+                              onClick={() => setMidiPort(input.id)}
+                            >
+                              {input.name}
+                            </button>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      data-testid="midi-learn"
+                      className={midi.learning ? 'is-on' : undefined}
+                      onPointerEnter={() => setOpenFlyout('midi')}
+                      onClick={() => {
+                        if (midi.learning) {
+                          cancelCcLearn()
+                          return
+                        }
+                        beginCcLearn()
+                      }}
+                    >
+                      {midi.learning ? 'Waiting for CC…' : 'Learn CC'}
+                    </button>
+                    <button
+                      type="button"
+                      data-testid="midi-forget"
+                      disabled={!midi.lastTargetId}
+                      onPointerEnter={() => setOpenFlyout('midi')}
+                      onClick={() => clearCcForTarget()}
+                    >
+                      Forget this fader
+                    </button>
+                    {midi.error ? <p className="menu-hint">{midi.error}</p> : null}
+                  </div>
+                </div>
+                <hr className="menu-line" />
                 {resetArmed ? (
                   <button
                     type="button"
                     className="menu-danger"
                     data-testid="reset-confirm"
+                    onPointerEnter={() => setOpenFlyout(null)}
                     onClick={() => {
                       engine.stop()
                       const blank = createBlankProject()
@@ -853,7 +962,12 @@ export function App() {
                     Start over
                   </button>
                 ) : (
-                  <button type="button" data-testid="reset" onClick={() => setResetArmed(true)}>
+                  <button
+                    type="button"
+                    data-testid="reset"
+                    onPointerEnter={() => setOpenFlyout(null)}
+                    onClick={() => setResetArmed(true)}
+                  >
                     Reset
                   </button>
                 )}
@@ -861,17 +975,19 @@ export function App() {
                 <button
                   type="button"
                   data-testid="help"
+                  onPointerEnter={() => setOpenFlyout(null)}
                   onClick={() => {
                     setFileOpen(false)
                     setResetArmed(false)
                     setDocs('help')
                   }}
                 >
-                  Help
+                  User Guide
                 </button>
                 <button
                   type="button"
                   data-testid="shortcuts"
+                  onPointerEnter={() => setOpenFlyout(null)}
                   onClick={() => {
                     setFileOpen(false)
                     setResetArmed(false)
@@ -883,6 +999,7 @@ export function App() {
                 <button
                   type="button"
                   data-testid="changelog"
+                  onPointerEnter={() => setOpenFlyout(null)}
                   onClick={() => {
                     setFileOpen(false)
                     setResetArmed(false)
@@ -893,40 +1010,77 @@ export function App() {
                 </button>
               </div>
             ) : null}
-          </div>
+    </div>
+  )
+
+  return (
+    <div className={['app', songOpen ? '' : 'is-song-closed', tracksOpen ? '' : 'is-tracks-closed'].filter(Boolean).join(' ')}>
+      <header className="top">
+        <div className="top-side">
+          <button
+            type="button"
+            className={songOpen ? 'drawer-toggle is-burger is-on' : 'drawer-toggle is-burger'}
+            data-testid="menu"
+            aria-expanded={songOpen}
+            aria-label={songOpen ? 'Hide song' : 'Show song'}
+            onClick={() => setSongOpen((open) => !open)}
+          >
+            <span />
+          </button>
+          {compactHeader ? null : songHome}
+          {midi.learning ? (
+            <span className="midi-learn-flag" data-testid="midi-learn-flag">
+              Click a fader, then move a CC knob
+            </span>
+          ) : null}
         </div>
-        <Brand live={liveView} onLive={goLive} />
-        <Transport
-          playing={playback.playing}
-          recording={recording}
-          onRecord={() => setRecording((value) => !value)}
-          onToggle={() => {
-            if (engine.getPlayback().playing) engine.stop()
-            else {
-              setFollowLive(true)
-              engine.play()
-            }
-          }}
-          project={project}
-          onBpm={(bpm) => setProject((current) => setProjectBpm(current, bpm), 'live:bpm')}
-          onKey={(offset) => setProject((current) => setProjectKey(current, offset))}
-          onMeter={(meter) => setProject((current) => setProjectMeter(current, meter))}
-        />
+        <Brand />
         <div className="top-side is-end">
+          <Transport
+            playing={playback.playing}
+            recording={recording}
+            onRecord={() => setRecording((value) => !value)}
+            onToggle={() => {
+              if (engine.getPlayback().playing) engine.stop()
+              else {
+                setFollowLive(true)
+                engine.play()
+              }
+            }}
+            project={project}
+            songHome={compactHeader ? songHome : undefined}
+            onBpm={(bpm) => setProject((current) => setProjectBpm(current, bpm), 'live:bpm')}
+            onKey={(offset) => setProject((current) => setProjectKey(current, offset))}
+            onMeter={(meter) => setProject((current) => setProjectMeter(current, meter))}
+          />
           <LevelMeter level={playback.level} />
           <button
             type="button"
-            className={tracksOpen ? 'drawer-toggle is-on' : 'drawer-toggle'}
+            className={tracksOpen ? 'drawer-toggle is-tracks is-on' : 'drawer-toggle is-tracks'}
             data-testid="tracks-menu"
             aria-expanded={tracksOpen}
             aria-label={tracksOpen ? 'Hide tracks' : 'Show tracks'}
             onClick={() => setTracksOpen((open) => !open)}
           >
-            <span />
+            <span className="tracks-faders" aria-hidden="true">
+              <i />
+              <i />
+              <i />
+            </span>
           </button>
         </div>
       </header>
       <div className="body">
+        <button
+          type="button"
+          className="drawer-scrim"
+          tabIndex={-1}
+          aria-label="Close sidebars"
+          onClick={() => {
+            setSongOpen(false)
+            setTracksOpen(false)
+          }}
+        />
         <aside className="song-drawer">
           <SongMap
             project={project}
@@ -979,7 +1133,11 @@ export function App() {
           project={project}
           selection={selection}
           sectionId={sectionId}
-          partName={section?.name ?? 'Part'}
+          partName={section?.name ?? 'Section'}
+          onRequestAddTrack={(groupId) => {
+            setTracksOpen(true)
+            setAddMenu({ groupId })
+          }}
           playing={playback.playing}
           activity={playback.voices}
           level={playback.level}
@@ -1021,6 +1179,7 @@ export function App() {
           onPreview={(instrumentId, down) => engine.preview(instrumentId, down)}
           onPreviewMany={(ids, down) => engine.previewMany(ids, down)}
           onPreviewNote={(instrumentId, midi, down) => engine.previewNote(instrumentId, midi, down)}
+          onPreviewPitches={(instrumentId, pitches, down) => engine.previewPitches(instrumentId, pitches, down)}
           onRecordHold={recordHold}
           recording={recording}
           onNotes={(instrumentId, notes) => setProject((current) => setRollNotes(current, instrumentId, notes, sectionId))}
@@ -1039,6 +1198,7 @@ export function App() {
           onLiveView={setLiveView}
           followLive={followLive}
           onFollowLive={setFollowLive}
+          onLive={goLive}
           onCopyContent={
             selectedContentIds(project, selection)
               ? (toSectionId) => {
@@ -1092,6 +1252,8 @@ export function App() {
             onSoloGroup={soloGroup}
             onAddGroup={createGroup}
             onAddTrack={createTrack}
+            addMenu={addMenu}
+            onAddMenu={setAddMenu}
             onPreviewCatalog={(catalog, down) => (down ? engine.previewCatalog(catalog) : engine.previewCatalog(catalog, false))}
             onRenameGroup={(groupId, name) => setProject((current) => renameGroup(current, groupId, name))}
             onRenameInstrument={(instrumentId, name) => setProject((current) => renameInstrument(current, instrumentId, name))}

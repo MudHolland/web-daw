@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import type { StereoLevel } from '../audio/engine.ts'
 import { METERS, type Meter, type Project } from '../model/project.ts'
 import { Fader } from './Fader.tsx'
@@ -13,6 +13,7 @@ type TransportProps = {
   onBpm: (bpm: number) => void
   onKey: (offset: number) => void
   onMeter: (meter: Meter) => void
+  songHome?: ReactNode
 }
 
 function bpmFromTaps(times: number[]): number | null {
@@ -24,7 +25,17 @@ function bpmFromTaps(times: number[]): number | null {
   return Math.min(200, Math.max(40, bpm))
 }
 
-export function Transport({ playing, onToggle, recording = false, onRecord, project, onBpm, onKey, onMeter }: TransportProps) {
+export function Transport({
+  playing,
+  onToggle,
+  recording = false,
+  onRecord,
+  project,
+  onBpm,
+  onKey,
+  onMeter,
+  songHome,
+}: TransportProps) {
   const [open, setOpen] = useState(false)
   const popoverRef = useRef<HTMLDivElement>(null)
   const toggleRef = useRef<HTMLButtonElement>(null)
@@ -66,20 +77,22 @@ export function Transport({ playing, onToggle, recording = false, onRecord, proj
 
   return (
     <div className="transport">
-      {onRecord ? (
-        <button
-          type="button"
-          className={['transport-record', recording ? 'is-on' : '', recording && playing ? 'is-live' : ''].filter(Boolean).join(' ')}
-          data-testid="record"
-          aria-pressed={recording}
-          aria-label={recording ? 'Stop recording' : 'Record'}
-          title={recording ? 'Recording — tap a track name or A–L to write the current step' : 'Arm record'}
-          onClick={onRecord}
-        >
-          <span className="record-mark" aria-hidden="true" />
-        </button>
-      ) : null}
-
+    <button
+      ref={toggleRef}
+      type="button"
+      className={['transport-song', open ? 'is-open' : '', recording ? 'is-record' : ''].filter(Boolean).join(' ')}
+      data-testid="song-timing-toggle"
+      aria-expanded={open}
+      aria-haspopup="dialog"
+      aria-label="Song BPM, Key, Meter, and Record"
+      title="Song settings"
+      onClick={() => setOpen((prev) => !prev)}
+    >
+      <span className="transport-song-bpm">{project.bpm}</span>
+      <span className="transport-song-meta">
+        {project.key} · {project.meter}
+      </span>
+    </button>
       <button
         type="button"
         className={playing ? 'transport-play is-on' : 'transport-play'}
@@ -91,21 +104,6 @@ export function Transport({ playing, onToggle, recording = false, onRecord, proj
         <span className="play-mark" aria-hidden="true" />
       </button>
 
-      <button
-        ref={toggleRef}
-        type="button"
-        className={['transport-timing-btn', open ? 'is-open' : ''].filter(Boolean).join(' ')}
-        data-testid="song-timing-toggle"
-        aria-expanded={open}
-        aria-haspopup="dialog"
-        aria-label="Song BPM, Key, and Meter"
-        title="Song BPM, Key, and Meter"
-        onClick={() => setOpen((prev) => !prev)}
-      >
-        <svg className="chevron-icon" viewBox="0 0 12 12" aria-hidden="true">
-          <path d="M2.5 4.5 L6 8 L9.5 4.5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      </button>
 
       {open ? (
         <div
@@ -123,6 +121,7 @@ export function Transport({ playing, onToggle, recording = false, onRecord, proj
           </div>
 
           <div className="transport-pop-body">
+            {songHome ? <div className="transport-pop-song">{songHome}</div> : null}
             <label className="transport-pop-field transport-pop-bpm">
               <span className="transport-pop-label">BPM</span>
               <div className="transport-pop-fader-row">
@@ -181,8 +180,25 @@ export function Transport({ playing, onToggle, recording = false, onRecord, proj
             </div>
           </div>
 
+          {onRecord ? (
+            <button
+              type="button"
+              className={['transport-record', recording ? 'is-on' : '', recording && playing ? 'is-live' : '']
+                .filter(Boolean)
+                .join(' ')}
+              data-testid="record"
+              aria-pressed={recording}
+              aria-label={recording ? 'Stop recording' : 'Record'}
+              title={recording ? 'Recording — tap a track name or A–L to write the current step' : 'Arm record'}
+              onClick={onRecord}
+            >
+              <span className="record-mark" aria-hidden="true" />
+              Record
+            </button>
+          ) : null}
+
           <div className="transport-pop-hint">
-            Song parts adhere to this meter, key, and BPM unless customized.
+            Song sections adhere to this meter, key, and BPM unless customized.
           </div>
         </div>
       ) : null}
@@ -210,24 +226,20 @@ function MeterRow({ level }: { level: number }) {
   )
 }
 
-export function Brand({ live, onLive }: { live: boolean; onLive: () => void }) {
+export function Brand() {
   return (
     <div className="brand">
+      {/*
       <div className="wordmark">
-        <span className="wordmark-kicker">Groove box</span>
-        <strong>Beat Forge</strong>
-        <span className="wordmark-version">VERSION 1.6</span>
+        <span className="wordmark-kicker">Studio</span>
+        <strong>LoopAnvil</strong>
+        <span className="wordmark-version">VERSION 1.8.1</span>
       </div>
-      <button
-        type="button"
-        className={live ? 'model-badge is-on' : 'model-badge'}
-        data-testid="live"
-        aria-pressed={live}
-        aria-label={live ? 'Viewing playing bar' : 'Show playing bar'}
-        onClick={onLive}
-      >
-        LIVE
-      </button>
+      */}
+      <div className="wordmark">
+        <img className="wordmark-logo" src="/LoopAnvil_Logo.png" alt="LoopAnvil Studio" />
+        {/* <span className="wordmark-version">VERSION 1.8.1</span> */}
+      </div>
     </div>
   )
 }

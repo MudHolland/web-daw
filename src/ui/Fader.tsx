@@ -1,5 +1,7 @@
+import { useEffect } from 'react'
 import type { CSSProperties } from 'react'
 import { faderToGain, formatGainDb, GAIN_UNITY_POS, gainToFader } from '../model/gain.ts'
+import { registerCcTarget, touchCcTarget } from '../midi/ccBus.ts'
 
 type FaderProps = {
   min: number
@@ -17,6 +19,11 @@ type FaderProps = {
 }
 
 export function Fader({ min, max, step, value, reset, testId, vertical = false, detent, split = false, onChange }: FaderProps) {
+  useEffect(() => {
+    if (!testId) return
+    return registerCcTarget(testId, { min, max, step, apply: onChange })
+  }, [testId, min, max, step, onChange])
+
   const span = max - min || 1
   const pct = ((value - min) / span) * 100
   const bipolar = min < 0 && max > 0
@@ -56,6 +63,12 @@ export function Fader({ min, max, step, value, reset, testId, vertical = false, 
         value={value}
         data-testid={testId}
         title={reset === undefined ? undefined : 'Double-click to reset'}
+        onPointerDown={() => {
+          if (testId) touchCcTarget(testId)
+        }}
+        onFocus={() => {
+          if (testId) touchCcTarget(testId)
+        }}
         onChange={(event) => onChange(Number(event.target.value))}
         onDoubleClick={(event) => {
           if (reset === undefined) return

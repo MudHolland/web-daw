@@ -8,7 +8,7 @@ export function EditorStage({ children }: { children: ReactNode }) {
   return (
     <EditorDockContext.Provider value={dock}>
       <div className="editor-stage">
-        {children}
+        <div className="editor-panels">{children}</div>
         <div className="editor-dock" ref={setDock} />
       </div>
     </EditorDockContext.Provider>

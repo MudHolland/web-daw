@@ -326,13 +326,31 @@ export class Engine {
   }
 
   previewNote(instrumentId: string, midi: number, hold?: boolean): void {
+    this.previewPitches(instrumentId, [midi], hold)
+  }
+
+  previewPitches(instrumentId: string, pitches: number[], hold?: boolean): void {
     if (hold === false) {
       this.releasePreview()
       return
     }
     this.armPreview()
     this.releasePreview()
-    this.firePreview(instrumentId, hold === true, true, midi)
+    if (pitches.length === 0) return
+    this.firePreview(instrumentId, hold === true, true, pitches[0])
+    const voice = this.auditions.at(-1)?.voice ?? this.voices.get(instrumentId)
+    if (!voice || pitches.length < 2) return
+    const instrument = this.project.instruments.find((item) => item.id === instrumentId)
+    if (!instrument || instrument.voice.type === '808') return
+    const section = this.project.sections.find((item) => item.id === this.focusId) ?? this.project.sections[0]
+    const semis = section ? noteShift(this.project, section, instrumentId) : 0
+    const envelope = insertOn(instrument, 'adsr') ? instrument.envelope : null
+    const gate = hold === true ? 30 : undefined
+    const time = (this.ctx?.currentTime ?? 0) + 0.02
+    const sound = shapedSound(instrument)
+    for (const midi of pitches.slice(1)) {
+      voice.trigger(time, Math.max(0, Math.min(127, Math.round(midi + semis))), 0.85, sound, envelope, gate)
+    }
   }
 
   previewMany(instrumentIds: string[], hold?: boolean): void {

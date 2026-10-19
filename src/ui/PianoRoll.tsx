@@ -25,8 +25,9 @@ type PianoRollProps = {
 
 type Drag =
   | { kind: 'draw'; pitch: number; start: number; duration: number }
-  | { kind: 'move'; index: number; pitch: number; start: number; duration: number; originX: number; originY: number; moved: boolean }
+  | { kind: 'move'; index: number; indices: number[]; pitch: number; start: number; duration: number; originX: number; originY: number; moved: boolean }
   | { kind: 'resize'; index: number; start: number; duration: number; originX: number }
+  | { kind: 'marquee'; x0: number; y0: number; x1: number; y1: number; moved: boolean }
 
 const BLACK = new Set([1, 3, 6, 8, 10])
 
@@ -60,7 +61,18 @@ export function PianoRoll({
     draftRef.current = next
     setDraft(next)
   }
-  const [selected, setSelected] = useState<number | null>(null)
+  const [selected, setSelected] = useState<number[]>([])
+  const selectedRef = useRef<number[]>([])
+  selectedRef.current = selected
+  function pickNotes(next: number[]) {
+    selectedRef.current = next
+    setSelected(next)
+  }
+  const notesRef = useRef(notes)
+  notesRef.current = notes
+  const onChangeRef = useRef(onChange)
+  onChangeRef.current = onChange
+  const [marquee, setMarquee] = useState<{ x0: number; y0: number; x1: number; y1: number } | null>(null)
   const [span, setSpan] = useState<{ start: number; duration: number } | null>(null)
   const [dragSpan, setDragSpan] = useState<{ start: number; duration: number } | null>(null)
   const highlight = dragSpan ?? (heldSpan !== undefined ? heldSpan : span)
@@ -83,8 +95,12 @@ export function PianoRoll({
   for (let pitch = pitchHigh; pitch >= pitchLow; pitch -= 1) pitches.push(pitch)
 
   useEffect(() => {
-    if (selected != null && selected >= notes.length) setSelected(null)
-  }, [notes, selected])
+    setSelected((current) => {
+      const next = current.filter((index) => index < notes.length)
+      selectedRef.current = next
+      return next
+    })
+  }, [notes])
 
   useEffect(() => {
     if (scrolled.current) return
@@ -99,7 +115,8 @@ export function PianoRoll({
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if (selected == null) return
+      const picked = selectedRef.current
+      if (picked.length === 0) return
       if (
         event.target instanceof HTMLInputElement ||
         event.target instanceof HTMLTextAreaElement ||
@@ -109,12 +126,14 @@ export function PianoRoll({
       }
       if (event.key !== 'Delete' && event.key !== 'Backspace') return
       event.preventDefault()
-      onChange(notes.filter((_, index) => index !== selected))
-      setSelected(null)
+      event.stopImmediatePropagation()
+      const drop = new Set(picked)
+      onChangeRef.current(notesRef.current.filter((_, index) => !drop.has(index)))
+      pickNotes([])
     }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [notes, onChange, selected])
+    window.addEventListener('keydown', onKey, true)
+    return () => window.removeEventListener('keydown', onKey, true)
+  }, [])
 
   function stepFromBeats(event: { clientX: number }) {
     const beats = beatsRef.current
@@ -185,14 +204,46 @@ export function PianoRoll({
       showDraft(notes.map((note, index) => (index === drag.index ? { ...note, duration } : note)))
       return
     }
-    const stepDelta = Math.round((event.clientX - drag.originX) / columnWidth)
-    const rowDelta = Math.round((event.clientY - drag.originY) / rowHeight)
+    if (drag.kind !== 'move') return
+    let stepDelta = Math.round((event.clientX - drag.originX) / columnWidth)
+    let rowDelta = Math.round((event.clientY - drag.originY) / rowHeight)
     if (Math.abs(event.clientX - drag.originX) > 3 || Math.abs(event.clientY - drag.originY) > 3) drag.moved = true
     if (!drag.moved) return
-    const start = Math.max(origin, Math.min(Math.max(origin, limit - drag.duration), drag.start + stepDelta))
-    const row = Math.max(0, Math.min(pitches.length - 1, pitches.indexOf(drag.pitch) + rowDelta))
-    const pitch = pitches[row] ?? drag.pitch
-    showDraft(notes.map((note, index) => (index === drag.index ? { ...note, pitch, start } : note)))
+    const moving = drag.indices.length > 0 ? drag.indices : [drag.index]
+    for (const index of moving) {
+      const note = notes[index]
+      if (!note) continue
+      stepDelta = Math.max(origin - note.start, Math.min(limit - note.duration - note.start, stepDelta))
+      const row = pitches.indexOf(note.pitch)
+      if (row < 0) continue
+      rowDelta = Math.max(-row, Math.min(pitches.length - 1 - row, rowDelta))
+    }
+    const group = new Set(moving)
+    showDraft(
+      notes.map((note, index) => {
+        if (!group.has(index)) return note
+        const row = pitches.indexOf(note.pitch)
+        const pitch = row < 0 ? note.pitch : (pitches[row + rowDelta] ?? note.pitch)
+        return { ...note, pitch, start: note.start + stepDelta }
+      }),
+    )
+  }
+
+  function notesTouched(x0: number, y0: number, x1: number, y1: number) {
+    const grid = gridRef.current
+    if (!grid) return [] as number[]
+    const left = Math.min(x0, x1)
+    const right = Math.max(x0, x1)
+    const top = Math.min(y0, y1)
+    const bottom = Math.max(y0, y1)
+    const hits: number[] = []
+    for (const el of grid.querySelectorAll<HTMLElement>('[data-note]')) {
+      const rect = el.getBoundingClientRect()
+      if (rect.right >= left && rect.left <= right && rect.bottom >= top && rect.top <= bottom) {
+        hits.push(Number(el.dataset.note))
+      }
+    }
+    return hits
   }
 
   function onPointerDown(event: ReactPointerEvent<HTMLDivElement>) {
@@ -212,11 +263,15 @@ export function PianoRoll({
       onColumn(note.start)
       const rect = noteEl.getBoundingClientRect()
       const edge = event.clientX >= rect.right - 10
+      const picked = selectedRef.current
+      const indices = picked.includes(index) ? [...picked] : [index]
+      if (!picked.includes(index)) pickNotes([index])
       dragRef.current = edge
         ? { kind: 'resize', index, start: note.start, duration: note.duration, originX: event.clientX }
         : {
             kind: 'move',
             index,
+            indices,
             pitch: note.pitch,
             start: note.start,
             duration: note.duration,
@@ -229,13 +284,22 @@ export function PianoRoll({
     const cell = cellAt(event)
     if (!cell) return
     onColumn(cell.step)
-    dragRef.current = { kind: 'draw', pitch: cell.pitch, start: cell.step, duration: 1 }
-    showDraft([...notes, { pitch: cell.pitch, start: cell.step, duration: 1, velocity: 0.9 }])
+    pickNotes([])
+    dragRef.current = { kind: 'marquee', x0: event.clientX, y0: event.clientY, x1: event.clientX, y1: event.clientY, moved: false }
   }
 
   function onPointerMove(event: ReactPointerEvent<HTMLDivElement>) {
     const drag = dragRef.current
     if (!drag) return
+    if (drag.kind === 'marquee') {
+      drag.x1 = event.clientX
+      drag.y1 = event.clientY
+      if (Math.abs(drag.x1 - drag.x0) > 4 || Math.abs(drag.y1 - drag.y0) > 4) drag.moved = true
+      if (!drag.moved) return
+      setMarquee({ x0: drag.x0, y0: drag.y0, x1: drag.x1, y1: drag.y1 })
+      pickNotes(notesTouched(drag.x0, drag.y0, drag.x1, drag.y1))
+      return
+    }
     applyDrag(drag, event)
   }
 
@@ -243,27 +307,52 @@ export function PianoRoll({
     const drag = dragRef.current
     dragRef.current = null
     if (!drag) return
+    if (drag.kind === 'marquee') {
+      setMarquee(null)
+      if (drag.moved) return
+      const cell = cellAt({ clientX: drag.x0, clientY: drag.y0 })
+      if (!cell) return
+      onChange([...notes, { pitch: cell.pitch, start: cell.step, duration: 1, velocity: 0.9 }])
+      pickNotes([notes.length])
+      return
+    }
     if (drag.kind === 'move' && !drag.moved) {
       showDraft(null)
-      if (selected === drag.index) {
+      if (selected.length === 1 && selected[0] === drag.index) {
         onChange(notes.filter((_, index) => index !== drag.index))
-        setSelected(null)
+        pickNotes([])
       } else {
-        setSelected(drag.index)
+        pickNotes([drag.index])
       }
       return
     }
     const next = draftRef.current
     if (next) onChange(next)
-    if (drag.kind === 'draw') setSelected(notes.length)
-    else setSelected(drag.index)
+    if (drag.kind === 'draw') pickNotes([notes.length])
+    else if (drag.kind === 'move') pickNotes(drag.indices)
+    else pickNotes([drag.index])
     showDraft(null)
   }
 
   const bars = Math.floor(spanLength / groupSize)
+  const gridRect = marquee ? gridRef.current?.getBoundingClientRect() : null
+  const marqueeBox =
+    marquee && gridRect
+      ? {
+          left: Math.min(marquee.x0, marquee.x1) - gridRect.left,
+          top: Math.min(marquee.y0, marquee.y1) - gridRect.top,
+          width: Math.abs(marquee.x1 - marquee.x0),
+          height: Math.abs(marquee.y1 - marquee.y0),
+        }
+      : null
 
   return (
-    <div className="roll" data-testid="piano-roll" style={{ '--steps': spanLength, '--rows': pitches.length } as CSSProperties}>
+    <div
+      className="roll"
+      data-testid="piano-roll"
+      data-note-selection={selected.length > 0 ? 'on' : 'off'}
+      style={{ '--steps': spanLength, '--rows': pitches.length } as CSSProperties}
+    >
       <div className="roll-scroll">
         <div className="roll-sheet">
           <div className="roll-corner" />
@@ -344,6 +433,18 @@ export function PianoRoll({
             {playhead >= origin && playhead < limit ? (
               <div className="roll-playhead" style={{ left: `${((playhead - origin) * 100) / spanLength}%` }} />
             ) : null}
+            {marqueeBox ? (
+              <div
+                className="roll-marquee"
+                data-testid="roll-marquee"
+                style={{
+                  left: `${marqueeBox.left}px`,
+                  top: `${marqueeBox.top}px`,
+                  width: `${marqueeBox.width}px`,
+                  height: `${marqueeBox.height}px`,
+                }}
+              />
+            ) : null}
             {shown.map((note, index) => {
               const row = pitches.indexOf(note.pitch)
               if (row < 0) return null
@@ -355,7 +456,7 @@ export function PianoRoll({
                   key={`${index}-${note.pitch}-${note.start}`}
                   data-note={index}
                   data-testid="roll-note"
-                  className={selected === index ? 'roll-note is-selected' : 'roll-note'}
+                  className={selected.includes(index) ? 'roll-note is-selected' : 'roll-note'}
                   title={`${midiName(note.pitch)}, ${note.duration} step${note.duration === 1 ? '' : 's'}`}
                   style={{
                     top: `calc(${(row / pitches.length) * 100}% + 2px)`,

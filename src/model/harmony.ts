@@ -88,18 +88,29 @@ export const CHORD_TONES = [
   { label: '6', semi: 9 },
   { label: 'b7', semi: 10 },
   { label: '7', semi: 11 },
+  { label: '8', semi: 12 },
   { label: 'b9', semi: 13 },
   { label: '9', semi: 14 },
   { label: '#9', semi: 15 },
+  { label: '10', semi: 16 },
   { label: '11', semi: 17 },
   { label: '#11', semi: 18 },
+  { label: '12', semi: 19 },
   { label: 'b13', semi: 20 },
   { label: '13', semi: 21 },
+  { label: 'b14', semi: 22 },
+  { label: '14', semi: 23 },
 ] as const
 
 export function spellIntervals(root: string, semitones: number[]): number[] {
   const base = 60 + keyRoot(root)
   return [...new Set(semitones)].sort((a, b) => a - b).map((semi) => base + semi)
+}
+
+export function nameChordWithBass(root: string, semitones: number[], bass: number[]): string {
+  const symbol = nameChord(root, semitones.filter((semi) => semi >= 0))
+  if (bass.length !== 1) return symbol
+  return `${symbol}/${keyAtOffset(root, bass[0]!)}`
 }
 
 export function nameChord(root: string, semitones: number[]): string {

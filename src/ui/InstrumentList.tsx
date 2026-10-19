@@ -41,6 +41,8 @@ type GroupListProps = {
   onSoloGroup: (groupId: string) => void
   onAddGroup: (name: string) => void
   onAddTrack: (groupId: string | null, catalog: CatalogId) => void
+  addMenu: { groupId: string | null } | null
+  onAddMenu: (target: { groupId: string | null } | null) => void
   onPreviewCatalog: (catalog: CatalogId, down: boolean) => void
   onRenameGroup: (groupId: string, name: string) => void
   onRenameInstrument: (instrumentId: string, name: string) => void
@@ -72,6 +74,8 @@ export function GroupList({
   onSoloGroup,
   onAddGroup,
   onAddTrack,
+  addMenu,
+  onAddMenu,
   onPreviewCatalog,
   onRenameGroup,
   onRenameInstrument,
@@ -84,7 +88,6 @@ export function GroupList({
   playing,
   activity,
 }: GroupListProps) {
-  const [menu, setMenu] = useState(false)
   const [colorPick, setColorPick] = useState<{ kind: 'track' | 'group'; id: string } | null>(null)
   const [drag, setDrag] = useState<TrackDrag | null>(null)
   const addingGroup =
@@ -100,7 +103,7 @@ export function GroupList({
     <div className="track-pane">
       <div className="pane-title">
         <button type="button" className={selection.kind === 'song' ? 'pane-heading is-on' : 'pane-heading'} onClick={onSelectSong}>
-          <h2>All Tracks</h2>
+          Mixer
         </button>
       </div>
       <div className="group-list">
@@ -153,6 +156,7 @@ export function GroupList({
                   onGroupColor(group.id, color)
                 }}
                 onClosePicker={() => setColorPick(null)}
+                onAddTrack={() => onAddMenu({ groupId: group.id })}
               />
             </div>
           )
@@ -177,27 +181,35 @@ export function GroupList({
             type="button"
             className="song-add"
             data-testid="add-tracks"
-            aria-label="Add track or group"
-            aria-expanded={menu}
+            aria-label="Add track"
+            aria-expanded={addMenu != null}
             onPointerDown={(event) => event.stopPropagation()}
-            onClick={() => setMenu((current) => !current)}
+            onClick={() =>
+              onAddMenu(addMenu ? null : { groupId: addingGroup?.id ?? null })
+            }
           >
-            +
+            Add track
           </button>
         )}
-        {menu ? (
+        {addMenu ? (
           <AddMenu
-            includeGroup={!addingGroup}
-            families={addingGroup ? familiesForGroup(addingGroup.name) : undefined}
-            onClose={() => setMenu(false)}
+            includeGroup={addMenu.groupId == null}
+            families={
+              addMenu.groupId
+                ? familiesForGroup(project.groups.find((item) => item.id === addMenu.groupId)?.name ?? '')
+                : addingGroup
+                  ? familiesForGroup(addingGroup.name)
+                  : undefined
+            }
+            onClose={() => onAddMenu(null)}
             onGroup={() => {
-              setMenu(false)
+              onAddMenu(null)
               onAddGroup('Group')
             }}
             onPreview={onPreviewCatalog}
             onTrack={(catalog) => {
-              setMenu(false)
-              onAddTrack(addingGroup?.id ?? null, catalog)
+              onAddMenu(null)
+              onAddTrack(addMenu.groupId, catalog)
             }}
           />
         ) : null}
@@ -538,6 +550,7 @@ type GroupBlockProps = {
   onColor: (instrumentId: string, color: string | null) => void
   onGroupColor: (color: string | null) => void
   onClosePicker: () => void
+  onAddTrack: () => void
 }
 
 function GroupBlock({
@@ -574,6 +587,7 @@ function GroupBlock({
   onColor,
   onGroupColor,
   onClosePicker,
+  onAddTrack,
 }: GroupBlockProps) {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(group.name)
@@ -754,6 +768,18 @@ function GroupBlock({
           {dropIndex === resting.length ? <li className="track-gap" data-drop-index={resting.length} /> : null}
         </ul>
       ) : null}
+      <button
+        type="button"
+        className="group-add-track"
+        data-testid={`group-add-${group.id}`}
+        onPointerDown={(event) => event.stopPropagation()}
+        onClick={(event) => {
+          event.stopPropagation()
+          onAddTrack()
+        }}
+      >
+        Add track
+      </button>
     </section>
   )
 }
